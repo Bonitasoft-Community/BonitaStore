@@ -33,7 +33,7 @@ public class Toolbox {
 		try {
 			return Long.valueOf(parameter.toString());
 		} catch (final Exception e) {
-			LogBox.logger.severe("Can't decode integer [" + parameter + "]");
+			LoggerStore.logger.severe("Can't decode integer [" + parameter + "]");
 			return defaultValue;
 		}
 	}
@@ -45,7 +45,7 @@ public class Toolbox {
 		try {
 			return Integer.valueOf(parameter.toString());
 		} catch (final Exception e) {
-			LogBox.logger.severe("Can't decode integer [" + parameter + "]");
+			LoggerStore.logger.severe("Can't decode integer [" + parameter + "]");
 			return defaultValue;
 		}
 	}
@@ -57,7 +57,7 @@ public class Toolbox {
 		try {
 			return Boolean.valueOf(parameter.toString());
 		} catch (final Exception e) {
-			LogBox.logger.severe("Can't decode boolean [" + parameter + "]");
+			LoggerStore.logger.severe("Can't decode boolean [" + parameter + "]");
 			return defaultValue;
 		}
 	}

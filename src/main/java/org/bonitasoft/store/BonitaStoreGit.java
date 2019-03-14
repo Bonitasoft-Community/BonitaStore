@@ -3,6 +3,7 @@ package org.bonitasoft.store;
 
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -10,14 +11,25 @@ import java.util.Properties;
 import org.apache.commons.codec.binary.Base64;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
-import org.bonitasoft.store.ArtefactItem.TypeArtefacts;
+import org.bonitasoft.store.BonitaStore.DetectionParameters;
+import org.bonitasoft.store.BonitaStore.UrlToDownload;
+import org.bonitasoft.store.artefact.Artefact;
+import org.bonitasoft.store.artefact.FactoryArtefact;
+import org.bonitasoft.store.artefact.Artefact.TypeArtefact;
 import org.bonitasoft.store.source.git.GithubAccessor;
 import org.bonitasoft.store.source.git.GithubAccessor.ResultGithub;
-import org.bonitasoft.store.toolbox.LogBox;
-import org.bonitasoft.store.toolbox.LogBox.LOGLEVEL;
+import org.bonitasoft.store.toolbox.LoggerStore;
+import org.bonitasoft.store.toolbox.LoggerStore.LOGLEVEL;
 import org.bonitasoft.log.event.BEventFactory;
 import org.json.simple.JSONObject;
 
+/* ******************************************************************************** */
+/*                                                                                  */
+/*   BonitaStoreGit                                                                 */
+/*                                                                                  */
+/* One repository, which contains multiple artefact.                                */
+/*                                                                                  */
+/* ******************************************************************************** */
 
 public class BonitaStoreGit extends BonitaStore {
 
@@ -57,6 +69,13 @@ public class BonitaStoreGit extends BonitaStore {
 		return mGithubAccessor.getUrlRepository();
 	}
 
+  @Override
+  public Map<String,Object> toMap()
+  {
+    Map<String,Object> map = new HashMap<String,Object>();
+    map.put( BonitaStoreType,  "Git");
+    return map;
+  }
 	public String specificRepository=null;
 	public void setSpecificRepository(String specificRepository)
 	{
@@ -65,222 +84,11 @@ public class BonitaStoreGit extends BonitaStore {
 	
 	/**
 	 *
+	 *Get all repository, wich must have a special structure
 	 */
 	@Override
-	public StoreResult getListContent(final List<TypeArtefacts> listTypeApps, boolean withNotAvailable, final LogBox logBox) {
-		final SimpleDateFormat sdfParseRelease = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-
-		final StoreResult storeResult = new StoreResult("getListAvailableItems");
-
-		if (logBox.isLog(LOGLEVEL.MAIN)) {
-			logBox.log(LOGLEVEL.MAIN, "Github  getListAvailableItems : " + mGithubAccessor.toLog());
-		}
-
-		if (!mGithubAccessor.isCorrect()) {
-			storeResult.addEvent(NoGithubInformation);
-			storeResult.endOperation();
-			return storeResult;
-		}
-		// call the github to get the contents
-		String urlCall=this.specificRepository==null ? "/repos?page=1&per_page=10000" : this.specificRepository;
-		
-		final ResultGithub resultListRepository = mGithubAccessor.executeGetRestOrder(urlCall, null, logBox);
-		storeResult.addEvents(resultListRepository.listEvents);
-
-		resultListRepository.checkResultFormat(true, "The Github should return a list or repository");
-		// Sarch all project started by the ItemTypetype
-		if (resultListRepository.isError()) {
-			storeResult.endOperation();
-			return storeResult;
-		}
-		for (final Object oneRepositoryOb : resultListRepository.getJsonArray()) {
-			if (!(oneRepositoryOb instanceof JSONObject)) {
-				continue;
-			}
-			final JSONObject oneRepository = (JSONObject) oneRepositoryOb;
-
-			final String repositoryName = (String) oneRepository.get("name");
-			TypeArtefacts typeArtefact = match(listTypeApps, repositoryName);
-			if (typeArtefact == null)
-				continue;
-			
-
-			// this is what we search
-		
-			final ArtefactItem artefactItem = new ArtefactItem();
-			artefactItem.typeArtefact = typeArtefact;
-			artefactItem.sourceBonitaStore = this;
-
-
-			// set the name. If a page.properties exist, then we will get the
-			// information inside
-			artefactItem.setArtefactName(typeArtefact, (String) oneRepository.get("name"));
-			artefactItem.displayName = (String) oneRepository.get("name");
-			artefactItem.description = (String) oneRepository.get("description");
-			String traceOneApps = "name[" + artefactItem.getArtefactName() + "]";
-			String shortName = artefactItem.getArtefactName();
-			if (shortName.toUpperCase().startsWith(typeArtefact.toString().toUpperCase() + "_")) {
-				// remove the typeApps
-				shortName = shortName.substring(typeArtefact.toString().length() + 1);
-			}
-
-			// --------------------- Content
-			// Logo and documentation
-	     artefactItem.urlContent = (String) oneRepository.get("url");
-
-
-			final ResultGithub resultContent = mGithubAccessor.executeGetRestOrder(null, artefactItem.urlContent + "/contents", logBox);
-			resultContent.checkResultFormat(true, "Contents of a repository must be a list");
-			storeResult.addEvents(resultContent.listEvents);
-
-			if (!resultContent.isError()) {
-				for (final Map<String, Object> oneContent : (List<Map<String, Object>>) resultContent.getJsonArray()) {
-					final String assetName = (String) oneContent.get("name");
-					if (assetName == null) {
-						continue;
-					}
-					if (assetName.equalsIgnoreCase("page.properties")) {
-						final String urlPageProperties = (String) oneContent.get("download_url");
-						final ResultGithub resultContentpage = mGithubAccessor.getContent(urlPageProperties, "GET", "", "UTF-8");
-						storeResult.addEvents(resultContentpage.listEvents);
-						if (!BEventFactory.isError(resultContentpage.listEvents)) {
-							final String pageSt = resultContentpage.content;
-							final StringReader stringPage = new StringReader(pageSt);
-							try {
-								final Properties properties = new Properties();
-
-								properties.load(stringPage);
-								final String pageName = properties.getProperty("name");
-								if (pageName != null && !pageName.isEmpty()) {
-									artefactItem.setArtefactName(typeArtefact, pageName);
-								}
-
-								final String pageDescription = properties.getProperty("description");
-								if (pageDescription != null && !pageDescription.isEmpty()) {
-									artefactItem.description = pageDescription;
-								}
-
-								final String pageDisplayName = properties.getProperty("displayName");
-								if (pageDisplayName != null && !pageDisplayName.isEmpty()) {
-									artefactItem.displayName = pageDisplayName;
-								}
-							} catch (final Exception e) {
-								storeResult.addEvent(new BEvent(errorDecodePageProperties, "Error " + e.toString()));
-							}
-						}
-
-					}
-
-					if (assetName.equalsIgnoreCase("logo.jpg") || assetName.equalsIgnoreCase(shortName + ".jpg")) {
-
-						// we get it !
-						try {
-							final ResultGithub resultContentLogo = mGithubAccessor.executeGetRestOrder(null, (String) oneContent.get("url"), logBox);
-							final String logoSt = (String) resultContentLogo.getJsonObject().get("content");
-							final Base64 base64 = new Base64();
-							artefactItem.logo = base64.decode(logoSt);
-							traceOneApps += "logo detected;";
-						} catch (final Exception e) {
-							artefactItem.addEvent(new BEvent(errorDecodeLogo, "Get logo from  [" + oneContent.get("url") + "] : " + e.toString()));
-						}
-					}
-					if (assetName.endsWith(".pdf")) {
-						// we get the documentation
-						artefactItem.documentationFile = (String) oneContent.get("url");
-						traceOneApps += "doc detected;";
-					}
-				} // end loop on content
-			} // end get Contents
-
-			// --------------------- release
-			String releaseUrl = (String) oneRepository.get("releases_url");
-			// release is : :
-			// "https://api.github.com/repos/Bonitasoft-Community/page_awacs/releases{/id}",
-			if (releaseUrl != null && releaseUrl.endsWith("{/id}")) {
-				releaseUrl = releaseUrl.substring(0, releaseUrl.length() - "{/id}".length());
-			}
-
-			// get the releases now
-			final ResultGithub resultRelease = mGithubAccessor.executeGetRestOrder(null, releaseUrl, logBox);
-			resultRelease.checkResultFormat(true, "Contents of a release must be a list");
-			storeResult.addEvents(resultRelease.listEvents);
-			if (!resultRelease.isError()) {
-				for (final Map<String, Object> oneRelease : (List<Map<String, Object>>) resultRelease.getJsonArray()) {
-
-					final ArtefactItem.ArtefactRelease appsRelease = artefactItem.newInstanceRelease();
-					appsRelease.id = (Long) oneRelease.get("id");
-					appsRelease.version = oneRelease.get("name").toString();
-					traceOneApps += "release[" + appsRelease.version + "] detected;";
-
-					try {
-						appsRelease.dateRelease = sdfParseRelease.parse(oneRelease.get("published_at").toString());
-					} catch (final Exception e) {
-						logBox.log(LOGLEVEL.ERROR, "FoodTruckStoreGithub : date [" + oneRelease.get("published_at") + "] can't be parse.");
-					}
-					appsRelease.releaseNote = oneRelease.get("body").toString();
-					// search a ZIP access
-					if (oneRelease.get("assets") != null) {
-						for (final Map<String, Object> oneAsset : (List<Map<String, Object>>) oneRelease.get("assets")) {
-							final String assetName = (String) oneAsset.get("name");
-							if (assetName != null && assetName.endsWith(".zip")) {
-								appsRelease.urlDownload = (String) oneAsset.get("browser_download_url");
-								if (appsRelease.urlDownload != null && appsRelease.urlDownload.length() == 0) {
-									appsRelease.urlDownload = null;
-								}
-								appsRelease.numberOfDownload = (Long) oneAsset.get("download_count");
-								traceOneApps += "release with content;";
-							}
-						}
-					}
-					artefactItem.listReleases.add(appsRelease);
-				} // end loop on release
-
-				if (artefactItem.listReleases.size() == 0 || artefactItem.getLastUrlDownload() == null) {
-					artefactItem.isAvailable = false;
-				}
-			}
-			logBox.log(LogBox.LOGLEVEL.INFO, traceOneApps);
-			if ( ! artefactItem.isAvailable)
-			{
-				if (withNotAvailable)
-					storeResult.listArtefacts.add(artefactItem);
-			}
-			else
-				storeResult.listArtefacts.add(artefactItem);
-		} // end loop repo
-
-		/*
-		 * appsItem.contribFile = eElement.getAttribute("bonitacontributfile");
-		 * appsItem.urlDownload = baseUrlDownload +
-		 * eElement.getAttribute("bonitacontributfile");
-		 * appsItem.documentationFile =
-		 * eElement.getAttribute("documentationfile"); try {
-		 * appsItem.releaseDate =
-		 * sdfParseRelease.parse(eElement.getAttribute("releasedate").toString()
-		 * ); } catch (final Exception e) {
-		 * logger.severe("FoodTruckStoreGithub.getListAvailableApps Parse Date["
-		 * + eElement.getAttribute("releasedate") + " error " + e); }
-		 * appsItem.description =
-		 * eElement.getElementsByTagName("description").item(0).getTextContent()
-		 * ; // logo -------------- generated by GenerateListingItem.java final
-		 * String logoSt =
-		 * eElement.getElementsByTagName("logo").item(0).getTextContent(); if
-		 * (logoSt != null && logoSt.length() > 0) { final Base64 base64 = new
-		 * Base64(); appsItem.logo = base64.decode(logoSt); }
-		 * storeResult.listCustomPage.add(appsItem); } } catch(final Exception
-		 * e) { storeResult.addEvent(new BEvent(BadListingFormat, e, "")); }
-		 */
-		storeResult.endOperation();
-		return storeResult;
-	}
-
-	
-	 /**
-  * the URL is a directory which contains just a list of artefacts.
-  */
- @Override
- public StoreResult getListFiles(final List<TypeArtefacts> listTypeApps, boolean withNotAvailable, final LogBox logBox) {
-   final SimpleDateFormat sdfParseRelease = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+  public StoreResult getListArtefacts(DetectionParameters detectionParameters, LoggerStore logBox) {
+	  final SimpleDateFormat sdfParseRelease = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
    final StoreResult storeResult = new StoreResult("getListAvailableItems");
 
@@ -304,7 +112,9 @@ public class BonitaStoreGit extends BonitaStore {
    if (resultListRepository.isError()) {
      storeResult.endOperation();
      return storeResult;
-   }
+   } 
+   
+   // check the list of all item returned
    for (final Object oneRepositoryOb : resultListRepository.getJsonArray()) {
      if (!(oneRepositoryOb instanceof JSONObject)) {
        continue;
@@ -312,25 +122,33 @@ public class BonitaStoreGit extends BonitaStore {
      final JSONObject oneRepository = (JSONObject) oneRepositoryOb;
 
      final String repositoryName = (String) oneRepository.get("name");
-     TypeArtefacts typeArtefact = match(listTypeApps, repositoryName);
+     TypeArtefact typeArtefact = match(detectionParameters.listTypeArtefact, repositoryName);
      if (typeArtefact == null)
        continue;
      
 
      // this is what we search
    
-     final ArtefactItem artefactItem = new ArtefactItem();
+
+     FactoryArtefact factoryArtefact = FactoryArtefact.getInstance();
+     
+     final Artefact artefactItem = factoryArtefact.getFromType( typeArtefact,(String) oneRepository.get("name"), null, 
+         (String) oneRepository.get("description"),
+         null,
+         this);
+
+     if (artefactItem == null)
+     {
+       continue;
+     }
      artefactItem.typeArtefact = typeArtefact;
      artefactItem.sourceBonitaStore = this;
 
 
      // set the name. If a page.properties exist, then we will get the
      // information inside
-     artefactItem.setArtefactName(typeArtefact, (String) oneRepository.get("name"));
-     artefactItem.displayName = (String) oneRepository.get("name");
-     artefactItem.description = (String) oneRepository.get("description");
-     String traceOneApps = "name[" + artefactItem.getArtefactName() + "]";
-     String shortName = artefactItem.getArtefactName();
+     String traceOneApps = "name[" + artefactItem.getName() + "]";
+     String shortName = artefactItem.getName();
      if (shortName.toUpperCase().startsWith(typeArtefact.toString().toUpperCase() + "_")) {
        // remove the typeApps
        shortName = shortName.substring(typeArtefact.toString().length() + 1);
@@ -341,10 +159,10 @@ public class BonitaStoreGit extends BonitaStore {
      artefactItem.urlContent = (String) oneRepository.get("url");
      artefactItem.urlDownload = (String) oneRepository.get("download_url");
      
-     logBox.log(LogBox.LOGLEVEL.INFO, traceOneApps);
+     logBox.log(LoggerStore.LOGLEVEL.INFO, traceOneApps);
      if ( ! artefactItem.isAvailable)
      {
-       if (withNotAvailable)
+       if (detectionParameters.withNotAvailable)
          storeResult.listArtefacts.add(artefactItem);
      }
      else
@@ -363,7 +181,7 @@ public class BonitaStoreGit extends BonitaStore {
 	 * @param repositoryName
 	 * @return the typeApp or null if nothing match
 	 */
-	private TypeArtefacts match(final List<TypeArtefacts> listTypeApps, String repositoryName) {
+	private TypeArtefact match(final List<TypeArtefact> listTypeApps, String repositoryName) {
 		// TypeAppsName is CUSTOMPAGE or CUSTOMWIDGET
 
 		// we accept CUSTOMPAGE or PAGE
@@ -372,7 +190,7 @@ public class BonitaStoreGit extends BonitaStore {
 		}
 		repositoryName = repositoryName.toUpperCase();
 
-		for (TypeArtefacts typeApps : listTypeApps)
+		for (TypeArtefact typeApps : listTypeApps)
 		{
 			final String typeAppsName = typeApps.toString().toUpperCase();
 			if (repositoryName.startsWith(typeAppsName + "_") || ("CUSTOM" + repositoryName).startsWith(typeAppsName + "_") || repositoryName.toUpperCase().endsWith(typeAppsName)) {
@@ -382,8 +200,8 @@ public class BonitaStoreGit extends BonitaStore {
 		return null;
 	}
 
-	@Override
-	public StoreResult downloadOneArtefact(final ArtefactItem artefactItem, UrlToDownload urlToDownload, boolean isBinaryContent, final LogBox logBox) {
+  @Override
+  public StoreResult downloadArtefact(final Artefact artefactItem, UrlToDownload urlToDownload,  final LoggerStore logBox) {
 		final StoreResult storeResult = new StoreResult("DownloadOneCustomPage");
 		String url = null;
 		switch( urlToDownload)
@@ -400,7 +218,7 @@ public class BonitaStoreGit extends BonitaStore {
 		    
 		}
 		if (url == null) {
-		  storeResult.addEvent(new BEvent(noContribFile, "Apps[" + artefactItem.getArtefactName() + "]"));
+		  storeResult.addEvent(new BEvent(noContribFile, "Apps[" + artefactItem.getName() + "]"));
 			return storeResult;
 		}
 		if (logBox.isLog(LOGLEVEL.MAIN)) {
@@ -408,7 +226,7 @@ public class BonitaStoreGit extends BonitaStore {
 		}
 		
 		ResultGithub resultListing=null;
-		if (isBinaryContent)
+		if (artefactItem.isBinaryContent() )
 		  resultListing = mGithubAccessor.getBinaryContent(url, "GET", null, null);
 		else
 		  resultListing = mGithubAccessor.getContent(url, "GET", null, null);

@@ -57,8 +57,8 @@ import org.bonitasoft.store.git.model.RESTCharsets;
 import org.bonitasoft.store.git.model.RESTHTTPMethod;
 import org.bonitasoft.store.git.model.RESTRequest;
 import org.bonitasoft.store.git.model.RESTResponse;
-import org.bonitasoft.store.toolbox.LogBox;
-import org.bonitasoft.store.toolbox.LogBox.LOGLEVEL;
+import org.bonitasoft.store.toolbox.LoggerStore;
+import org.bonitasoft.store.toolbox.LoggerStore.LOGLEVEL;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -184,7 +184,7 @@ public class GithubAccessor {
      * @return
      */
     @SuppressWarnings("unchecked")
-    public ResultGithub executeGetRestOrder(final String order, final String completeOrder, final LogBox logBox) {
+    public ResultGithub executeGetRestOrder(final String order, final String completeOrder, final LoggerStore logBox) {
         //get the latest release
         final ResultGithub resultLastContrib = new ResultGithub();
         final String orderGithub=order == null ? completeOrder : mUrlRepository + order;

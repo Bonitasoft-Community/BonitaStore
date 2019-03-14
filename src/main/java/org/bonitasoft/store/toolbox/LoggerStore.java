@@ -5,9 +5,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.Logger;
 
-public class LogBox {
+public class LoggerStore {
 
-	static public Logger logger = Logger.getLogger(LogBox.class.getName());
+	static public Logger logger = Logger.getLogger(LoggerStore.class.getName());
 
 	public enum LOGLEVEL {
 		NOLOG(0), ERROR(1), MAIN(2), INFO(3), DEBUG(4);
@@ -33,7 +33,15 @@ public class LogBox {
 			logger.info(message);
 		}
 	}
+	public void info(String message )
+	{
+	  log( LOGLEVEL.INFO, message);
+	}
 
+	public void severe(String message )
+	{
+	  log( LOGLEVEL.ERROR, message);
+	}
 	/**
 	 * log a message exception
 	 * 

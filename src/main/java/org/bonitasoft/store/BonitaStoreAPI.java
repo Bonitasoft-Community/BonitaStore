@@ -14,11 +14,11 @@ public class BonitaStoreAPI {
   public static String CommunityGithubUrlRepository = "https://api.github.com/orgs/Bonitasoft-Community";
 
 
-  public static BonitaStoreGit getBonitaCommunityStore()
+  public static BonitaStore getBonitaCommunityStore()
   {
-    return new BonitaStoreGit( CommunityGithubUserName, CommunityGithubPassword, CommunityGithubUrlRepository );
+    return new BonitaStoreCommunity( CommunityGithubUserName, CommunityGithubPassword, CommunityGithubUrlRepository );
   }
-  public static BonitaStoreGit getBonitaCommunityStore( String specificRepository)
+  public static BonitaStore getBonitaCommunityStore( String specificRepository)
   {
     BonitaStoreGit bonitaStoreGit = new BonitaStoreGit( CommunityGithubUserName, CommunityGithubPassword, CommunityGithubUrlRepository );
     bonitaStoreGit.setSpecificRepository( specificRepository );
