@@ -11,12 +11,10 @@ import org.bonitasoft.store.toolbox.LoggerStore;
 
 /**
  * Result on any operation on a store
- * 
  */
 public class StoreResult {
 
-
-  public List<Artefact> listStoreItem = new ArrayList<Artefact>();
+  // public List<Artefact> listStoreItem = new ArrayList<Artefact>();
   private final List<BEvent> listEvents = new ArrayList<BEvent>();
   public List<Profile> allListProfiles = new ArrayList<Profile>();
 
@@ -25,7 +23,6 @@ public class StoreResult {
   public String statusTitle;
   public String statusinfo = "";
   public String statusDetails = "";
-
 
   public boolean isAllowAddProfile = false;
 
@@ -92,20 +89,21 @@ public class StoreResult {
     statusinfo += statusOperation.statusinfo.length() > 0 ? statusOperation.statusinfo + ";" : "";
     statusDetails += statusOperation.statusDetails.length() > 0 ? statusOperation.statusDetails + ";" : "";
     listEvents.addAll(statusOperation.listEvents);
-
+    listArtefacts.addAll(statusOperation.listArtefacts);
   }
 
   /**
    * get one artefact by its name
+   * 
    * @param name
    * @param ignoreCase
    * @return
    */
   public Artefact getArtefactByName(final String name) {
     for (final Artefact apps : listArtefacts) {
-        if (apps.getName().equalsIgnoreCase(name)) {
-          return apps;
-        }            
+      if (apps.getName().equalsIgnoreCase(name)) {
+        return apps;
+      }
     }
     return null;
 
@@ -125,7 +123,5 @@ public class StoreResult {
   public long getTimeOperation() {
     return timeOperation;
   }
-
- 
 
 }

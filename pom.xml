@@ -24,7 +24,7 @@
     <dependency>
         <groupId>com.bonitasoft.log.event</groupId>
         <artifactId>bonita-event</artifactId>
-        <version>1.3.0</version>
+        <version>1.4.0</version>
     </dependency>
         
         <dependency>

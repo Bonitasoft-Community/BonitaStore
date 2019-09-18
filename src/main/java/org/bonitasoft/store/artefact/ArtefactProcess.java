@@ -24,45 +24,41 @@ import org.bonitasoft.store.BonitaStore;
 
 public class ArtefactProcess extends Artefact {
 
-	
-	private BusinessArchive businessArchive;
+  private BusinessArchive businessArchive;
 
-	private static BEvent EventInvalidBarFile = new BEvent(ArtefactProcess.class.getName(), 1, Level.APPLICATIONERROR, "Invalid Bar file", "The bar file can't be read", "The artefact is ignored", "Check the exception");
-	
+  private static BEvent EventInvalidBarFile = new BEvent(ArtefactProcess.class.getName(), 1, Level.APPLICATIONERROR, "Invalid Bar file", "The bar file can't be read", "The artefact is ignored", "Check the exception");
 
-	public ArtefactProcess(String processName, String processVersion, String processDescription, Date dateProcess, BonitaStore sourceOrigin) {
-		super( TypeArtefact.PROCESS, processName, processVersion, processDescription, dateProcess, sourceOrigin);
-	}
+  public ArtefactProcess(String processName, String processVersion, String processDescription, Date dateProcess, BonitaStore sourceOrigin) {
+    super(TypeArtefact.PROCESS, processName, processVersion, processDescription, dateProcess, sourceOrigin);
+  }
 
-	 @Override
-	  /** Bar file */
-	  public boolean isBinaryContent() {
-	    return true;
-	  }
-	/**
-	 * load from the filefile
-	 * 
-	 * @param file
-	 * @throws IOException
-	 * @throws InvalidBusinessArchiveFormatException
-	 */
-	@Override
-	public List<BEvent> loadFromFile(File file) {
-		List<BEvent> listEvents = new ArrayList<BEvent>();
+  @Override
+  /** Bar file */
+  public boolean isBinaryContent() {
+    return true;
+  }
 
-		try {
-			businessArchive = BusinessArchiveFactory.readBusinessArchive(file);
-		} catch (Exception e) {
-			listEvents.add(new BEvent(EventInvalidBarFile, e, file.getName()));
-		}
-		return listEvents;
-	}
-	
-	public BusinessArchive getBusinessArchive()
-	{
-	  return businessArchive;
-	}
+  /**
+   * load from the filefile
+   * 
+   * @param file
+   * @throws IOException
+   * @throws InvalidBusinessArchiveFormatException
+   */
+  @Override
+  public List<BEvent> loadFromFile(File file) {
+    List<BEvent> listEvents = new ArrayList<BEvent>();
 
-	
+    try {
+      businessArchive = BusinessArchiveFactory.readBusinessArchive(file);
+    } catch (Exception e) {
+      listEvents.add(new BEvent(EventInvalidBarFile, e, file.getName()));
+    }
+    return listEvents;
+  }
+
+  public BusinessArchive getBusinessArchive() {
+    return businessArchive;
+  }
 
 }

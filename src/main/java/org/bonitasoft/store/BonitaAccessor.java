@@ -25,6 +25,16 @@ public class BonitaAccessor {
   public ApplicationAPI applicationAPI;
   public OrganizationAPI organisationAPI;
 
+  /**
+   * getinstance to be consistance with other API factory
+   * @param apiSession
+   * @return
+   */
+  public static BonitaAccessor getInstance(APISession apiSession) {
+      return new BonitaAccessor( apiSession );
+  }
+
+  
   public BonitaAccessor(APISession apiSession) {
     this.apiSession = apiSession;
     try {

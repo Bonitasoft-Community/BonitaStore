@@ -5,26 +5,27 @@ package org.bonitasoft.store.git.model;
  */
 public class HeaderAuthorization implements Authorization {
 
-    /**
-     * The token value.
-     */
-    private String value = null;
+  /**
+   * The token value.
+   */
+  private String value = null;
 
-    /**
-     * Value getter.
-     * @return The value.
-     */
-    public String getValue() {
-        return value;
-    }
+  /**
+   * Value getter.
+   * 
+   * @return The value.
+   */
+  public String getValue() {
+    return value;
+  }
 
-    /**
-     * The value setter.
-     * @param value The new value.
-     */
-    public void setValue(final String value) {
-        this.value = value;
-    }
-
+  /**
+   * The value setter.
+   * 
+   * @param value The new value.
+   */
+  public void setValue(final String value) {
+    this.value = value;
+  }
 
 }

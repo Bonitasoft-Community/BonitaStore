@@ -12,27 +12,25 @@ import org.apache.http.cookie.Cookie;
  */
 public class RESTCookieStore implements CookieStore {
 
-    /**
-     * The list of cookies of the store.
-     */
-    private final List<Cookie> cookies = new ArrayList<Cookie>();
+  /**
+   * The list of cookies of the store.
+   */
+  private final List<Cookie> cookies = new ArrayList<Cookie>();
 
-    public void addCookie(final Cookie cookie) {
-        cookies.add(cookie);
-    }
+  public void addCookie(final Cookie cookie) {
+    cookies.add(cookie);
+  }
 
+  public List<Cookie> getCookies() {
+    return cookies;
+  }
 
-    public List<Cookie> getCookies() {
-        return cookies;
-    }
+  public boolean clearExpired(final Date date) {
+    return true;
+  }
 
-
-    public boolean clearExpired(final Date date) {
-        return true;
-    }
-
-    public void clear() {
-        cookies.clear();
-    }
+  public void clear() {
+    cookies.clear();
+  }
 
 }

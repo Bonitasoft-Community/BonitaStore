@@ -14,8 +14,6 @@ import org.bonitasoft.store.artefact.ArtefactAbstractResource;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 public class DeployStrategyResource extends DeployStrategy {
-  
-
 
   public DeployOperation detectDeployment(Artefact artefact, BonitaAccessor bonitaAccessor, LoggerStore logBox) {
     DeployOperation deployOperation = new DeployOperation();
@@ -27,7 +25,7 @@ public class DeployStrategyResource extends DeployStrategy {
       String logToDebug = "";
       for (final Page page : searchResultPage.getResult()) {
         logToDebug += "[" + page.getName() + "/" + page.getContentName() + "/" + page.getContentType() + "]";
-        if (page.getName().equals(artefactResource.getName()) && page.getContentType().equals( artefactResource.getContentType())) {
+        if (page.getName().equals(artefactResource.getName()) && page.getContentType().equals(artefactResource.getContentType())) {
           deployOperation.presentDateArtefact = page.getLastModificationDate();
           deployOperation.presentVersionArtefact = null;
         }
@@ -42,7 +40,6 @@ public class DeployStrategyResource extends DeployStrategy {
     return deployOperation;
   }
 
-  
   public DeployOperation deploy(Artefact artefact, BonitaAccessor bonitaAccessor, LoggerStore logBox) {
     DeployOperation deployOperation = new DeployOperation();
     //
@@ -50,7 +47,7 @@ public class DeployStrategyResource extends DeployStrategy {
 
     Page currentPage = null;
     try {
-      currentPage = bonitaAccessor.pageAPI.getPageByName(artefactResource.getName() );
+      currentPage = bonitaAccessor.pageAPI.getPageByName(artefactResource.getName());
     } catch (PageNotFoundException pe) {
     }
     try {
@@ -74,7 +71,7 @@ public class DeployStrategyResource extends DeployStrategy {
       deployOperation.deploymentStatus = DeploymentStatus.DEPLOYED;
     } catch (Exception e) {
       deployOperation.deploymentStatus = DeploymentStatus.DEPLOYEDFAILED;
-      deployOperation.listEvents.add(new BEvent(EventErrorAtDeployment, e, "Page [" + artefactResource.getName()  + "]"));
+      deployOperation.listEvents.add(new BEvent(EventErrorAtDeployment, e, "Page [" + artefactResource.getName() + "]"));
     }
     return deployOperation;
   }

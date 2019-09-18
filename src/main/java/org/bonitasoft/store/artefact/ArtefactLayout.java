@@ -7,19 +7,18 @@ import org.bonitasoft.store.artefact.Artefact.TypeArtefact;
 
 public class ArtefactLayout extends ArtefactAbstractResource {
 
-	public ArtefactLayout(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
-		super( TypeArtefact.LAYOUT, name, version, description, dateCreation, sourceOrigin);
-	}
+  public ArtefactLayout(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
+    super(TypeArtefact.LAYOUT, name, version, description, dateCreation, sourceOrigin);
+  }
 
-	@Override
-	public String getContentType() {
-		return "layout";
-	}
+  @Override
+  public String getContentType() {
+    return "layout";
+  }
 
-	
-	 @Override
-	  /** zip file */
-	  public boolean isBinaryContent() {
-	    return true;
-	  }
+  @Override
+  /** zip file */
+  public boolean isBinaryContent() {
+    return true;
+  }
 }

@@ -6,8 +6,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.StringReader;
-import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,53 +30,49 @@ import org.bonitasoft.store.toolbox.LoggerStore;
 
 /**
  * create artefact
- *
  */
 public class FactoryArtefact {
 
-  protected static BEvent EVENT_NO_DETECTION = new BEvent(FactoryArtefact.class.getName(), 1, Level.APPLICATIONERROR, "This file does not match any artefact", "The artefact can't be deployed", "No detection", "Check the file");
+  public static BEvent EVENT_NO_DETECTION = new BEvent(FactoryArtefact.class.getName(), 1, Level.APPLICATIONERROR, "This file does not match any artefact", "The artefact can't be deployed", "No detection", "Check the file");
 
-  
   protected static BEvent EVENT_FAILED_DETECTION = new BEvent(FactoryArtefact.class.getName(), 2, Level.APPLICATIONERROR, "Error during detection", "An error is detected during the exploitation", "No detection", "Check the file");
 
-  
-  public static FactoryArtefact getInstance()
-      {     return new FactoryArtefact();
-}
-  
-  
+  public static FactoryArtefact getInstance() {
+    return new FactoryArtefact();
+  }
+
   /**
    * create the artefact from a FileContent
+   * 
    * @param fileName
    * @param fileContent
    * @param bonitaStore
    * @return
    */
-  public static class ArtefactResult
-  {
+  public static class ArtefactResult {
+
     public Artefact artefact;
-    public String logAnalysis="";
-    public List<BEvent> listevents= new ArrayList<BEvent>();
+    public String logAnalysis = "";
+    public List<BEvent> listEvents = new ArrayList<BEvent>();
   }
-  public ArtefactResult getInstanceArtefact(String fileName, File fileContent, BonitaStore bonitaStore, LoggerStore logStore)  
-  {
+
+  public ArtefactResult getInstanceArtefact(String fileName, File fileContent, BonitaStore bonitaStore, LoggerStore logStore) {
     ArtefactResult artefactResult = new ArtefactResult();
-    
+
     artefactResult.logAnalysis = "analysis[" + fileName + "]";
     Date dateFile = null;
-    try
-    {
-    BasicFileAttributes attributes = Files.readAttributes(fileContent.toPath(), BasicFileAttributes.class);
-    dateFile = new Date(attributes.lastModifiedTime().toMillis());
+    try {
+      // JDK 1.7
+      dateFile = new Date( fileContent.lastModified() );
+      // JDK 1.8
+      // BasicFileAttributes attributes = Files.readAttributes(fileContent.toPath(), BasicFileAttributes.class);
+      // dateFile = new Date(attributes.lastModifiedTime().toMillis());
 
-    }
-    catch(Exception e)
-    {
-      artefactResult.listevents.add( new BEvent( EVENT_FAILED_DETECTION, e, "fileName["+fileName+"]"));
+    } catch (Exception e) {
+      artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, e, "fileName[" + fileName + "]"));
       return artefactResult;
     }
-  
-    
+
     // ----------------------- process
     if (fileName.endsWith(".bar")) {
 
@@ -88,7 +82,7 @@ public class FactoryArtefact {
 
         String processVersion = fileName.substring(separator + 2);
         processVersion = processVersion.substring(0, processVersion.length() - 4); // remove
-                                              // .bar
+        // .bar
         artefactResult.logAnalysis += "Process[" + processName + "] version[" + processVersion + "] detected";
         artefactResult.artefact = new ArtefactProcess(processName, processVersion, "", dateFile, bonitaStore);
       }
@@ -130,21 +124,17 @@ public class FactoryArtefact {
 
     } else if (fileName.endsWith(".zip")) {
       // ZIP file : may be a lot of thing !
-      PropertiesAttribut propertiesAttribute=null;
-      try
-      {
+      PropertiesAttribut propertiesAttribute = null;
+      try {
         propertiesAttribute = searchInPagePropertie(fileContent);
-        if (propertiesAttribute == null)
-        {
-          artefactResult.listevents.add( new BEvent( EVENT_FAILED_DETECTION, "fileName["+fileName+"]"));
+        if (propertiesAttribute == null) {
+          artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, "fileName[" + fileName + "]"));
           return artefactResult;
         }
-    }
-    catch(Exception e)
-    {
-      artefactResult.listevents.add( new BEvent( EVENT_FAILED_DETECTION, e, "fileName["+fileName+"]"));
-      return artefactResult;
-    }
+      } catch (Exception e) {
+        artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, e, "fileName[" + fileName + "]"));
+        return artefactResult;
+      }
 
       if (propertiesAttribute.contentType == null || "page".equals(propertiesAttribute.contentType)) {
         artefactResult.artefact = new ArtefactCustomPage(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
@@ -164,19 +154,24 @@ public class FactoryArtefact {
       } else {
         logStore.severe("Unknow artefact contentType=[" + propertiesAttribute.contentType + "]");
       }
+    } else if (fileName.endsWith(".groovy")) {
+      String name = fileName.substring(0, fileName.length() - ".groovy".length());
+      artefactResult.artefact = new ArtefactGroovy(name, null, "", dateFile, bonitaStore);
 
+      
       // ----------------------- Nothing
     } else {
       artefactResult.logAnalysis += "No detection.";
-      artefactResult.listevents.add( new BEvent( EVENT_NO_DETECTION,"fileName["+fileName+"]" ));
+      artefactResult.listEvents.add(new BEvent(EVENT_NO_DETECTION, "fileName[" + fileName + "]"));
     }
-    if (artefactResult.artefact!=null)
-      applyStrategy( artefactResult.artefact );
+    if (artefactResult.artefact != null)
+      applyStrategy(artefactResult.artefact);
     return artefactResult;
   }
-  
+
   /**
    * get a artefact from its type
+   * 
    * @param type
    * @param name
    * @param version
@@ -185,71 +180,68 @@ public class FactoryArtefact {
    * @param bonitaStore
    * @return
    */
-  
-  public Artefact getFromType(TypeArtefact type, String name, String version, String description, Date dateCreation, BonitaStore bonitaStore )
-  {
-    
-    Artefact artefact=null;
+
+  public Artefact getFromType(TypeArtefact type, String name, String version, String description, Date dateCreation, BonitaStore bonitaStore) {
+
+    Artefact artefact = null;
     if (type == TypeArtefact.BDM)
-      artefact= new ArtefactBDM(name, version, description, dateCreation, bonitaStore);
+      artefact = new ArtefactBDM(name, version, description, dateCreation, bonitaStore);
     if (type == TypeArtefact.PROCESS)
-      artefact= new ArtefactProcess( name, version, description, dateCreation, bonitaStore);
+      artefact = new ArtefactProcess(name, version, description, dateCreation, bonitaStore);
     if (type == TypeArtefact.CUSTOMPAGE)
-      artefact=new ArtefactCustomPage( name, version, description, dateCreation, bonitaStore);
+      artefact = new ArtefactCustomPage(name, version, description, dateCreation, bonitaStore);
     if (type == TypeArtefact.CUSTOMWIDGET)
-      artefact=null;
+      artefact = null;
     if (type == TypeArtefact.LAYOUT)
-      artefact= new ArtefactLayout( name, version, description, dateCreation, bonitaStore);
+      artefact = new ArtefactLayout(name, version, description, dateCreation, bonitaStore);
     if (type == TypeArtefact.LIVINGAPP)
-      artefact= new ArtefactLivingApplication( name, version, description, dateCreation, bonitaStore);
+      artefact = new ArtefactLivingApplication(name, version, description, dateCreation, bonitaStore);
     if (type == TypeArtefact.LOOKANDFEEL)
-      artefact= new ArtefactLookAndFeel( name, version, description, dateCreation, bonitaStore);
+      artefact = new ArtefactLookAndFeel(name, version, description, dateCreation, bonitaStore);
     if (type == TypeArtefact.ORGANIZATION)
-      artefact= new ArtefactLookAndFeel( name, version, description, dateCreation, bonitaStore);
+      artefact = new ArtefactLookAndFeel(name, version, description, dateCreation, bonitaStore);
     if (type == TypeArtefact.PROFILE)
-      artefact= new ArtefactProfile( name, version, description, dateCreation, bonitaStore);
+      artefact = new ArtefactProfile(name, version, description, dateCreation, bonitaStore);
     if (type == TypeArtefact.RESTAPI)
-      artefact= new ArtefactRestApi( name, version, description, dateCreation, bonitaStore);
+      artefact = new ArtefactRestApi(name, version, description, dateCreation, bonitaStore);
     if (type == TypeArtefact.THEME)
-      artefact= new ArtefactTheme( name, version, description, dateCreation, bonitaStore);
+      artefact = new ArtefactTheme(name, version, description, dateCreation, bonitaStore);
     if (type == TypeArtefact.GROOVY)
-      artefact= new ArtefactGroovy( name, version, description, dateCreation, bonitaStore);
-    
-    if (artefact!=null)
+      artefact = new ArtefactGroovy(name, version, description, dateCreation, bonitaStore);
+
+    if (artefact != null)
       applyStrategy(artefact);
-    
+
     return artefact;
   }
-  
+
   /*
    * apply all strategy in artefact
    */
-  private void applyStrategy( Artefact artefact )
-  {
+  private void applyStrategy(Artefact artefact) {
     if (artefact instanceof ArtefactBDM)
-      artefact.setDeployStrategy( new DeployStrategyBDM() );
+      artefact.setDeployStrategy(new DeployStrategyBDM());
     if (artefact instanceof ArtefactProcess)
-      artefact.setDeployStrategy( new DeployStrategyProcess() );
+      artefact.setDeployStrategy(new DeployStrategyProcess());
     if (artefact instanceof ArtefactProfile)
-      artefact.setDeployStrategy( new DeployStrategyProfile() );
+      artefact.setDeployStrategy(new DeployStrategyProfile());
     if (artefact instanceof ArtefactCustomPage)
-      artefact.setDeployStrategy( new DeployStrategyResource() );
+      artefact.setDeployStrategy(new DeployStrategyResource());
     if (artefact instanceof ArtefactLayout)
-      artefact.setDeployStrategy( new DeployStrategyResource() );
+      artefact.setDeployStrategy(new DeployStrategyResource());
     if (artefact instanceof ArtefactLivingApplication)
-      artefact.setDeployStrategy( new DeployStrategyLivingApplication() );
+      artefact.setDeployStrategy(new DeployStrategyLivingApplication());
     if (artefact instanceof ArtefactLookAndFeel)
-      artefact.setDeployStrategy( new DeployStrategyLookAndFeel() );
+      artefact.setDeployStrategy(new DeployStrategyLookAndFeel());
     if (artefact instanceof BArtefactOrganization)
-      artefact.setDeployStrategy( new DeployStrategyOrganization() );
+      artefact.setDeployStrategy(new DeployStrategyOrganization());
     if (artefact instanceof ArtefactRestApi)
-      artefact.setDeployStrategy( new DeployStrategyResource() );
+      artefact.setDeployStrategy(new DeployStrategyResource());
     if (artefact instanceof ArtefactTheme)
-      artefact.setDeployStrategy( new DeployStrategyResource() );
+      artefact.setDeployStrategy(new DeployStrategyResource());
 
-    
   }
-  
+
   /**
    * read a line
    * 
@@ -311,6 +303,7 @@ public class FactoryArtefact {
   }
 
   private class PropertiesAttribut {
+
     public String contentType;
     public String name;
     public String description;
@@ -376,7 +369,6 @@ public class FactoryArtefact {
   }
 
   /**
-   * 
    * @param file
    * @return
    * @throws Exception
