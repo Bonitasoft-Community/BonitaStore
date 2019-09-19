@@ -68,10 +68,10 @@ public class FactoryArtefact {
             // BasicFileAttributes attributes = Files.readAttributes(fileContent.toPath(), BasicFileAttributes.class);
             // dateFile = new Date(attributes.lastModifiedTime().toMillis());
 
-        } catch (Exception e) {
-            artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, e, "fileName[" + fileName + "]"));
-            return artefactResult;
-        }
+    } catch (Exception e) {
+      artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, e, "Cannot Acess Date fileName[" + fileName + "]"));
+      return artefactResult;
+    }
 
         // ----------------------- process
         if (fileName.endsWith(".bar")) {
@@ -122,19 +122,19 @@ public class FactoryArtefact {
 
             }
 
-        } else if (fileName.endsWith(".zip")) {
-            // ZIP file : may be a lot of thing !
-            PropertiesAttribut propertiesAttribute = null;
-            try {
-                propertiesAttribute = searchInPagePropertie(fileContent);
-                if (propertiesAttribute == null) {
-                    artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, "fileName[" + fileName + "]"));
-                    return artefactResult;
-                }
-            } catch (Exception e) {
-                artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, e, "fileName[" + fileName + "]"));
-                return artefactResult;
-            }
+    } else if (fileName.endsWith(".zip")) {
+      // ZIP file : may be a lot of thing !
+      PropertiesAttribut propertiesAttribute = null;
+      try {
+        propertiesAttribute = searchInPagePropertie(fileContent);
+        if (propertiesAttribute == null) {
+          artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, "propertiesAttribute is null fileName[" + fileName + "]"));
+          return artefactResult;
+        }
+      } catch (Exception e) {
+        artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, e, "fileName[" + fileName + "]"));
+        return artefactResult;
+      }
 
             if (propertiesAttribute.contentType == null || "page".equals(propertiesAttribute.contentType)) {
                 artefactResult.artefact = new ArtefactCustomPage(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
