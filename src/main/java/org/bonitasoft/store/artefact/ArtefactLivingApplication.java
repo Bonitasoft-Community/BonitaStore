@@ -21,17 +21,17 @@ import org.bonitasoft.store.BonitaStore;
 
 public class ArtefactLivingApplication extends Artefact {
 
-  public String name;
-  public String version;
-  public Date dateCreation;
+    public String name;
+    public String version;
+    public Date dateCreation;
 
-  public ArtefactLivingApplication(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
-    super(TypeArtefact.LIVINGAPP, name, version, description, dateCreation, sourceOrigin);
-  }
+    public ArtefactLivingApplication(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
+        super(TypeArtefact.LIVINGAPP, name, version, description, dateCreation, sourceOrigin);
+    }
 
-  @Override
-  /** zip file */
-  public boolean isBinaryContent() {
-    return true;
-  }
+    @Override
+    /** zip file */
+    public boolean isBinaryContent() {
+        return true;
+    }
 }

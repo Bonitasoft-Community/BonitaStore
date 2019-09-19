@@ -9,27 +9,28 @@ import org.bonitasoft.store.BonitaStore;
 
 public class ArtefactRestApi extends ArtefactAbstractResource {
 
-  protected static BEvent EventDeploymentRestFailed = new BEvent(ArtefactRestApi.class.getName(), 1, Level.APPLICATIONERROR, "Rest deployment Error", "The Rest API is deployed but will failed", "The call will return a 403", "Upload manualy the restApi");
+    protected static BEvent EventDeploymentRestFailed = new BEvent(ArtefactRestApi.class.getName(), 1, Level.APPLICATIONERROR, "Rest deployment Error", "The Rest API is deployed but will failed", "The call will return a 403", "Upload manualy the restApi");
 
-  public String name;
-  public String version;
-  public Date dateCreation;
+    public String name;
+    public String version;
+    public Date dateCreation;
 
-  public ArtefactRestApi(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
-    super(TypeArtefact.RESTAPI, name, version, description, dateCreation, sourceOrigin);
-  }
-
-  public ArtefactRestApi(File fileName, BonitaStore sourceOrigin) {
-      super(TypeArtefact.RESTAPI, "name", "1.0", "Description", new Date(), sourceOrigin);
+    public ArtefactRestApi(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
+        super(TypeArtefact.RESTAPI, name, version, description, dateCreation, sourceOrigin);
     }
-  @Override
-  public String getContentType() {
-    return "apiExtension";
-  }
 
-  @Override
-  /** zip file */
-  public boolean isBinaryContent() {
-    return true;
-  }
+    public ArtefactRestApi(File fileName, BonitaStore sourceOrigin) {
+        super(TypeArtefact.RESTAPI, "name", "1.0", "Description", new Date(), sourceOrigin);
+    }
+
+    @Override
+    public String getContentType() {
+        return "apiExtension";
+    }
+
+    @Override
+    /** zip file */
+    public boolean isBinaryContent() {
+        return true;
+    }
 }

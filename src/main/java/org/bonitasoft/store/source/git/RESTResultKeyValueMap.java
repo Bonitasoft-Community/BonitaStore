@@ -22,59 +22,59 @@ import java.util.List;
  */
 public class RESTResultKeyValueMap implements Serializable {
 
-  /**
-   * The serial version
-   */
-  private static final long serialVersionUID = 1L;
+    /**
+     * The serial version
+     */
+    private static final long serialVersionUID = 1L;
 
-  /**
-   * The key of the element
-   */
-  private String key = null;
+    /**
+     * The key of the element
+     */
+    private String key = null;
 
-  /**
-   * The value of the element which is a list of values
-   */
-  private List<String> value = new ArrayList<String>();
+    /**
+     * The value of the element which is a list of values
+     */
+    private List<String> value = new ArrayList<String>();
 
-  /**
-   * Get the key
-   * 
-   * @return the key
-   */
-  public String getKey() {
-    return key;
-  }
+    /**
+     * Get the key
+     * 
+     * @return the key
+     */
+    public String getKey() {
+        return key;
+    }
 
-  /**
-   * Set the key
-   * 
-   * @param newKey the key
-   */
-  public void setKey(final String newKey) {
-    key = newKey;
-  }
+    /**
+     * Set the key
+     * 
+     * @param newKey the key
+     */
+    public void setKey(final String newKey) {
+        key = newKey;
+    }
 
-  /**
-   * Get the value
-   * 
-   * @return the value
-   */
-  public List<String> getValue() {
-    return value;
-  }
+    /**
+     * Get the value
+     * 
+     * @return the value
+     */
+    public List<String> getValue() {
+        return value;
+    }
 
-  /**
-   * Set the value
-   * 
-   * @param newValue the value
-   */
-  public void setValue(final List<String> newValue) {
-    value = newValue;
-  }
+    /**
+     * Set the value
+     * 
+     * @param newValue the value
+     */
+    public void setValue(final List<String> newValue) {
+        value = newValue;
+    }
 
-  @Override
-  public String toString() {
-    return "RESTResultKeyValueMap  [key: " + getKey() + "]";
-  }
+    @Override
+    public String toString() {
+        return "RESTResultKeyValueMap  [key: " + getKey() + "]";
+    }
 }

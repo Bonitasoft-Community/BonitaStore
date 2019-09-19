@@ -10,17 +10,17 @@ import org.bonitasoft.store.BonitaStore;
 
 public class ArtefactBDM extends Artefact {
 
-  public ArtefactBDM(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
-    super(TypeArtefact.BDM, name, version, description, dateCreation, sourceOrigin);
-  }
+    public ArtefactBDM(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
+        super(TypeArtefact.BDM, name, version, description, dateCreation, sourceOrigin);
+    }
 
-  public List<BEvent> loadFromFile(File file) {
-    return new ArrayList<BEvent>();
-  }
+    public List<BEvent> loadFromFile(File file) {
+        return new ArrayList<BEvent>();
+    }
 
-  @Override
-  public boolean isBinaryContent() {
-    return false;
-  }
+    @Override
+    public boolean isBinaryContent() {
+        return false;
+    }
 
 }
