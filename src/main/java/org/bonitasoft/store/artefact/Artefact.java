@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.bonitasoft.engine.bpm.BaseElement;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.store.BonitaStore;
@@ -76,6 +77,12 @@ public abstract class Artefact {
     // to be delete
     private List<Map<String, Object>> listProfiles = new ArrayList<Map<String, Object>>();
 
+    /**
+     * Bonita Id (pageid for a Page, etc...), if the artefact is Deployed in a Bonita server
+     */
+    public BaseElement bonitaBaseElement;
+    
+    
     public Artefact(TypeArtefact typeArtefact, String name, String version, String description, Date dateVersion, BonitaStore provider) {
         this.typeArtefact = typeArtefact;
         this.artefactName = name.toLowerCase();

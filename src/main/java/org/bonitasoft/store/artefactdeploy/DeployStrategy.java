@@ -61,10 +61,7 @@ public abstract class DeployStrategy {
 
         public List<BEvent> listEvents = new ArrayList<BEvent>();
         public String report;
-        /**
-         * Bonita Id (pageid for a Page, etc...)
-         */
-        public BaseElement bonitaBaseElement;
+       
     }
 
 

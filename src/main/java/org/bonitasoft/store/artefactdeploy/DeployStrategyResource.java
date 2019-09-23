@@ -32,6 +32,9 @@ public class DeployStrategyResource extends DeployStrategy {
             for (final Page page : searchResultPage.getResult()) {
                 // logToDebug += "[" + page.getName() + "/" + page.getContentName() + "/" + page.getContentType() + "]";
                 if (page.getName().equals(artefactResource.getName()) && page.getContentType().equals(artefactResource.getContentType())) {
+                    
+                    artefact.bonitaBaseElement = page;
+                    
                     deployOperation.presentDateArtefact = page.getLastModificationDate();
                     deployOperation.presentVersionArtefact = null;
                     logToDebug += "Found existing page deployed at " + page.getLastModificationDate();
@@ -83,26 +86,26 @@ public class DeployStrategyResource extends DeployStrategy {
                 if (getUpdateStrategy() == UPDATE_STRATEGY.UPDATE)
                 {
                     bonitaAccessor.pageAPI.updatePageContent(currentPage.getId(), artefactResource.getContent().toByteArray());
-                    deployOperation.bonitaBaseElement = currentPage;
+                    artefactResource.bonitaBaseElement = currentPage;
                 }
                 else
                 {
                     logToDebug += "Delete ["+currentPage.getId()+"];";
                     bonitaAccessor.pageAPI.deletePage(currentPage.getId());
                     Page page = bonitaAccessor.pageAPI.createPage(artefactResource.getName(), artefactResource.getContent().toByteArray());
-                    deployOperation.bonitaBaseElement = page;
+                    artefactResource.bonitaBaseElement = page;
   
                 }
-                deployOperation.bonitaBaseElement = currentPage;
+                
             } else {
                 logToDebug += "Create;";
 
                 Page page = bonitaAccessor.pageAPI.createPage(artefactResource.getName(), artefactResource.getContent().toByteArray());
-                deployOperation.bonitaBaseElement = page;
+                artefactResource.bonitaBaseElement = page;
 
             }
             deployOperation.deploymentStatus = DeploymentStatus.DEPLOYED;
-            logToDebug += "Deployed PageId["+deployOperation.bonitaBaseElement.getId()+"];";
+            logToDebug += "Deployed PageId["+artefactResource.bonitaBaseElement.getId()+"];";
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));

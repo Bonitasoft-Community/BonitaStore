@@ -43,6 +43,9 @@ public class DeployStrategyProcess extends DeployStrategy {
                 deployOperation.presentDateArtefact = processDeploymentInfo.getDeploymentDate();
                 deployOperation.presentVersionArtefact = process.getVersion();
                 if (processDeploymentInfo.getDeploymentDate().equals(process.getDate())) {
+                    
+                    process.bonitaBaseElement = bonitaAccessor.processAPI.getProcessDefinition( processDeploymentInfo.getProcessId() );
+                    
                     deployOperation.detectionStatus = DetectionStatus.SAME;
                     deployOperation.report = "A version exist with the same date (" + DeployStrategy.sdf.format(process.getDate()) + ")";
                 } else if (processDeploymentInfo.getDeploymentDate().before(process.getDate())) {
@@ -114,7 +117,7 @@ public class DeployStrategyProcess extends DeployStrategy {
                 ProcessDefinition processDefinition = bonitaAccessor.processAPI.deploy(((ArtefactProcess) process).getBusinessArchive());
                 bonitaAccessor.processAPI.enableProcess(processDefinition.getId());
                 
-                deployOperation.bonitaBaseElement = processDefinition;
+                process.bonitaBaseElement = processDefinition;
                 deployOperation.deploymentStatus = DeploymentStatus.DEPLOYED;
 
             } catch (ProcessDeployException e) {

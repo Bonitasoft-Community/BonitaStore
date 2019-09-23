@@ -3,13 +3,16 @@ package org.bonitasoft.store.artefactdeploy;
 import java.lang.reflect.Method;
 
 import org.bonitasoft.engine.api.ProfileAPI;
+import org.bonitasoft.engine.exception.SearchException;
 import org.bonitasoft.engine.profile.Profile;
+import org.bonitasoft.engine.profile.ProfileSearchDescriptor;
 import org.bonitasoft.engine.search.SearchOptionsBuilder;
 import org.bonitasoft.engine.search.SearchResult;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.store.BonitaStoreAccessor;
 import org.bonitasoft.store.artefact.Artefact;
 import org.bonitasoft.store.toolbox.LoggerStore;
+import org.hibernate.jpa.internal.metamodel.AttributeFactory;
 
 public class DeployStrategyProfile extends DeployStrategy {
 
@@ -20,6 +23,9 @@ public class DeployStrategyProfile extends DeployStrategy {
             SearchResult<Profile> searchProfile = bonitaAccessor.profileAPI.searchProfiles(new SearchOptionsBuilder(0, 1000).done());
             for (Profile profile : searchProfile.getResult()) {
                 if (profile.getName().equals(artefactProfile.getName())) {
+                    
+                    artefactProfile.bonitaBaseElement = profile;
+                    
                     deployOperation.presentDateArtefact = profile.getLastUpdateDate();
 
                     if (profile.getLastUpdateDate().equals(artefactProfile.getDate())) {
@@ -46,8 +52,12 @@ public class DeployStrategyProfile extends DeployStrategy {
         return deployOperation;
     }
 
+    
+    /**
+     * 
+     */
     @Override
-    public DeployOperation deploy(Artefact artefactProfile, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public DeployOperation deploy(Artefact artefactProfile, BonitaStoreAccessor bonitaAccessor, LoggerStore logStore) {
 
         DeployOperation deployOperation = new DeployOperation();
         deployOperation.deploymentStatus = DeploymentStatus.NOTHINGDONE;
@@ -86,6 +96,8 @@ public class DeployStrategyProfile extends DeployStrategy {
                      */
                     method.invoke(profileAPI, params);
                     deployOperation.deploymentStatus = DeploymentStatus.DEPLOYED;
+                    artefactProfile.bonitaBaseElement = getProfileByName( bonitaAccessor.profileAPI, artefactProfile.getName(),logStore);
+                   
                 }
             }
 
@@ -100,5 +112,27 @@ public class DeployStrategyProfile extends DeployStrategy {
         }
 
         return deployOperation;
+    }
+    
+    /**
+     * this method does not exist in the ProfileAPI
+     * @param profileName
+     * @return
+     */
+    private Profile getProfileByName( ProfileAPI profileAPI, String profileName, LoggerStore logStore )
+    {
+        // search the profile again
+        SearchOptionsBuilder searchOptionsBuilder = new SearchOptionsBuilder(0, 2);
+        searchOptionsBuilder.filter(ProfileSearchDescriptor.NAME, profileName);
+        SearchResult<Profile> searchResult;
+        try {
+            searchResult = profileAPI.searchProfiles( searchOptionsBuilder.done());
+            if (searchResult.getCount()>0)
+                return searchResult.getResult().get(0);
+        } catch (SearchException e) {
+            logStore.severe("Error getProfileByName=[" + e.getMessage() + "]");
+            
+        }
+        return null;
     }
 }

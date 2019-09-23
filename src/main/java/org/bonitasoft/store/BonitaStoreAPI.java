@@ -2,6 +2,8 @@ package org.bonitasoft.store;
 
 import java.io.File;
 
+import org.bonitasoft.engine.session.APISession;
+
 public class BonitaStoreAPI {
 
     public static BonitaStoreAPI getInstance() {
@@ -47,7 +49,13 @@ public class BonitaStoreAPI {
         BonitaStoreDirectory bonitaDirectory = new BonitaStoreDirectory(pathDirectory);
         return bonitaDirectory;
     }
-
+    /*
+     * get a store from a local disk
+     */
+    public BonitaStoreLocal getLocalStore(APISession apiSession) {
+        BonitaStoreLocal bonitaDirectory = new BonitaStoreLocal(apiSession);
+        return bonitaDirectory;
+    }
     /**
      * return the BonitaStoreFactory. The factory is not unique.
      * 

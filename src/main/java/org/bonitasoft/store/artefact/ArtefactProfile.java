@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.bonitasoft.engine.api.ProfileAPI;
+import org.bonitasoft.engine.bpm.BaseElement;
 import org.bonitasoft.engine.profile.Profile;
 import org.bonitasoft.engine.search.SearchOptionsBuilder;
 import org.bonitasoft.engine.search.SearchResult;
@@ -52,13 +53,34 @@ public class ArtefactProfile extends Artefact {
                 } catch (IOException e) {
                 }
         }
-        return new ArrayList<BEvent>();
+        return listEvents;
     }
 
+    /**
+     * load from a String. Should be a XML string (according the profile content)
+     * @param contentSt
+     * @return
+     */
+    public List<BEvent> loadFromString(String contentSt)
+    {
+        profileContent = contentSt.getBytes();
+        return new ArrayList<BEvent>();
+    }
     @Override
     /** zip file */
     public boolean isBinaryContent() {
         return true;
+    }
+    
+    /**
+     * return the Bonita artefact
+     * @return
+     */
+    public Profile getProfile()
+    {
+        if (bonitaBaseElement!=null)
+            return (Profile) bonitaBaseElement;
+        return null;
     }
 
 }

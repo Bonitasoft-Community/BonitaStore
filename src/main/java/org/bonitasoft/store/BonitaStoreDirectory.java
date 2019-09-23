@@ -24,6 +24,14 @@ import org.bonitasoft.store.artefact.FactoryArtefact.ArtefactResult;
 import org.bonitasoft.store.source.git.GithubAccessor;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
+/* ******************************************************************************** */
+/*                                                                                  */
+/* BonitaStoreDirectory */
+/*                                                                                  */
+/* Load the different artefact from a repository */
+/*                                                                                  */
+/* ******************************************************************************** */
+
 public class BonitaStoreDirectory extends BonitaStore {
 
     private static BEvent EVENT_LOAD_FAILED = new BEvent(BonitaStoreDirectory.class.getName(), 1, Level.APPLICATIONERROR, "Error at load time", "The artefact can't be loaded", "Artefact is not accessible", "Check the exception");
