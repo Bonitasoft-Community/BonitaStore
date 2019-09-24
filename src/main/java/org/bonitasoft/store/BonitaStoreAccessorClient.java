@@ -73,7 +73,7 @@ public class BonitaStoreAccessorClient {
             listOptions.add( args[ i ]);
         // decode options
         UPDATE_STRATEGY strategy = UPDATE_STRATEGY.UPDATE; 
-        boolean insertIntoProfileBo = false;
+        String insertIntoProfile = null;
         for (String option : listOptions)
         {
             StringTokenizer st = new StringTokenizer(option, ":");
@@ -91,8 +91,8 @@ public class BonitaStoreAccessorClient {
                     System.out.println("UpdateStrategy ["+value+"] unknow, only "+UPDATE_STRATEGY.UPDATE+","+UPDATE_STRATEGY.DELETEANDADD+" accepted");    
                 }
             }
-            if ("profilebo".equalsIgnoreCase( command )) {
-                insertIntoProfileBo=true;
+            if ("profile".equalsIgnoreCase( command )) {
+                insertIntoProfile=value;
             }
         }
         System.out.println("BonitaStoreClient: Start Connection[" + applicationUrl + "/" + applicationName + "] User[" + userName + "] password[" + passwd + "] FileToDeploy[" + fileName + "]");
@@ -114,13 +114,19 @@ public class BonitaStoreAccessorClient {
         DeployOperation deploy = bonitaAccessorClient.deployArtefact(fileArtefact, strategy);
         if (BEventFactory.isError(deploy.listEvents)) {
             System.out.println("FAILED " + deploy.listEvents.toString());
-        } else
-            System.out.println("SUCCESS");
-
+        } else {
         
-        if (insertIntoProfileBo) {
-            Profile profileBo = bonitaAccessorClient.getProfileBOTools();
-            bonitaAccessorClient.registerInProfile( profileBo, (ArtefactCustomPage) deploy.artefact);
+            System.out.println("SUCCESS");
+        
+            if (insertIntoProfile !=null) {
+                ArtefactProfile profileBo = bonitaAccessorClient.getOrCreateProfile(insertIntoProfile);
+                if (profileBo!=null)
+                {
+                    List<BEvent> listEvents = bonitaAccessorClient.registerInProfile( profileBo, (ArtefactCustomPage) deploy.artefact);
+                    System.out.println("Registration:" + listEvents);
+                }
+                
+            }
         }
         
         
@@ -225,9 +231,10 @@ public class BonitaStoreAccessorClient {
             ArtefactResult artefactResult = factoryArtefact.getInstanceArtefact(fileArtefact.getName(), fileArtefact, bonitaStore, loggerStore);
             if (BEventFactory.isError(artefactResult.listEvents)) {
                 System.out.println("Load error " + artefactResult.listEvents.toString());
-                DeployOperation deploy = new DeployOperation();
-                deploy.listEvents =artefactResult.listEvents;
-                return deploy;
+                DeployOperation deployOperation = new DeployOperation();
+                deployOperation.artefact = artefactResult.artefact;
+                deployOperation.listEvents = artefactResult.listEvents;
+                return deployOperation;
             }
 
             System.out.println("  Deploy Artefact");
@@ -239,9 +246,9 @@ public class BonitaStoreAccessorClient {
             
             // then deploy
             DeployOperation deployOperation = artefactResult.artefact.deploy(BonitaAccessor, loggerStore);
-
+            deployOperation.artefact = artefactResult.artefact;
             System.out.println("Deploiment Status:" + deployOperation.deploymentStatus.toString());
-            System.out.println("Deploiment nDetails:" + deployOperation.listEvents.toString());
+            System.out.println("Deploiment Details:" + deployOperation.listEvents.toString());
 
             return deployOperation;
         } catch (Exception e) {
@@ -258,9 +265,9 @@ public class BonitaStoreAccessorClient {
     /*                                                                                  */
     /* ******************************************************************************** */
     
-    private String profileBOTools= "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+    private String profileTemplate= "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
     + "<profiles:profiles xmlns:profiles=\"http://www.bonitasoft.org/ns/profile/6.1\"> "
-    + "   <profile name=\"BOtools\" isDefault=\"false\"> "
+    + "   <profile name=\"@@PROFILENAME@@\" isDefault=\"false\"> "
     + "        <description></description>"
     + "        <profileEntries>"
     + "        </profileEntries>"
@@ -276,7 +283,7 @@ public class BonitaStoreAccessorClient {
     + "</profiles:profiles>";
     
     
-    public Profile getProfileBOTools()
+    public ArtefactProfile getOrCreateProfile(String profileName )
     {
 
         BonitaStoreAPI bonitaStoreAPI = BonitaStoreAPI.getInstance();
@@ -287,31 +294,30 @@ public class BonitaStoreAccessorClient {
 
         BonitaStoreAccessor bonitaAccessor = new BonitaStoreAccessor(apiSession);
 
-        System.out.println("  Load Artefact");
+        System.out.println("  Load Artefact Profile["+profileName+"]");
         ArtefactProfile artefactProfileBO = (ArtefactProfile) factoryArtefact.getFromType(TypeArtefact.PROFILE, "BOTools", "1.0", "Profile to access Custom page", new Date(), bonitaStore);
-        artefactProfileBO.loadFromString(profileBOTools);
+        String profileContent = profileTemplate.replace("@@PROFILENAME@@", profileName);
+        
+        artefactProfileBO.loadFromString(profileContent);
         DeployOperation deploy = artefactProfileBO.detectDeployment(bonitaAccessor, loggerStore);
         if (deploy.detectionStatus == DetectionStatus.NEWARTEFAC)
         {
             deploy = artefactProfileBO.deploy(bonitaAccessor, loggerStore);
             if (BEventFactory.isError( deploy.listEvents ))
+            {
+                System.out.println("CreateProfile ["+profileName+"] failed "+deploy.listEvents.toString());
                 return null;
+            }
         }
-        return artefactProfileBO.getProfile();
+        return artefactProfileBO;
     
     }
     
-    public List<BEvent> registerInProfile( Profile profile, ArtefactCustomPage page)
+    public List<BEvent> registerInProfile( ArtefactProfile profile, ArtefactCustomPage page)
     {
-        List<BEvent> listEvents = new ArrayList<BEvent>();
-        // not yet implemented
-        // ProfileEntry createProfileLinkEntry(String name,
-        // String description,
-        //         long profileId,
-        // String page,
-        // boolean isCustom)
+        BonitaStoreAccessor bonitaAccessor = new BonitaStoreAccessor(apiSession);
 
-        return listEvents;
+        return profile.registerCustomPage(page, bonitaAccessor);
     }
 
     

@@ -1,33 +1,38 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>org.bonitasoft.store</groupId>
-  <artifactId>bonita-store</artifactId>
-  <version>1.0.0</version>
-  <properties>
-   <maven.compiler.source>1.8</maven.compiler.source>
-   <maven.compiler.target>1.8</maven.compiler.target>
-</properties>
-  <dependencies>
-  
-  	 
-  	<dependency>
-  		<groupId>org.bonitasoft.engine</groupId>
-  		<artifactId>bonita-client</artifactId>
-  		<version>7.8.4</version>
-	</dependency>
-	<dependency>
-  		<groupId>org.bonitasoft.engine</groupId>
-  		<artifactId>bonita-server</artifactId>
-  		<version>7.8.4</version>
-	</dependency>
-   
-    <dependency>
-        <groupId>org.bonitasoft.log.event</groupId>
-        <artifactId>bonita-event</artifactId>
-        <version>1.5.0</version>
-    </dependency>
-        
-        <dependency>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.bonitasoft.store</groupId>
+	<artifactId>bonita-store</artifactId>
+	<version>1.1.0</version>
+	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+	</properties>
+	<dependencies>
+
+
+		<dependency>
+			<groupId>org.bonitasoft.engine</groupId>
+			<artifactId>bonita-client</artifactId>
+			<version>7.9.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.bonitasoft.engine</groupId>
+			<artifactId>bonita-client-sp</artifactId>
+			<version>7.9.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bonitasoft.engine</groupId>
+			<artifactId>bonita-server</artifactId>
+			<version>7.9.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.bonitasoft.log.event</groupId>
+			<artifactId>bonita-event</artifactId>
+			<version>1.5.0</version>
+		</dependency>
+
+		<dependency>
 			<groupId>com.googlecode.json-simple</groupId>
 			<artifactId>json-simple</artifactId>
 			<version>1.1</version>
@@ -38,31 +43,31 @@
 			<version>2.5</version>
 			<scope>provided</scope>
 		</dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpcore</artifactId>
-            <version>4.4.4</version>
-        </dependency>
-  </dependencies>
-      <!-- ******************** Community Maven repository **************** -->
-      <repositories>
-          <repository>
-              <releases>
-                  <enabled>true</enabled>
-                  <checksumPolicy>warn</checksumPolicy>
-              </releases>
-              <snapshots>
-                  <enabled>false</enabled>
-              </snapshots>
-              <id>logPageBonita</id>
-              <name>logPageBonita</name>
-              <url>https://raw.githubusercontent.com/Bonitasoft-Community/bonitamavenrepository/master</url>
-              <layout>default</layout>
-          </repository>
-      </repositories>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.5.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpcore</artifactId>
+			<version>4.4.4</version>
+		</dependency>
+	</dependencies>
+	<!-- ******************** Community Maven repository **************** -->
+	<repositories>
+		<repository>
+			<releases>
+				<enabled>true</enabled>
+				<checksumPolicy>warn</checksumPolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<id>logPageBonita</id>
+			<name>logPageBonita</name>
+			<url>https://raw.githubusercontent.com/Bonitasoft-Community/bonitamavenrepository/master</url>
+			<layout>default</layout>
+		</repository>
+	</repositories>
 </project>

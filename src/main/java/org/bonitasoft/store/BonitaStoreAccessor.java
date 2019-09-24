@@ -50,16 +50,25 @@ public class BonitaStoreAccessor {
     }
 
     public ProfileAPI getProfileAPI() {
+        ProfileAPI profile = null;
         try {
-            ProfileAPI profile = null;
             Class<?> clazz = Class.forName("com.bonitasoft.engine.api.TenantAPIAccessor");
             if (clazz != null) {
                 Method method = clazz.getMethod("getProfileAPI", APISession.class);
                 profile = (ProfileAPI) method.invoke(null, apiSession);
-            } else
-                profile = TenantAPIAccessor.getProfileAPI(apiSession);
+                return profile;
+            } 
+                
             return profile;
         } catch (Exception e) {
+        }
+        // Here ? Not a server API
+        try
+        {
+            return TenantAPIAccessor.getProfileAPI(apiSession);
+        }
+        catch(Exception e)
+        {
             return null;
         }
 

@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 
 import org.bonitasoft.engine.api.ProfileAPI;
 import org.bonitasoft.engine.exception.SearchException;
+import org.bonitasoft.engine.profile.ImportPolicy;
 import org.bonitasoft.engine.profile.Profile;
 import org.bonitasoft.engine.profile.ProfileSearchDescriptor;
 import org.bonitasoft.engine.search.SearchOptionsBuilder;
@@ -68,17 +69,18 @@ public class DeployStrategyProfile extends DeployStrategy {
             ProfileAPI profileAPI = bonitaAccessor.getProfileAPI();
 
             // get the policy : com.bonitasoft.engine.profile.ImportPolicy.REPLACE_DUPLICATES;
+            // get the policy : com.bonitasoft.engine.profile.ImportPolicy.REPLACE_DUPLICATES;
             Class<?> clImportPolicy = Class.forName("com.bonitasoft.engine.profile.ImportPolicy");
             if (clImportPolicy == null) {
                 deployOperation.listEvents.add(new BEvent(EventErrorAtDeployment, "Profile name[" + artefactProfile.getName() + "] - Only Subscription edition"));
                 deployOperation.deploymentStatus = DeploymentStatus.BADBONITAVERSION;
                 return deployOperation;
             }
-            Object[] params = new Object[] { String.class };
+            
             Method methodValueOf = clImportPolicy.getMethod("valueOf", String.class);
             Object importPolicy = methodValueOf.invoke(null, "REPLACE_DUPLICATES");
-
-            params = new Object[] { artefactProfile.getContent(), importPolicy };
+            
+            Object[] params = new Object[] { artefactProfile.getContent().toByteArray(), importPolicy };
 
             // this methode can't be join..
             // java.lang.reflect.Method method = profileAPI.getClass().getMethod("importProfiles", byte[].class, clImportPolicy.getClass() );
@@ -95,6 +97,7 @@ public class DeployStrategyProfile extends DeployStrategy {
                      * methods+="("+oneParam.getName()+")";
                      */
                     method.invoke(profileAPI, params);
+                    
                     deployOperation.deploymentStatus = DeploymentStatus.DEPLOYED;
                     artefactProfile.bonitaBaseElement = getProfileByName( bonitaAccessor.profileAPI, artefactProfile.getName(),logStore);
                    
