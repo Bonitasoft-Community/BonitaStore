@@ -105,6 +105,7 @@ public class GithubAccessor {
      */
 
     private final String mUserName;
+
     private final String mPassword;
     private final String mUrlRepository;
 
@@ -133,17 +134,30 @@ public class GithubAccessor {
 
         }
 
-        public JSONArray getJsonArray() {
+        /**
+         * if attribute is null, then the jsonResult must be an array
+         * Else, this is a map AND the jsonResult.get(attribut) is an array
+         * 
+         * @param attribut
+         * @return
+         */
+        public JSONArray getJsonArray(String attribut) {
             try {
-                return (JSONArray) jsonResult;
+                Object itemToCheck = jsonResult;
+                if (attribut != null) {
+                    itemToCheck = ((JSONObject) itemToCheck).get(attribut);
+                }
+
+                return (JSONArray) itemToCheck;
             } catch (final Exception e) {
                 return null;
             }
 
         }
 
-        public void checkResultFormat(final boolean formatExpectedIsArray, final String message) {
-            if (formatExpectedIsArray && getJsonArray() == null) {
+        public void checkResultFormat(String attribut, final boolean formatExpectedIsArray, final String message) {
+
+            if (formatExpectedIsArray && getJsonArray(attribut) == null) {
                 listEvents.add(new BEvent(eventBadFormat, message));
             }
             if (!formatExpectedIsArray && getJsonObject() == null) {
@@ -158,6 +172,10 @@ public class GithubAccessor {
 
     public String getUrlRepository() {
         return mUrlRepository;
+    }
+
+    public String getUserName() {
+        return mUserName;
     }
 
     /**

@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.bonitasoft.engine.session.APISession;
+
 public class BonitaStoreFactory {
 
-    protected static BonitaStoreFactory getNewInstance() {
+    protected static BonitaStoreFactory getInstance() {
         return new BonitaStoreFactory();
     }
 
@@ -21,28 +23,63 @@ public class BonitaStoreFactory {
     }
 
     public void registerStore(BonitaStore bonitaStore) {
+        // register only if not already present
+        for (BonitaStore storeInTheList : this.listBonitaStore)
+            if (storeInTheList.getId().equals(bonitaStore.getId()))
+                return;
+
         this.listBonitaStore.add(bonitaStore);
     }
 
     /**
+     * get a store from a serialisation information
+     * 
+     * @param sourceOb
+     * @return
+     */
+    public BonitaStore getBonitaStore(Map<String, Object> sourceOb) {
+        return null;
+    }
+
+    /**
+     * getStoreByName
+     * @param storeName
+     * @return
+     */
+    public BonitaStore getStoreByName(String storeName) {
+        if (storeName==null)
+            return null;
+        for (BonitaStore bonitaStore : listBonitaStore)
+            if (storeName.equals( bonitaStore.getName()))
+                return bonitaStore;
+        return null;
+    }
+
+    /**
      * Static method, create the object but not add it in the list of store manipulate by the factory.
-     * A registerStore is mandatory
+     * A registerStore is possible after if the registerTheStore is false
      * 
      * @return
      */
-    public static BonitaStoreCommunity getBonitaCommunityStore() {
-        return new BonitaStoreCommunity(BonitaStoreAPI.CommunityGithubUserName, BonitaStoreAPI.CommunityGithubPassword, BonitaStoreAPI.CommunityGithubUrlRepository);
+    public BonitaStoreCommunity getBonitaCommunityStore(boolean registerTheStore) {
+        BonitaStoreCommunity bonitaStore = new BonitaStoreCommunity(BonitaStoreAPI.CommunityGithubUserName, BonitaStoreAPI.CommunityGithubPassword, BonitaStoreAPI.CommunityGithubUrlRepository);
+        if (registerTheStore)
+            registerStore(bonitaStore);
+        return bonitaStore;
     }
 
     /**
      * get one specific repository in the Community repository
+     * A registerStore is possible after if the registerTheStore is false
      * 
      * @param specificRepository
      * @return
      */
-    public static BonitaStoreCommunity getBonitaCommunityStore(String specificRepository) {
+    public BonitaStoreCommunity getBonitaCommunityStore(String specificRepository, boolean registerTheStore) {
         BonitaStoreCommunity bonitaStoreCommunity = new BonitaStoreCommunity(BonitaStoreAPI.CommunityGithubUserName, BonitaStoreAPI.CommunityGithubPassword, specificRepository);
         bonitaStoreCommunity.setSpecificRepository(specificRepository);
+        if (registerTheStore)
+            registerStore(bonitaStoreCommunity);
         return bonitaStoreCommunity;
     }
 
@@ -54,8 +91,10 @@ public class BonitaStoreFactory {
      * @param gitUrlRepository
      * @return
      */
-    public static BonitaStoreGit getGitStore(String gituserName, String gitPassword, String gitUrlRepository) {
+    public BonitaStoreGit getGitStore(String gituserName, String gitPassword, String gitUrlRepository, boolean registerTheStore) {
         BonitaStoreGit bonitaStoreGit = new BonitaStoreGit(gituserName, gitPassword, gitUrlRepository);
+        if (registerTheStore)
+            registerStore(bonitaStoreGit);
         return bonitaStoreGit;
     }
 
@@ -64,8 +103,8 @@ public class BonitaStoreFactory {
      * 
      * @return
      */
-    public static BonitaStore getLocalBonitaServer() {
-        return null;
+    public BonitaStore getLocalServer(APISession apiSession, boolean registerTheStore) {
+        return new BonitaStoreLocalServer(apiSession);
     }
 
     /**
@@ -73,7 +112,7 @@ public class BonitaStoreFactory {
      * 
      * @return
      */
-    public static BonitaStore getBonitaServer(String server, int port, String applicationName) {
+    public BonitaStore getBonitaServer(String server, int port, String applicationName, boolean registerTheStore) {
         return null;
     }
 

@@ -5,11 +5,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.bonitasoft.engine.bpm.BaseElement;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.store.BonitaStoreAccessor;
-import org.bonitasoft.store.artefact.Artefact;
+import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 public abstract class DeployStrategy {
@@ -18,10 +17,11 @@ public abstract class DeployStrategy {
     protected static BEvent EventErrorAtEnablement = new BEvent(DeployStrategy.class.getName(), 3, Level.APPLICATIONERROR, "Error at Enablement", "The Process is deployment, but not enable", "Process can't be used", "Check the error in the administration part");
     protected static BEvent EventErrorAtDetection = new BEvent(DeployStrategy.class.getName(), 4, Level.APPLICATIONERROR, "Error at detection", "Detection on the server for this artefact failed, can't know if the artefact exist or not", "Artefact can't be deployed", "Check the exception");
 
-    public enum UPDATE_STRATEGY { UPDATE, DELETEANDADD };
+    public enum UPDATE_STRATEGY {
+        UPDATE, DELETEANDADD
+    };
+
     public UPDATE_STRATEGY updateStrategy = UPDATE_STRATEGY.UPDATE;
-    
-    
 
     /* ******************************************************************************** */
     /*                                                                                  */
@@ -45,7 +45,7 @@ public abstract class DeployStrategy {
 
     public static class DeployOperation {
 
-        public Artefact artefact;
+        public Artifact artefact;
         /**
          * in case of detection, the deployStatus is updated
          */
@@ -61,27 +61,25 @@ public abstract class DeployStrategy {
 
         public List<BEvent> listEvents = new ArrayList<BEvent>();
         public String report;
-       
-    }
 
+    }
 
     public UPDATE_STRATEGY getUpdateStrategy() {
         return updateStrategy;
     }
 
-    
     public void setUpdateStrategy(UPDATE_STRATEGY updateStrategy) {
         this.updateStrategy = updateStrategy;
     }
-    
-    /* ******************************************************************************** */
-    /*                                                                                  */
-    /*                                                                                  */
-    /*                                                                                  */
-    /*                                                                                  */
-    /* ******************************************************************************** */
-    public abstract DeployOperation detectDeployment(Artefact artefact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox);
 
-    public abstract DeployOperation deploy(Artefact artefact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox);
+    /* ******************************************************************************** */
+    /*                                                                                  */
+    /*                                                                                  */
+    /*                                                                                  */
+    /*                                                                                  */
+    /* ******************************************************************************** */
+    public abstract DeployOperation detectDeployment(Artifact artefact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox);
+
+    public abstract DeployOperation deploy(Artifact artefact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox);
 
 }

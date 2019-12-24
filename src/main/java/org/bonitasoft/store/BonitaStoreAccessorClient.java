@@ -15,33 +15,27 @@ import java.util.StringTokenizer;
 
 import org.bonitasoft.engine.api.ApiAccessType;
 import org.bonitasoft.engine.api.LoginAPI;
-import org.bonitasoft.engine.api.ProfileAPI;
 import org.bonitasoft.engine.api.TenantAPIAccessor;
 import org.bonitasoft.engine.exception.BonitaHomeNotSetException;
 import org.bonitasoft.engine.exception.ServerAPIException;
 import org.bonitasoft.engine.exception.UnknownAPITypeException;
 import org.bonitasoft.engine.platform.LoginException;
 import org.bonitasoft.engine.platform.LogoutException;
-import org.bonitasoft.engine.profile.Profile;
-import org.bonitasoft.engine.profile.ProfileSearchDescriptor;
-import org.bonitasoft.engine.search.SearchOptionsBuilder;
-import org.bonitasoft.engine.search.SearchResult;
 import org.bonitasoft.engine.session.APISession;
 import org.bonitasoft.engine.session.SessionNotFoundException;
 import org.bonitasoft.engine.util.APITypeManager;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.log.event.BEventFactory;
-import org.bonitasoft.store.artefact.Artefact;
-import org.bonitasoft.store.artefact.FactoryArtefact;
-import org.bonitasoft.store.artefact.Artefact.TypeArtefact;
-import org.bonitasoft.store.artefact.ArtefactCustomPage;
-import org.bonitasoft.store.artefact.ArtefactProfile;
-import org.bonitasoft.store.artefact.FactoryArtefact.ArtefactResult;
 import org.bonitasoft.store.artefactdeploy.DeployStrategy;
 import org.bonitasoft.store.artefactdeploy.DeployStrategy.DeployOperation;
 import org.bonitasoft.store.artefactdeploy.DeployStrategy.DetectionStatus;
 import org.bonitasoft.store.artefactdeploy.DeployStrategy.UPDATE_STRATEGY;
+import org.bonitasoft.store.artifact.ArtifactCustomPage;
+import org.bonitasoft.store.artifact.ArtifactProfile;
+import org.bonitasoft.store.artifact.FactoryArtifact;
+import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
+import org.bonitasoft.store.artifact.FactoryArtifact.ArtefactResult;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 /* ******************************************************************************** */
@@ -69,30 +63,25 @@ public class BonitaStoreAccessorClient {
         String passwd = args.length > 3 ? args[3] : null;
         String fileName = args.length > 4 ? args[4] : null;
         List<String> listOptions = new ArrayList<String>();
-        for (int i=5;i<args.length;i++)
-            listOptions.add( args[ i ]);
+        for (int i = 5; i < args.length; i++)
+            listOptions.add(args[i]);
         // decode options
-        UPDATE_STRATEGY strategy = UPDATE_STRATEGY.UPDATE; 
+        UPDATE_STRATEGY strategy = UPDATE_STRATEGY.UPDATE;
         String insertIntoProfile = null;
-        for (String option : listOptions)
-        {
+        for (String option : listOptions) {
             StringTokenizer st = new StringTokenizer(option, ":");
-            String command= st.hasMoreTokens()? st.nextToken():"";
-            String value= st.hasMoreTokens()? st.nextToken():"";
-            
-        
-            if ("strategy".equalsIgnoreCase( command )) {
-                try
-                {
-                    strategy=UPDATE_STRATEGY.valueOf( value);
-                }
-                catch(Exception e)
-                {
-                    System.out.println("UpdateStrategy ["+value+"] unknow, only "+UPDATE_STRATEGY.UPDATE+","+UPDATE_STRATEGY.DELETEANDADD+" accepted");    
+            String command = st.hasMoreTokens() ? st.nextToken() : "";
+            String value = st.hasMoreTokens() ? st.nextToken() : "";
+
+            if ("strategy".equalsIgnoreCase(command)) {
+                try {
+                    strategy = UPDATE_STRATEGY.valueOf(value);
+                } catch (Exception e) {
+                    System.out.println("UpdateStrategy [" + value + "] unknow, only " + UPDATE_STRATEGY.UPDATE + "," + UPDATE_STRATEGY.DELETEANDADD + " accepted");
                 }
             }
-            if ("profile".equalsIgnoreCase( command )) {
-                insertIntoProfile=value;
+            if ("profile".equalsIgnoreCase(command)) {
+                insertIntoProfile = value;
             }
         }
         System.out.println("BonitaStoreClient: Start Connection[" + applicationUrl + "/" + applicationName + "] User[" + userName + "] password[" + passwd + "] FileToDeploy[" + fileName + "]");
@@ -110,26 +99,24 @@ public class BonitaStoreAccessorClient {
         System.out.println("BonitaStoreClient: Deploy...");
         File fileArtefact = new File(fileName);
         // Copy the file
-        backupFile( fileArtefact );
+        // backupFile(fileArtefact);
         DeployOperation deploy = bonitaAccessorClient.deployArtefact(fileArtefact, strategy);
         if (BEventFactory.isError(deploy.listEvents)) {
             System.out.println("FAILED " + deploy.listEvents.toString());
         } else {
-        
+
             System.out.println("SUCCESS");
-        
-            if (insertIntoProfile !=null) {
-                ArtefactProfile profileBo = bonitaAccessorClient.getOrCreateProfile(insertIntoProfile);
-                if (profileBo!=null)
-                {
-                    List<BEvent> listEvents = bonitaAccessorClient.registerInProfile( profileBo, (ArtefactCustomPage) deploy.artefact);
+
+            if (insertIntoProfile != null) {
+                ArtifactProfile profileBo = bonitaAccessorClient.getOrCreateProfile(insertIntoProfile);
+                if (profileBo != null) {
+                    List<BEvent> listEvents = bonitaAccessorClient.registerInProfile(profileBo, (ArtifactCustomPage) deploy.artefact);
                     System.out.println("Registration:" + listEvents);
                 }
-                
+
             }
         }
-        
-        
+
         bonitaAccessorClient.logout();
     }
     /* ******************************************************************************** */
@@ -222,7 +209,7 @@ public class BonitaStoreAccessorClient {
             BonitaStoreAPI bonitaStoreAPI = BonitaStoreAPI.getInstance();
             BonitaStore bonitaStore = bonitaStoreAPI.getDirectoryStore(pathDirectory);
 
-            FactoryArtefact factoryArtefact = FactoryArtefact.getInstance();
+            FactoryArtifact factoryArtefact = FactoryArtifact.getInstance();
             LoggerStore loggerStore = new LoggerStore();
 
             BonitaStoreAccessor BonitaAccessor = new BonitaStoreAccessor(apiSession);
@@ -243,7 +230,7 @@ public class BonitaStoreAccessorClient {
             DeployStrategy deployStrategy = artefactResult.artefact.getDeployStrategy();
             deployStrategy.setUpdateStrategy(strategy);
             artefactResult.artefact.setDeployStrategy(deployStrategy);
-            
+
             // then deploy
             DeployOperation deployOperation = artefactResult.artefact.deploy(BonitaAccessor, loggerStore);
             deployOperation.artefact = artefactResult.artefact;
@@ -260,104 +247,97 @@ public class BonitaStoreAccessorClient {
     }
     /* ******************************************************************************** */
     /*                                                                                  */
-    /* Profile operation                                                                */
+    /* Profile operation */
     /*                                                                                  */
     /*                                                                                  */
     /* ******************************************************************************** */
-    
-    private String profileTemplate= "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-    + "<profiles:profiles xmlns:profiles=\"http://www.bonitasoft.org/ns/profile/6.1\"> "
-    + "   <profile name=\"@@PROFILENAME@@\" isDefault=\"false\"> "
-    + "        <description></description>"
-    + "        <profileEntries>"
-    + "        </profileEntries>"
-    + "        <profileMapping>"
-    + "            <users/>"
-    + "            <groups/>"
-    + "            <memberships/>"
-    + "            <roles>"
-    + "                <role>member</role>"
-    + "            </roles>"
-    + "        </profileMapping>"
-    + "    </profile>"
-    + "</profiles:profiles>";
-    
-    
-    public ArtefactProfile getOrCreateProfile(String profileName )
-    {
+
+    private String profileTemplate = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+            + "<profiles:profiles xmlns:profiles=\"http://www.bonitasoft.org/ns/profile/6.1\"> "
+            + "   <profile name=\"@@PROFILENAME@@\" isDefault=\"false\"> "
+            + "        <description></description>"
+            + "        <profileEntries>"
+            + "        </profileEntries>"
+            + "        <profileMapping>"
+            + "            <users/>"
+            + "            <groups/>"
+            + "            <memberships/>"
+            + "            <roles>"
+            + "                <role>member</role>"
+            + "            </roles>"
+            + "        </profileMapping>"
+            + "    </profile>"
+            + "</profiles:profiles>";
+
+    public ArtifactProfile getOrCreateProfile(String profileName) {
 
         BonitaStoreAPI bonitaStoreAPI = BonitaStoreAPI.getInstance();
         BonitaStore bonitaStore = bonitaStoreAPI.getLocalStore(apiSession);
 
-        FactoryArtefact factoryArtefact = FactoryArtefact.getInstance();
+        FactoryArtifact factoryArtefact = FactoryArtifact.getInstance();
         LoggerStore loggerStore = new LoggerStore();
 
         BonitaStoreAccessor bonitaAccessor = new BonitaStoreAccessor(apiSession);
 
-        System.out.println("  Load Artefact Profile["+profileName+"]");
-        ArtefactProfile artefactProfileBO = (ArtefactProfile) factoryArtefact.getFromType(TypeArtefact.PROFILE, "BOTools", "1.0", "Profile to access Custom page", new Date(), bonitaStore);
+        System.out.println("  Load Artefact Profile[" + profileName + "]");
+        ArtifactProfile artefactProfileBO = (ArtifactProfile) factoryArtefact.getFromType(TypeArtifact.PROFILE, "BOTools", "1.0", "Profile to access Custom page", new Date(), bonitaStore);
         String profileContent = profileTemplate.replace("@@PROFILENAME@@", profileName);
-        
+
         artefactProfileBO.loadFromString(profileContent);
         DeployOperation deploy = artefactProfileBO.detectDeployment(bonitaAccessor, loggerStore);
-        if (deploy.detectionStatus == DetectionStatus.NEWARTEFAC)
-        {
+        if (deploy.detectionStatus == DetectionStatus.NEWARTEFAC) {
             deploy = artefactProfileBO.deploy(bonitaAccessor, loggerStore);
-            if (BEventFactory.isError( deploy.listEvents ))
-            {
-                System.out.println("CreateProfile ["+profileName+"] failed "+deploy.listEvents.toString());
+            if (BEventFactory.isError(deploy.listEvents)) {
+                System.out.println("CreateProfile [" + profileName + "] failed " + deploy.listEvents.toString());
                 return null;
             }
         }
         return artefactProfileBO;
-    
+
     }
-    
-    public List<BEvent> registerInProfile( ArtefactProfile profile, ArtefactCustomPage page)
-    {
+
+    public List<BEvent> registerInProfile(ArtifactProfile profile, ArtifactCustomPage page) {
         BonitaStoreAccessor bonitaAccessor = new BonitaStoreAccessor(apiSession);
 
         return profile.registerCustomPage(page, bonitaAccessor);
     }
 
-    
     /* ******************************************************************************** */
     /*                                                                                  */
-    /* private operation
-    /*                                                                                  */
+    /*
+     * private operation
+     * /*
+     */
     /*                                                                                  */
     /* ******************************************************************************** */
 
-    private static void backupFile(File sourceFile )
-    {
-        
+    private static void backupFile(File sourceFile) {
+
         InputStream inStream = null;
         OutputStream outStream = null;
-    
-        try
-        {
-        File bfile =new File(sourceFile.getAbsoluteFile()+"_bak.zip");
-        
-        inStream = new FileInputStream(sourceFile);
-        outStream = new FileOutputStream(bfile);
-        
-        byte[] buffer = new byte[1024];
-        
-        int length;
-        //copy the file content in bytes 
-        while ((length = inStream.read(buffer)) > 0){
-      
-            outStream.write(buffer, 0, length);
-     
+
+        try {
+            System.out.print("Backup file["+sourceFile.getName()+"] to ["+sourceFile.getAbsoluteFile() + "_bak.zip]");
+            File bfile = new File(sourceFile.getAbsoluteFile() + "_bak.zip");
+
+            inStream = new FileInputStream(sourceFile);
+            outStream = new FileOutputStream(bfile);
+
+            byte[] buffer = new byte[1024];
+
+            int length;
+            //copy the file content in bytes 
+            while ((length = inStream.read(buffer)) > 0) {
+
+                outStream.write(buffer, 0, length);
+
+            }
+
+            inStream.close();
+            outStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-     
-        inStream.close();
-        outStream.close();
-          
-        
-        
-    }catch(IOException e){
-        e.printStackTrace();
-    }
     }
 }

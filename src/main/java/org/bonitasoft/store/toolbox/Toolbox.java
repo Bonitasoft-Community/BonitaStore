@@ -2,17 +2,9 @@ package org.bonitasoft.store.toolbox;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.bonitasoft.engine.profile.Profile;
-import org.bonitasoft.log.event.BEvent;
-import org.bonitasoft.log.event.BEventFactory;
 
 public class Toolbox {
 

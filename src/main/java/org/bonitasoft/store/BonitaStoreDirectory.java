@@ -6,22 +6,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
-import org.bonitasoft.store.BonitaStore.DetectionParameters;
-import org.bonitasoft.store.BonitaStore.UrlToDownload;
-import org.bonitasoft.store.artefact.Artefact;
-import org.bonitasoft.store.artefact.Artefact.TypeArtefact;
-import org.bonitasoft.store.artefact.ArtefactProcess;
-import org.bonitasoft.store.artefact.FactoryArtefact;
-import org.bonitasoft.store.artefact.FactoryArtefact.ArtefactResult;
-import org.bonitasoft.store.source.git.GithubAccessor;
+import org.bonitasoft.store.artifact.Artifact;
+import org.bonitasoft.store.artifact.FactoryArtifact;
+import org.bonitasoft.store.artifact.FactoryArtifact.ArtefactResult;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 /* ******************************************************************************** */
@@ -45,14 +37,19 @@ public class BonitaStoreDirectory extends BonitaStore {
      */
     public File directoryFilePath;
 
-    /**
-     * Same name than in the HTML
-     */
-    private static String cstDirectory = "directory";
-
     @Override
     public String getName() {
         return "Dir " + directoryFilePath;
+    }
+
+    public String getId() {
+        return "Directory-" + directoryFilePath;
+
+    }
+
+    @Override
+    public boolean isManageDownload() {
+        return false;
     }
 
     @Override
@@ -70,13 +67,13 @@ public class BonitaStoreDirectory extends BonitaStore {
      * 
      */
     @Override
-    public StoreResult getListArtefacts(DetectionParameters detectionParameters, LoggerStore logBox) {
-        StoreResult storeResult = new StoreResult("getListContent");
+    public BonitaStoreResult getListArtefacts(DetectionParameters detectionParameters, LoggerStore logBox) {
+        BonitaStoreResult storeResult = new BonitaStoreResult("getListContent");
         if (directoryFilePath == null || !directoryFilePath.exists()) {
             storeResult.addEvent(new BEvent(EVENT_DIRECTORY_NOT_EXIST, "Directory[" + (directoryFilePath == null ? "null" : directoryFilePath.getAbsolutePath()) + "]"));
             return storeResult;
         }
-        FactoryArtefact factoryArtefact = FactoryArtefact.getInstance();
+        FactoryArtifact factoryArtefact = FactoryArtifact.getInstance();
         try {
             for (File fileContent : directoryFilePath.listFiles()) {
                 if (fileContent.isDirectory())
@@ -88,7 +85,7 @@ public class BonitaStoreDirectory extends BonitaStore {
 
                 ArtefactResult artefactResult = factoryArtefact.getInstanceArtefact(fileName, fileContent, this, logBox);
                 // directory can contains additionnal file : no worry about that
-                if (artefactResult.listEvents.size() == 1 && artefactResult.listEvents.get(0).isSameEvent(FactoryArtefact.EVENT_NO_DETECTION)) {
+                if (artefactResult.listEvents.size() == 1 && artefactResult.listEvents.get(0).isSameEvent(FactoryArtifact.EVENT_NO_DETECTION)) {
                     logAnalysis += "File not recognized";
                     logBox.info("ForkList.SourceDirectory " + logAnalysis);
                     continue;
@@ -97,7 +94,7 @@ public class BonitaStoreDirectory extends BonitaStore {
                 if (artefactResult.artefact != null) {
                     artefactResult.artefact.setFileName(fileName);
 
-                    storeResult.listArtefacts.add(artefactResult.artefact);
+                    storeResult.listArtifacts.add(artefactResult.artefact);
                 }
                 logBox.info("ForkList.SourceDirectory " + logAnalysis);
 
@@ -114,9 +111,9 @@ public class BonitaStoreDirectory extends BonitaStore {
      * 
      */
     @Override
-    public StoreResult downloadArtefact(final Artefact artefactItem, UrlToDownload urlToDownload, final LoggerStore logBox) {
-        // TODO Auto-generated method stub
-        StoreResult storeResult = new StoreResult("downloadArtefact");
+    public BonitaStoreResult downloadArtefact(final Artifact artefactItem, UrlToDownload urlToDownload, final LoggerStore logBox) {
+
+        BonitaStoreResult storeResult = new BonitaStoreResult("downloadArtefact");
         File file = new File(directoryFilePath.getAbsolutePath() + File.separator + artefactItem.getFileName());
         if (artefactItem.isBinaryContent()) {
             try {
@@ -146,10 +143,10 @@ public class BonitaStoreDirectory extends BonitaStore {
      * 
      */
     @Override
-    public StoreResult ping(LoggerStore logBox) {
+    public BonitaStoreResult ping(LoggerStore logBox) {
         // check if the directory is available
         // TODO
-        return new StoreResult("ping");
+        return new BonitaStoreResult("ping");
     }
 
 }

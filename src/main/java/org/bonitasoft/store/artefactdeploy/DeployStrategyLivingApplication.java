@@ -11,13 +11,13 @@ import org.bonitasoft.engine.search.SearchOptionsBuilder;
 import org.bonitasoft.engine.search.SearchResult;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.store.BonitaStoreAccessor;
-import org.bonitasoft.store.artefact.Artefact;
+import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 public class DeployStrategyLivingApplication extends DeployStrategy {
 
     @Override
-    public DeployOperation detectDeployment(Artefact artefact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public DeployOperation detectDeployment(Artifact artefact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
         DeployOperation deployOperation = new DeployOperation();
         try {
             Application application = searchByName(artefact, bonitaAccessor);
@@ -33,7 +33,7 @@ public class DeployStrategyLivingApplication extends DeployStrategy {
     }
 
     @Override
-    public DeployOperation deploy(Artefact artefact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public DeployOperation deploy(Artifact artefact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
         DeployOperation deployOperation = new DeployOperation();
 
         try {
@@ -64,7 +64,7 @@ public class DeployStrategyLivingApplication extends DeployStrategy {
         return deployOperation;
     }
 
-    public Application searchByName(Artefact artefact, BonitaStoreAccessor bonitaAccessor) throws SearchException {
+    public Application searchByName(Artifact artefact, BonitaStoreAccessor bonitaAccessor) throws SearchException {
         SearchOptionsBuilder searchOptionsBuilder = new SearchOptionsBuilder(0, 10);
         searchOptionsBuilder.filter(ApplicationSearchDescriptor.DISPLAY_NAME, artefact.getName());
         SearchResult<Application> searchResultApplication = bonitaAccessor.applicationAPI.searchApplications(searchOptionsBuilder.done());

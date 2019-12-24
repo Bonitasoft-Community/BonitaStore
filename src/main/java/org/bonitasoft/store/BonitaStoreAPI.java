@@ -23,8 +23,8 @@ public class BonitaStoreAPI {
     public static String CommunityGithubPassword = "bonita2016";
     public static String CommunityGithubUrlRepository = "https://api.github.com/orgs/Bonitasoft-Community";
 
-    public BonitaStore getBonitaCommunityStore() {
-        return BonitaStoreFactory.getBonitaCommunityStore();
+    public BonitaStore getBonitaCommunityStore(boolean registerTheStore) {
+        return getBonitaStoreFactory().getBonitaCommunityStore(registerTheStore);
     }
 
     /**
@@ -33,8 +33,8 @@ public class BonitaStoreAPI {
      * @param specificRepository
      * @return
      */
-    public BonitaStore getBonitaCommunityStore(String specificRepository) {
-        return BonitaStoreFactory.getBonitaCommunityStore(specificRepository);
+    public BonitaStore getBonitaCommunityStore(String specificRepository, boolean registerTheStore) {
+        return getBonitaStoreFactory().getBonitaCommunityStore(specificRepository, registerTheStore);
     }
 
     public BonitaStoreGit getGitStore(String gituserName, String gitPassword, String gitUrlRepository) {
@@ -49,20 +49,22 @@ public class BonitaStoreAPI {
         BonitaStoreDirectory bonitaDirectory = new BonitaStoreDirectory(pathDirectory);
         return bonitaDirectory;
     }
+
     /*
      * get a store from a local disk
      */
-    public BonitaStoreLocal getLocalStore(APISession apiSession) {
-        BonitaStoreLocal bonitaDirectory = new BonitaStoreLocal(apiSession);
+    public BonitaStoreLocalServer getLocalStore(APISession apiSession) {
+        BonitaStoreLocalServer bonitaDirectory = new BonitaStoreLocalServer(apiSession);
         return bonitaDirectory;
     }
+
     /**
      * return the BonitaStoreFactory. The factory is not unique.
      * 
      * @return
      */
-    public BonitaStoreFactory getNewBonitaStoreFactory() {
-        return BonitaStoreFactory.getNewInstance();
+    public BonitaStoreFactory getBonitaStoreFactory() {
+        return BonitaStoreFactory.getInstance();
     }
 
 }

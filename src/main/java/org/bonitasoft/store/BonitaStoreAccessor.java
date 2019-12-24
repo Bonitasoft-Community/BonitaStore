@@ -57,18 +57,15 @@ public class BonitaStoreAccessor {
                 Method method = clazz.getMethod("getProfileAPI", APISession.class);
                 profile = (ProfileAPI) method.invoke(null, apiSession);
                 return profile;
-            } 
-                
+            }
+
             return profile;
         } catch (Exception e) {
         }
         // Here ? Not a server API
-        try
-        {
+        try {
             return TenantAPIAccessor.getProfileAPI(apiSession);
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             return null;
         }
 

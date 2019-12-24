@@ -4,10 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.collections4.ArrayStack;
-import org.bonitasoft.store.BonitaStore.UrlToDownload;
-import org.bonitasoft.store.artefact.Artefact;
-import org.bonitasoft.store.artefact.Artefact.TypeArtefact;
+import org.bonitasoft.store.artifact.Artifact;
+import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 public abstract class BonitaStore {
@@ -20,6 +18,20 @@ public abstract class BonitaStore {
     /* ******************************************************************************** */
 
     public abstract String getName();
+
+    /**
+     * return a unique ID to indentify the store. In a respository, it maybe the String + User Name to connect for example.
+     * 
+     * @return
+     */
+    public abstract String getId();
+
+    /**
+     * the store count the number of download
+     * 
+     * @return
+     */
+    public abstract boolean isManageDownload();
 
     /**
      * the store must be saved or instanciate, so each store must provide a Map with all the needed
@@ -49,14 +61,14 @@ public abstract class BonitaStore {
      */
     public static class DetectionParameters {
 
-        public List<TypeArtefact> listTypeArtefact = Arrays.asList(TypeArtefact.CUSTOMPAGE, TypeArtefact.CUSTOMWIDGET, TypeArtefact.GROOVY, TypeArtefact.PROCESS, TypeArtefact.BDM, TypeArtefact.LAYOUT, TypeArtefact.LIVINGAPP, TypeArtefact.THEME, TypeArtefact.RESTAPI, TypeArtefact.PROFILE,
-                TypeArtefact.ORGANIZATION, TypeArtefact.LOOKANDFEEL);
+        public List<TypeArtifact> listTypeArtifact = Arrays.asList(TypeArtifact.CUSTOMPAGE, TypeArtifact.CUSTOMWIDGET, TypeArtifact.GROOVY, TypeArtifact.PROCESS, TypeArtifact.BDM, TypeArtifact.LAYOUT, TypeArtifact.LIVINGAPP, TypeArtifact.THEME, TypeArtifact.RESTAPI, TypeArtifact.PROFILE,
+                TypeArtifact.ORGANIZATION, TypeArtifact.LOOKANDFEEL);
         public boolean withNotAvailable = true;
 
         public boolean isByTopics = true;
     }
 
-    public abstract StoreResult getListArtefacts(DetectionParameters detectionParameters, final LoggerStore logBox);
+    public abstract BonitaStoreResult getListArtefacts(DetectionParameters detectionParameters, final LoggerStore loggerStore);
 
     public enum UrlToDownload {
         LASTRELEASE, URLCONTENT, URLDOWNLOAD
@@ -70,7 +82,7 @@ public abstract class BonitaStore {
      * @param logBox
      * @return
      */
-    public abstract StoreResult downloadArtefact(final Artefact artefactItem, UrlToDownload urlToDownload, /*
+    public abstract BonitaStoreResult downloadArtefact(final Artifact artefactItem, UrlToDownload urlToDownload, /*
                                                                                                             * boolean
                                                                                                             * isBinaryContent,
                                                                                                             */ final LoggerStore logBox);
@@ -81,6 +93,6 @@ public abstract class BonitaStore {
      * @param logBox
      * @return
      */
-    public abstract StoreResult ping(LoggerStore logBox);
+    public abstract BonitaStoreResult ping(LoggerStore logBox);
 
 }

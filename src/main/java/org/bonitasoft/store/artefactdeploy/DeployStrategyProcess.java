@@ -12,8 +12,8 @@ import org.bonitasoft.engine.exception.DeletionException;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.store.BonitaStoreAccessor;
-import org.bonitasoft.store.artefact.Artefact;
-import org.bonitasoft.store.artefact.ArtefactProcess;
+import org.bonitasoft.store.artifact.Artifact;
+import org.bonitasoft.store.artifact.ArtifactProcess;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 public class DeployStrategyProcess extends DeployStrategy {
@@ -28,7 +28,7 @@ public class DeployStrategyProcess extends DeployStrategy {
     /*                                                                         */
     /* *********************************************************************** */
 
-    public DeployOperation detectDeployment(Artefact process, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public DeployOperation detectDeployment(Artifact process, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
         DeployOperation deployOperation = new DeployOperation();
         Long processDefinitionId = null;
         try {
@@ -43,9 +43,9 @@ public class DeployStrategyProcess extends DeployStrategy {
                 deployOperation.presentDateArtefact = processDeploymentInfo.getDeploymentDate();
                 deployOperation.presentVersionArtefact = process.getVersion();
                 if (processDeploymentInfo.getDeploymentDate().equals(process.getDate())) {
-                    
-                    process.bonitaBaseElement = bonitaAccessor.processAPI.getProcessDefinition( processDeploymentInfo.getProcessId() );
-                    
+
+                    process.bonitaBaseElement = bonitaAccessor.processAPI.getProcessDefinition(processDeploymentInfo.getProcessId());
+
                     deployOperation.detectionStatus = DetectionStatus.SAME;
                     deployOperation.report = "A version exist with the same date (" + DeployStrategy.sdf.format(process.getDate()) + ")";
                 } else if (processDeploymentInfo.getDeploymentDate().before(process.getDate())) {
@@ -82,7 +82,7 @@ public class DeployStrategyProcess extends DeployStrategy {
     /**
      * 
      */
-    public DeployOperation deploy(Artefact process, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public DeployOperation deploy(Artifact process, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
         DeployOperation deployOperation = new DeployOperation();
         deployOperation.deploymentStatus = DeploymentStatus.NOTHINGDONE;
 
@@ -114,9 +114,9 @@ public class DeployStrategyProcess extends DeployStrategy {
             // deploy it
             try {
                 // bonitaAccessor.processAPI.deployAndEnableProcess(businessArchive);
-                ProcessDefinition processDefinition = bonitaAccessor.processAPI.deploy(((ArtefactProcess) process).getBusinessArchive());
+                ProcessDefinition processDefinition = bonitaAccessor.processAPI.deploy(((ArtifactProcess) process).getBusinessArchive());
                 bonitaAccessor.processAPI.enableProcess(processDefinition.getId());
-                
+
                 process.bonitaBaseElement = processDefinition;
                 deployOperation.deploymentStatus = DeploymentStatus.DEPLOYED;
 

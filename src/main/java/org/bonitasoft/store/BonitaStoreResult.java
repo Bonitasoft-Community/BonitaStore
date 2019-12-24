@@ -6,13 +6,13 @@ import java.util.List;
 import org.bonitasoft.engine.profile.Profile;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEventFactory;
-import org.bonitasoft.store.artefact.Artefact;
+import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 /**
  * Result on any operation on a store
  */
-public class StoreResult {
+public class BonitaStoreResult {
 
     // public List<Artefact> listStoreItem = new ArrayList<Artefact>();
     private final List<BEvent> listEvents = new ArrayList<BEvent>();
@@ -26,7 +26,7 @@ public class StoreResult {
 
     public boolean isAllowAddProfile = false;
 
-    public List<Artefact> listArtefacts = new ArrayList<Artefact>();
+    public List<Artifact> listArtifacts = new ArrayList<Artifact>();
     // public Map<String, Object> mStatusResultJson = new HashMap<String,
     // Object>();
 
@@ -41,7 +41,7 @@ public class StoreResult {
     private long timeOperation;
 
     /** create the result as soon as possible to register the time */
-    public StoreResult(final String title) {
+    public BonitaStoreResult(final String title) {
         beginOperation();
         statusTitle = title;
     }
@@ -84,12 +84,12 @@ public class StoreResult {
 
     }
 
-    public void addResult(final StoreResult statusOperation) {
+    public void addResult(final BonitaStoreResult statusOperation) {
         statusTitle += statusOperation.statusTitle + ";";
         statusinfo += statusOperation.statusinfo.length() > 0 ? statusOperation.statusinfo + ";" : "";
         statusDetails += statusOperation.statusDetails.length() > 0 ? statusOperation.statusDetails + ";" : "";
         listEvents.addAll(statusOperation.listEvents);
-        listArtefacts.addAll(statusOperation.listArtefacts);
+        listArtifacts.addAll(statusOperation.listArtifacts);
     }
 
     /**
@@ -99,8 +99,8 @@ public class StoreResult {
      * @param ignoreCase
      * @return
      */
-    public Artefact getArtefactByName(final String name) {
-        for (final Artefact apps : listArtefacts) {
+    public Artifact getArtefactByName(final String name) {
+        for (final Artifact apps : listArtifacts) {
             if (apps.getName().equalsIgnoreCase(name)) {
                 return apps;
             }
