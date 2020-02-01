@@ -1,17 +1,12 @@
-package org.bonitasoft.store.artefact;
+package org.bonitasoft.store.artifact;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
 import org.bonitasoft.engine.api.ProfileAPI;
-import org.bonitasoft.engine.bpm.BaseElement;
 import org.bonitasoft.engine.profile.Profile;
 import org.bonitasoft.engine.profile.ProfileEntry;
 import org.bonitasoft.engine.profile.ProfileEntrySearchDescriptor;
@@ -22,27 +17,32 @@ import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.store.BonitaStore;
 import org.bonitasoft.store.BonitaStoreAccessor;
 
-public class ArtefactProfile extends Artefact {
+public class ArtifactProfile extends Artifact {
 
-    private static BEvent EventErrorAtload = new BEvent(ArtefactProfile.class.getName(), 1, Level.APPLICATIONERROR, "Can't load profile file", "The profile can't be read", "profile is not accessible", "Check the exception");
-    private static BEvent EventDetectionFailed = new BEvent(ArtefactProfile.class.getName(), 2, Level.ERROR, "Detection failed", "The list of profile can't be read", "profile will not be deployed", "Check the exception");
-    private static BEvent EventErrorAtDeployment = new BEvent(ArtefactProfile.class.getName(), 3, Level.APPLICATIONERROR, "Can't load profile file", "The profile can't be read", "profile is not accessible", "Check the exception");
+    private static BEvent EventErrorAtload = new BEvent(ArtifactProfile.class.getName(), 1, Level.APPLICATIONERROR, "Can't load profile file", "The profile can't be read", "profile is not accessible", "Check the exception");
+    private static BEvent EventDetectionFailed = new BEvent(ArtifactProfile.class.getName(), 2, Level.ERROR, "Detection failed", "The list of profile can't be read", "profile will not be deployed", "Check the exception");
+    private static BEvent EventErrorAtDeployment = new BEvent(ArtifactProfile.class.getName(), 3, Level.APPLICATIONERROR, "Can't load profile file", "The profile can't be read", "profile is not accessible", "Check the exception");
 
-    private static BEvent EVENT_PROFILE_ENTRY_CREATED = new BEvent(ArtefactProfile.class.getName(), 4, Level.SUCCESS, "Profile entry created with success", "The required entry is created with success");
-    private static BEvent EVENT_CANT_CREATE_PROFILE = new BEvent(ArtefactProfile.class.getName(), 5, Level.APPLICATIONERROR, "Can't create Profile entry", "You must use a Subscription to create a profile entry", "No entry in the profile", "Use the subscription");
+    private static BEvent EVENT_PROFILE_ENTRY_CREATED = new BEvent(ArtifactProfile.class.getName(), 4, Level.SUCCESS, "Profile entry created with success", "The required entry is created with success");
+    private static BEvent EVENT_CANT_CREATE_PROFILE = new BEvent(ArtifactProfile.class.getName(), 5, Level.APPLICATIONERROR, "Can't create Profile entry", "You must use a Subscription to create a profile entry", "No entry in the profile", "Use the subscription");
 
-    private static BEvent EVENT_FAIL_PROFILE_ENTRY_CREATION = new BEvent(ArtefactProfile.class.getName(), 6, Level.ERROR, "Can't create Profile entry", "An error arrived during the registration ", "No entry in the profile", "Check the exception");
+    private static BEvent EVENT_FAIL_PROFILE_ENTRY_CREATION = new BEvent(ArtifactProfile.class.getName(), 6, Level.ERROR, "Can't create Profile entry", "An error arrived during the registration ", "No entry in the profile", "Check the exception");
 
-    private static BEvent EVENT_PROFILE_ENTRY_ALREADY = new BEvent(ArtefactProfile.class.getName(), 7, Level.INFO, "Already exists", "Entry already exists", "No need to register it twice", "");
+    private static BEvent EVENT_PROFILE_ENTRY_ALREADY = new BEvent(ArtifactProfile.class.getName(), 7, Level.INFO, "Already exists", "Entry already exists", "No need to register it twice", "");
 
     public String name;
     public String version;
     public Date dateCreation;
 
-    public ArtefactProfile(String profileName, String profileVersion, String description, Date dateProfile, BonitaStore sourceOrigin) {
-        super(TypeArtefact.PROFILE, profileName, profileVersion, description, dateProfile, sourceOrigin);
+    public ArtifactProfile(String profileName, String profileVersion, String description, Date dateProfile, BonitaStore sourceOrigin) {
+        super(TypeArtifact.PROFILE, profileName, profileVersion, description, dateProfile, sourceOrigin);
         this.name = profileName;
         this.version = profileVersion;
+    }
+
+    public ArtifactProfile(Profile profile, BonitaStore sourceOrigin) {
+        super(TypeArtifact.PROFILE, profile.getName(), "", profile.getDescription(), profile.getCreationDate(), sourceOrigin);
+        setBonitaBaseElement( profile );
     }
 
     /**
@@ -85,7 +85,7 @@ public class ArtefactProfile extends Artefact {
      * @param page
      * @return
      */
-    public List<BEvent> registerCustomPage(ArtefactCustomPage page, BonitaStoreAccessor bonitaAccessor) {
+    public List<BEvent> registerCustomPage(ArtifactCustomPage page, BonitaStoreAccessor bonitaAccessor) {
         List<BEvent> listEvents = new ArrayList<BEvent>();
         try {
             // maybe already register ?

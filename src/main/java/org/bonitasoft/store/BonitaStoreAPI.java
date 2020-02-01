@@ -20,7 +20,7 @@ public class BonitaStoreAPI {
      * all information to access the Community store
      */
     public static String CommunityGithubUserName = "bonitafoodtruck";
-    public static String CommunityGithubPassword = "bonita2016";
+    public static String CommunityGithubPassword = "!&Bonita2020!!";
     public static String CommunityGithubUrlRepository = "https://api.github.com/orgs/Bonitasoft-Community";
 
     public BonitaStore getBonitaCommunityStore(boolean registerTheStore) {

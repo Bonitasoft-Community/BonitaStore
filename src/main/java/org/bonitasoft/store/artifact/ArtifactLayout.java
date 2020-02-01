@@ -1,16 +1,22 @@
-package org.bonitasoft.store.artefact;
+package org.bonitasoft.store.artifact;
 
 import java.util.Date;
 
+import org.bonitasoft.engine.page.Page;
 import org.bonitasoft.store.BonitaStore;
-import org.bonitasoft.store.artefact.Artefact.TypeArtefact;
 
-public class ArtefactLayout extends ArtefactAbstractResource {
+public class ArtifactLayout extends ArtifactAbstractResource {
 
-    public ArtefactLayout(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
-        super(TypeArtefact.LAYOUT, name, version, description, dateCreation, sourceOrigin);
+    public ArtifactLayout(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
+        super(TypeArtifact.LAYOUT, name, version, description, dateCreation, sourceOrigin);
     }
 
+    public ArtifactLayout(Page page, BonitaStore sourceOrigin) {
+        super(TypeArtifact.LAYOUT, page.getName(), "1.0", page.getDescription(), new Date(), sourceOrigin);
+        setProvided( page.isProvided());
+        setDisplayName(page.getDisplayName());
+        setBonitaBaseElement( page );
+    }
     @Override
     public String getContentType() {
         return "layout";

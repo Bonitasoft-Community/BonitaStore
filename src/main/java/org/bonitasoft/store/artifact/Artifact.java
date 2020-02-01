@@ -1,4 +1,4 @@
-package org.bonitasoft.store.artefact;
+package org.bonitasoft.store.artifact;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.bonitasoft.engine.bpm.BaseElement;
@@ -23,23 +22,23 @@ import org.bonitasoft.store.toolbox.LoggerStore;
 /**
  * an AppsItem maybe a Custom Page, a CustomWidget, ...
  */
-public abstract class Artefact {
+public abstract class Artifact {
 
-    protected static BEvent EventReadFile = new BEvent(Artefact.class.getName(), 1, Level.APPLICATIONERROR, "File error", "The file can't be read", "The artefact is ignored", "Check the exception");
+    protected static BEvent EventReadFile = new BEvent(Artifact.class.getName(), 1, Level.APPLICATIONERROR, "File error", "The file can't be read", "The artefact is ignored", "Check the exception");
 
-    public enum TypeArtefact {
+    public enum TypeArtifact {
         CUSTOMPAGE, CUSTOMWIDGET, GROOVY, PROCESS, BDM, LAYOUT, LIVINGAPP, THEME, RESTAPI, PROFILE, ORGANIZATION, LOOKANDFEEL, ELSE
     };
 
     /**
      * name of the application. THis name is unique on the Store and locally
      */
-    private String artefactName;
+    private String name;
     private String version;
     private Date dateVersion;
     protected String description;
 
-    private TypeArtefact typeArtefact;
+    private TypeArtifact typeArtifact;
 
     /**
      * additionnal information
@@ -53,11 +52,12 @@ public abstract class Artefact {
      * bonita server: artefact may be not enable
      */
     protected boolean isAvailable = true;
+
     /**
      * multiple github source can be explode. Retains from which github this
      * apps come from
      */
-    protected BonitaStore provider;
+    protected BonitaStore store;
 
     // in case of a new release exist on the store, this is the new release date
     // public Date storeReleaseDate;
@@ -74,22 +74,18 @@ public abstract class Artefact {
 
     protected List<BEvent> listEvents = new ArrayList<BEvent>();
 
-    // to be delete
-    private List<Map<String, Object>> listProfiles = new ArrayList<Map<String, Object>>();
-
     /**
      * Bonita Id (pageid for a Page, etc...), if the artefact is Deployed in a Bonita server
      */
     public BaseElement bonitaBaseElement;
-    
-    
-    public Artefact(TypeArtefact typeArtefact, String name, String version, String description, Date dateVersion, BonitaStore provider) {
-        this.typeArtefact = typeArtefact;
-        this.artefactName = name.toLowerCase();
+
+    public Artifact(TypeArtifact typeArtefact, String name, String version, String description, Date dateVersion, BonitaStore store) {
+        this.typeArtifact = typeArtefact;
+        this.name = name.toLowerCase();
         this.version = version;
         this.description = description;
         this.dateVersion = dateVersion;
-        this.provider = provider;
+        this.store = store;
 
     };
 
@@ -107,7 +103,7 @@ public abstract class Artefact {
      */
     public void setName(final String appsName) {
 
-        this.artefactName = appsName == null ? "" : appsName.toLowerCase();
+        this.name = appsName == null ? "" : appsName.toLowerCase();
 
     }
 
@@ -117,7 +113,7 @@ public abstract class Artefact {
      * @return
      */
     public String getName() {
-        return artefactName;
+        return name;
     }
 
     public String getVersion() {
@@ -136,8 +132,8 @@ public abstract class Artefact {
         return dateVersion;
     }
 
-    public TypeArtefact getType() {
-        return typeArtefact;
+    public TypeArtifact getType() {
+        return typeArtifact;
     }
 
     public abstract boolean isBinaryContent();
@@ -147,15 +143,15 @@ public abstract class Artefact {
     }
 
     public String toString() {
-        return artefactName + " IsProvided:" + isProvided + " " + description + " URL[" + getLastUrlDownload() + "] nbRelease[" + listReleases.size() + "]";
+        return name + " IsProvided:" + isProvided + " " + description + " URL[" + getLastUrlDownload() + "] nbRelease[" + listReleases.size() + "]";
     }
 
-    public BonitaStore getProvider() {
-        return provider;
+    public BonitaStore getStore() {
+        return store;
     }
 
     public String getDisplayName() {
-        return displayName;
+        return displayName == null ? getName() : displayName;
     }
 
     public void setDisplayName(String displayName) {
@@ -178,16 +174,22 @@ public abstract class Artefact {
         this.isProvided = isProvided;
     }
 
+    
+    public BaseElement getBonitaBaseElement() {
+        return bonitaBaseElement;
+    }
+
+    
+    public void setBonitaBaseElement(BaseElement bonitaBaseElement) {
+        this.bonitaBaseElement = bonitaBaseElement;
+    }
+
     public String getWhatsnews() {
         return whatsnews;
     }
 
     public List<BEvent> getListEvents() {
         return listEvents;
-    }
-
-    public List<Map<String, Object>> getListProfiles() {
-        return listProfiles;
     }
 
     public String getUrlContent() {
@@ -206,6 +208,14 @@ public abstract class Artefact {
         return listReleases;
     }
 
+    public void setWhatsnews(String whatsnews) {
+        this.whatsnews = whatsnews;
+    }
+
+    public void setNumberOfDownload(long numberOfDownload) {
+        this.numberOfDownload = numberOfDownload;
+    }
+
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Deploy strategy */
@@ -218,7 +228,7 @@ public abstract class Artefact {
         this.deployStrategy = deployStrategy;
 
     }
-   
+
     public DeployStrategy getDeployStrategy() {
         return deployStrategy;
     }
@@ -235,6 +245,7 @@ public abstract class Artefact {
      * -- to be delete ?
      */
     private String lastUrlDownload;
+
     private Date lastReleaseDate;
 
     private String fileName;
@@ -266,7 +277,7 @@ public abstract class Artefact {
         if (listReleases.size() > 0) {
             long total = 0;
             for (final ArtefactRelease appsRelease : listReleases) {
-                total += appsRelease.numberOfDownload;
+                total += appsRelease.numberOfDownload == null ? 0 : appsRelease.numberOfDownload;
             }
             return total;
         }
@@ -280,6 +291,9 @@ public abstract class Artefact {
         return lastUrlDownload;
     }
 
+    public void setLastUrlDownload(String lastUrlDownload) {
+        this.lastUrlDownload = lastUrlDownload;
+    }
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Content information */
@@ -314,6 +328,7 @@ public abstract class Artefact {
 
     /**
      * readFile
+     * 
      * @param file
      * @return
      * @throws FileNotFoundException
@@ -367,14 +382,16 @@ public abstract class Artefact {
         return lastReleaseDate;
     }
 
+    public void setLastReleaseDate(Date lastReleaseDate) {
+        this.lastReleaseDate = lastReleaseDate;
+    }
+
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Strategy operation : deploy */
     /*                                                                                  */
     /*                                                                                  */
     /* ******************************************************************************** */
-
-
     public DeployOperation detectDeployment(BonitaStoreAccessor bonitaAccessor, LoggerStore loggerStore) {
         return deployStrategy.detectDeployment(this, bonitaAccessor, loggerStore);
     }

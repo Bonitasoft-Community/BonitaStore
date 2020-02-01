@@ -1,4 +1,4 @@
-package org.bonitasoft.store.artefact;
+package org.bonitasoft.store.artifact;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -6,19 +6,16 @@ import java.util.Date;
 import java.util.List;
 
 import org.bonitasoft.log.event.BEvent;
-import org.bonitasoft.store.BonitaStoreAccessor;
 import org.bonitasoft.store.BonitaStore;
-import org.bonitasoft.store.artefactdeploy.DeployStrategy.DeployOperation;
-import org.bonitasoft.store.artefactdeploy.DeployStrategy.DetectionStatus;
 
-public class ArtefactLookAndFeel extends Artefact {
+public class ArtifactLookAndFeel extends Artifact {
 
     public String name;
     public String version;
     public Date dateCreation;
 
-    public ArtefactLookAndFeel(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
-        super(TypeArtefact.LOOKANDFEEL, name, version, description, dateCreation, sourceOrigin);
+    public ArtifactLookAndFeel(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
+        super(TypeArtifact.LOOKANDFEEL, name, version, description, dateCreation, sourceOrigin);
     }
 
     public List<BEvent> loadFromFile(File file) {
