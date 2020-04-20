@@ -19,8 +19,12 @@ public class BonitaStoreAPI {
     /**
      * all information to access the Community store
      */
-    public static String CommunityGithubUserName = "bonitafoodtruck";
-    public static String CommunityGithubPassword = "!&Bonita2020!!";
+    public static final String CommunityGithubUserName = "bonitafoodtruck";
+    public static final String CommunityGithubPassword = "!&Bonita2020!!";
+    
+    // https://developer.github.com/changes/2020-02-14-deprecating-password-auth/
+    public static final String COMMUNITY_GITHUB_TOKEN = "38cf002243d47eade2912e5652ee739855bde97c";
+    
     public static String CommunityGithubUrlRepository = "https://api.github.com/orgs/Bonitasoft-Community";
 
     public BonitaStore getBonitaCommunityStore(boolean registerTheStore) {
