@@ -69,7 +69,7 @@ public class BonitaStoreLocalServer extends BonitaStore {
 
     @Override
     public Map<String, Object> toMap() {
-        return new HashMap<String, Object>();
+        return new HashMap<>();
     }
 
     @Override

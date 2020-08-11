@@ -35,7 +35,7 @@ public class RESTResultKeyValueMap implements Serializable {
     /**
      * The value of the element which is a list of values
      */
-    private List<String> value = new ArrayList<String>();
+    private List<String> value = new ArrayList<>();
 
     /**
      * Get the key

@@ -1,4 +1,4 @@
-package org.bonitasoft.store.git.model;
+package org.bonitasoft.store.rest;
 
 /**
  * This interface reflects the information for an authorization.

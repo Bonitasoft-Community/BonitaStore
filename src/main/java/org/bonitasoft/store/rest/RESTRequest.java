@@ -1,10 +1,15 @@
-package org.bonitasoft.store.git.model;
+package org.bonitasoft.store.rest;
 
 import java.net.HttpCookie;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.http.Header;
+import org.apache.http.message.BasicHeader;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.store.source.git.RESTResultKeyValueMap;
 
@@ -13,11 +18,11 @@ import org.bonitasoft.store.source.git.RESTResultKeyValueMap;
  */
 public class RESTRequest {
 
-    /**
-     * The URL.
-     */
-    private URL url;
+    /** the Header URL */
+    public String headerUrl;
+    public String uri;
 
+    private URL url;
     /**
      * The REST HTTP Method.
      */
@@ -31,12 +36,11 @@ public class RESTRequest {
     /**
      * The headers.
      */
-    private final List<RESTResultKeyValueMap> headers = new ArrayList<RESTResultKeyValueMap>();
-
+    private List<Header> listHeaders = new ArrayList<>();
     /**
      * The cookies.
      */
-    private final List<HttpCookie> cookies = new ArrayList<HttpCookie>();
+    private List<HttpCookie> cookies = new ArrayList<>();
 
     /**
      * The ssl information.
@@ -73,11 +77,16 @@ public class RESTRequest {
      * URL value getter.
      * 
      * @return The URL value.
+     * @throws MalformedURLException 
      */
-    public URL getUrl() {
+    public URL getUrl()  {
+        
         return url;
     }
 
+    public void calculateUrlFromUri() throws MalformedURLException {
+        url = new URL(headerUrl+uri);
+    }
     /**
      * The URL value setter.
      * 
@@ -190,8 +199,8 @@ public class RESTRequest {
      * 
      * @return The headers value.
      */
-    public List<RESTResultKeyValueMap> getHeaders() {
-        return headers;
+    public List<Header> getHeaders() {
+        return listHeaders;
     }
 
     /**
@@ -210,8 +219,10 @@ public class RESTRequest {
      * @param value The lonely value of the new header.
      * @return True if the header has been added or false otherwise.
      */
-    public boolean addHeader(final String key, final String value) {
-        if (headers != null) {
+    public void addHeader(final String key, final String value) {
+       final Header header = new BasicHeader(key, value);
+       listHeaders.add( header );
+       /*
             final RESTResultKeyValueMap restResultKeyValueMap = new RESTResultKeyValueMap();
             restResultKeyValueMap.setKey(key);
             final List<String> values = new ArrayList<String>();
@@ -221,8 +232,15 @@ public class RESTRequest {
             return true;
         }
         return false;
+        */
     }
 
+    public void addHeader( Header header ) {
+        listHeaders.add( header );
+    }
+    public void addHeaders( List<Header> listHeader ) {
+        this.listHeaders.addAll( listHeader );
+    }
     /**
      * Add a header couple in the headers.
      * 
@@ -230,15 +248,12 @@ public class RESTRequest {
      * @param value The list of values of the new header.
      * @return True if the header has been added or false otherwise.
      */
-    public boolean addHeader(final String key, final List<String> value) {
-        if (headers != null) {
-            final RESTResultKeyValueMap restResultKeyValueMap = new RESTResultKeyValueMap();
-            restResultKeyValueMap.setKey(key);
-            restResultKeyValueMap.setValue(value);
-            headers.add(restResultKeyValueMap);
-            return true;
+    public void addHeader(final String key, final List<String> values) {
+        for (String aValue : values ) {
+            final Header header = new BasicHeader(key, aValue);
+            listHeaders.add( header );
         }
-        return false;
+   
     }
 
     /**
@@ -249,12 +264,12 @@ public class RESTRequest {
      * @return True if the cookie has been added or false otherwise.
      */
     public boolean addCookie(final String key, final String value) {
-        if (cookies != null) {
-            final HttpCookie cookie = new HttpCookie(key, value);
-            cookies.add(cookie);
-            return true;
-        }
-        return false;
+        if (cookies == null) 
+            cookies = new ArrayList<>();
+            
+        final HttpCookie cookie = new HttpCookie(key, value);
+        cookies.add(cookie);
+        return true;
     }
 
     /**

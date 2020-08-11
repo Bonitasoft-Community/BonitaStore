@@ -1,4 +1,4 @@
-package org.bonitasoft.store.git.model;
+package org.bonitasoft.store.rest;
 
 import java.io.File;
 import java.io.FileInputStream;

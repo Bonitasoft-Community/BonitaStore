@@ -12,7 +12,7 @@ public class BonitaStoreFactory {
         return new BonitaStoreFactory();
     }
 
-    private List<BonitaStore> listBonitaStore = new ArrayList<BonitaStore>();
+    private List<BonitaStore> listBonitaStore = new ArrayList<>();
 
     public List<BonitaStore> getBonitaStores() {
         return listBonitaStore;
@@ -103,7 +103,7 @@ public class BonitaStoreFactory {
      * 
      * @return
      */
-    public BonitaStore getLocalServer(APISession apiSession, boolean registerTheStore) {
+    public BonitaStoreLocalServer getLocalServer(APISession apiSession, boolean registerTheStore) {
         return new BonitaStoreLocalServer(apiSession);
     }
 
@@ -112,8 +112,11 @@ public class BonitaStoreFactory {
      * 
      * @return
      */
-    public BonitaStore getBonitaServer(String server, int port, String applicationName, boolean registerTheStore) {
-        return null;
+    public BonitaStoreBonitaExternalServer getBonitaExternalServer(String protocol, String server, int port, String applicationName, String userName, String password, boolean registerTheStore) {
+        BonitaStoreBonitaExternalServer bonitaServer = new BonitaStoreBonitaExternalServer( protocol, server, port, applicationName, userName, password);
+        if (registerTheStore)
+            registerStore(bonitaServer);
+        return bonitaServer;
     }
 
 }

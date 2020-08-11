@@ -47,15 +47,16 @@ import org.apache.http.util.EntityUtils;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.log.event.BEventFactory;
-import org.bonitasoft.store.git.model.Authorization;
-import org.bonitasoft.store.git.model.BasicDigestAuthorization;
-import org.bonitasoft.store.git.model.Content;
-import org.bonitasoft.store.git.model.HeaderAuthorization;
-import org.bonitasoft.store.git.model.NtlmAuthorization;
-import org.bonitasoft.store.git.model.RESTCharsets;
-import org.bonitasoft.store.git.model.RESTHTTPMethod;
-import org.bonitasoft.store.git.model.RESTRequest;
-import org.bonitasoft.store.git.model.RESTResponse;
+import org.bonitasoft.store.rest.Authorization;
+import org.bonitasoft.store.rest.BasicDigestAuthorization;
+import org.bonitasoft.store.rest.Content;
+import org.bonitasoft.store.rest.HeaderAuthorization;
+import org.bonitasoft.store.rest.NtlmAuthorization;
+import org.bonitasoft.store.rest.RESTCall;
+import org.bonitasoft.store.rest.RESTCharsets;
+import org.bonitasoft.store.rest.RESTHTTPMethod;
+import org.bonitasoft.store.rest.RESTRequest;
+import org.bonitasoft.store.rest.RESTResponse;
 import org.bonitasoft.store.toolbox.LoggerStore;
 import org.bonitasoft.store.toolbox.LoggerStore.LOGLEVEL;
 import org.json.simple.JSONArray;
@@ -66,19 +67,18 @@ public class GithubAccessor {
 
     final Logger logger = Logger.getLogger(GithubAccessor.class.getName());
 
-    private static final String HTTP_PROTOCOL = "HTTP";
-    private static final int HTTP_PROTOCOL_VERSION_MAJOR = 1;
-    private static final int HTTP_PROTOCOL_VERSION_MINOR = 1;
     private static final int CONNECTION_TIMEOUT = 60000;
-    private static final String AUTHORIZATION_HEADER = "Authorization";
 
     private final static BEvent eventResultNotExpected = new BEvent(GithubAccessor.class.getName(), 1, Level.APPLICATIONERROR, "Error Github code",
             "The URL call to the github repository does not return a code 200", "Check the URL to github, the login/password");
+
     private final static BEvent eventNoResult = new BEvent(GithubAccessor.class.getName(), 2, Level.INFO, "No result", "The github repository is empty");
 
-    private static BEvent eventBadUrl = new BEvent(GithubAccessor.class.getName(), 3, BEvent.Level.APPLICATIONERROR, "Bad URL",
-            "The URL given is not correct, it's malformed", "Check the URL");
+    private static BEvent eventBadUrl = new BEvent(GithubAccessor.class.getName(), 3, 
+            BEvent.Level.APPLICATIONERROR, "Bad URL",
+            "The URL given is not correct, it's malformed", "Url can't be call", "Check the URL");
 
+ 
     private static BEvent eventRestRequest = new BEvent(GithubAccessor.class.getName(), 4, BEvent.Level.APPLICATIONERROR, "Can't connect to the GITHUB Server",
             "An error occures when the GITHUB Server is connected", "Check the error");
 
@@ -213,7 +213,7 @@ public class GithubAccessor {
             return resultLastContrib;
         }
         try {
-            final RESTResponse response = execute(restRequest);
+            final RESTResponse response = RESTCall.execute(restRequest, CONNECTION_TIMEOUT);
             if (logBox.isLog(LOGLEVEL.INFO)) {
                 logBox.log(LOGLEVEL.INFO, "GithubAccess.getRestOrder: Url["
                         + orderGithub
@@ -308,7 +308,7 @@ public class GithubAccessor {
                 mUserName,
                 mPassword);
         try {
-            final RESTResponse response = execute(restRequest);
+            final RESTResponse response = RESTCall.execute(restRequest, CONNECTION_TIMEOUT);
             // System.out.println(response2.getBody());
             resultLastContrib.content = response.getBody();
         } catch (final Exception e) {
@@ -343,7 +343,7 @@ public class GithubAccessor {
         restRequest.setStringOutput(false);
         restRequest.setRedirect(true);
         try {
-            final RESTResponse response = execute(restRequest);
+            final RESTResponse response = RESTCall.execute(restRequest,CONNECTION_TIMEOUT);
             // System.out.println(response.getBody());
             resultLastContrib.contentByte = response.getContentByte();
             resultLastContrib.content = response.getBody();
@@ -390,225 +390,11 @@ public class GithubAccessor {
         return resultLastContrib;
     }
 
-    /**
-     * @param request
-     * @return
-     */
+   
 
-    private RESTResponse execute(final RESTRequest request) throws Exception {
-        CloseableHttpClient httpClient = null;
 
-        try {
-            final URL url = request.getUrl();
-            final String urlHost = url.getHost();
+   
 
-            final Builder requestConfigurationBuilder = RequestConfig.custom();
-            requestConfigurationBuilder.setConnectionRequestTimeout(CONNECTION_TIMEOUT);
-            requestConfigurationBuilder.setRedirectsEnabled(request.isRedirect());
-            final RequestConfig requestConfig = requestConfigurationBuilder.build();
-
-            final HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
-            httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(0, false));
-
-            final RequestBuilder requestBuilder = getRequestBuilderFromMethod(request.getRestMethod());
-            requestBuilder.setVersion(new ProtocolVersion(HTTP_PROTOCOL, HTTP_PROTOCOL_VERSION_MAJOR, HTTP_PROTOCOL_VERSION_MINOR));
-            int urlPort = url.getPort();
-            if (url.getPort() == -1) {
-                urlPort = url.getDefaultPort();
-            }
-            final String urlProtocol = url.getProtocol();
-            final String urlStr = url.toString();
-            requestBuilder.setUri(urlStr);
-            setHeaders(requestBuilder, request.getHeaders());
-            if (!RESTHTTPMethod.GET.equals(RESTHTTPMethod.valueOf(requestBuilder.getMethod()))) {
-                final String body = request.getBody();
-                if (body != null) {
-                    requestBuilder.setEntity(
-                            new StringEntity(request.getBody(),
-                                    ContentType.create(request.getContent().getContentType(),
-                                            request.getContent().getCharset().getValue())));
-                }
-            }
-
-            requestBuilder.setConfig(requestConfig);
-
-            final HttpContext httpContext = setAuthorization(
-                    requestConfigurationBuilder,
-                    request.getAuthorization(),
-                    urlHost,
-                    urlPort,
-                    urlProtocol,
-                    httpClientBuilder,
-                    requestBuilder);
-
-            final HttpUriRequest httpRequest = requestBuilder.build();
-
-            httpClient = httpClientBuilder.build();
-
-            long cumulTime = 0;
-            final long startTime = System.currentTimeMillis();
-            final HttpResponse httpResponse = httpClient.execute(httpRequest, httpContext);
-            final long endTime = System.currentTimeMillis();
-            cumulTime += endTime - startTime;
-
-            final Header[] responseHeaders = httpResponse.getAllHeaders();
-
-            final RESTResponse response = new RESTResponse();
-            response.setExecutionTime(cumulTime);
-            response.setStatusCode(httpResponse.getStatusLine().getStatusCode());
-            response.setMessage(httpResponse.getStatusLine().toString());
-
-            for (final Header header : responseHeaders) {
-                response.addHeader(header.getName(), header.getValue());
-            }
-
-            final HttpEntity entity = httpResponse.getEntity();
-            if (entity != null) {
-                if (request.isIgnore()) {
-                    EntityUtils.consumeQuietly(entity);
-                } else if (request.isStringOutput()) {
-                    final InputStream inputStream = entity.getContent();
-
-                    final StringWriter stringWriter = new StringWriter();
-                    IOUtils.copy(inputStream, stringWriter);
-                    if (stringWriter.toString() != null) {
-                        response.setBody(stringWriter.toString());
-                    }
-
-                } else {
-                    final byte[] contentByte = IOUtils.toByteArray(entity.getContent());
-
-                    response.setContentByte(contentByte);
-                }
-            }
-
-            return response;
-        } catch (final Exception ex) {
-            throw ex;
-        } finally {
-            try {
-                if (httpClient != null) {
-                    httpClient.close();
-                }
-            } catch (final IOException ex) {
-
-            }
-        }
-
-    }
-
-    private static HttpContext setAuthorization(
-            final Builder requestConfigurationBuilder,
-            final Authorization authorization,
-            final String urlHost,
-            final int urlPort,
-            final String urlProtocol,
-            final HttpClientBuilder httpClientBuilder,
-            final RequestBuilder requestBuilder) {
-        HttpContext httpContext = null;
-        if (authorization != null) {
-            if (authorization instanceof BasicDigestAuthorization) {
-                final List<String> authPrefs = new ArrayList<String>();
-                if (((BasicDigestAuthorization) authorization).isBasic()) {
-                    authPrefs.add(AuthSchemes.BASIC);
-                } else {
-                    authPrefs.add(AuthSchemes.DIGEST);
-                }
-                requestConfigurationBuilder.setTargetPreferredAuthSchemes(authPrefs);
-                final BasicDigestAuthorization castAuthorization = (BasicDigestAuthorization) authorization;
-
-                final String username = castAuthorization.getUsername();
-                final String password = castAuthorization.getPassword();
-                String host = castAuthorization.getHost();
-                if (castAuthorization.getHost() != null && castAuthorization.getHost().isEmpty()) {
-                    host = urlHost;
-                }
-                String realm = castAuthorization.getRealm();
-                if (castAuthorization.getRealm() != null && castAuthorization.getRealm().isEmpty()) {
-                    realm = AuthScope.ANY_REALM;
-                }
-
-                final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-                credentialsProvider.setCredentials(
-                        new AuthScope(host, urlPort, realm),
-                        new UsernamePasswordCredentials(username, password));
-                httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-
-                if (castAuthorization.isPreemptive()) {
-                    final AuthCache authoriationCache = new BasicAuthCache();
-                    AuthSchemeBase authorizationScheme = new DigestScheme();
-                    if (castAuthorization instanceof BasicDigestAuthorization) {
-                        authorizationScheme = new BasicScheme();
-                    }
-                    authoriationCache.put(new HttpHost(urlHost, urlPort, urlProtocol), authorizationScheme);
-                    final HttpClientContext localContext = HttpClientContext.create();
-                    localContext.setAuthCache(authoriationCache);
-                    httpContext = localContext;
-                }
-            } else if (authorization instanceof NtlmAuthorization) {
-                final List<String> authPrefs = new ArrayList<String>();
-                authPrefs.add(AuthSchemes.NTLM);
-                requestConfigurationBuilder.setTargetPreferredAuthSchemes(authPrefs);
-
-                final NtlmAuthorization castAuthorization = (NtlmAuthorization) authorization;
-                final String username = castAuthorization.getUsername();
-                final String password = new String(castAuthorization.getPassword());
-
-                final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-                credentialsProvider.setCredentials(
-                        AuthScope.ANY,
-                        new NTCredentials(username, password, castAuthorization.getWorkstation(), castAuthorization.getDomain()));
-                httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-            } else if (authorization instanceof HeaderAuthorization) {
-                final HeaderAuthorization castAuthorization = (HeaderAuthorization) authorization;
-                final String authorizationHeader = castAuthorization.getValue();
-                if (authorizationHeader != null && !authorizationHeader.isEmpty()) {
-                    final Header header = new BasicHeader(AUTHORIZATION_HEADER, authorizationHeader);
-                    requestBuilder.addHeader(header);
-                }
-            }
-        }
-
-        return httpContext;
-    }
-
-    private static void setHeaders(final RequestBuilder requestBuilder, final List<RESTResultKeyValueMap> headerData) {
-        for (final RESTResultKeyValueMap aHeaderData : headerData) {
-            final String key = aHeaderData.getKey();
-            for (final String value : aHeaderData.getValue()) {
-                final Header header = new BasicHeader(key, value);
-                requestBuilder.addHeader(header);
-            }
-        }
-    }
-
-    private static RequestBuilder getRequestBuilderFromMethod(final RESTHTTPMethod method) {
-        switch (method) {
-            case GET:
-                return RequestBuilder.get();
-            case POST:
-                return RequestBuilder.post();
-            case PUT:
-                return RequestBuilder.put();
-            case DELETE:
-                return RequestBuilder.delete();
-            default:
-                throw new IllegalStateException("Impossible to get the RequestBuilder from the \"" + method.name() + "\" name.");
-        }
-    }
-
-    /**
-     * @param url
-     * @param method
-     * @param body
-     * @param contentType
-     * @param charset
-     * @param arrayList
-     * @param arrayList2
-     * @param username
-     * @param password
-     * @return
-     */
     private RESTRequest buildRestRequest(final String url, final String method, final String body, final String contentType, final String charset,
             final ArrayList<ArrayList<String>> headerList, final ArrayList<ArrayList<String>> cookieList, final String username, final String password) {
         final RESTRequest request = new RESTRequest();
@@ -626,7 +412,7 @@ public class GithubAccessor {
         if (charset != null) {
             content.setCharset(RESTCharsets.getRESTCharsetsFromValue(charset));
         }
-        // request.setContent(content);
+        request.setContent(content);
         request.setBody(body);
         request.setRestMethod(RESTHTTPMethod.getRESTHTTPMethodFromValue(method));
         //request.setRedirect(true);

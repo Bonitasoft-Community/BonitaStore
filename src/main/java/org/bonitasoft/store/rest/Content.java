@@ -1,4 +1,4 @@
-package org.bonitasoft.store.git.model;
+package org.bonitasoft.store.rest;
 
 /**
  * This class reflects the information for a Content of a HTTP request.
@@ -39,6 +39,11 @@ public class Content {
      * @return The charset value.
      */
     public RESTCharsets getCharset() {
+        return charset;
+    }
+    public RESTCharsets getCharset(RESTCharsets defaultCharset) {
+        if (charset==null)
+            return defaultCharset;
         return charset;
     }
 

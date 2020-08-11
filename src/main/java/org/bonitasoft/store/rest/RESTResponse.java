@@ -1,8 +1,13 @@
-package org.bonitasoft.store.git.model;
+package org.bonitasoft.store.rest;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.http.Header;
 import org.bonitasoft.store.source.git.RESTResultKeyValueMap;
 
 /**
@@ -34,7 +39,8 @@ public class RESTResponse {
     /**
      * The headers.
      */
-    private List<RESTResultKeyValueMap> headers = new ArrayList<RESTResultKeyValueMap>();
+    // private List<RESTResultKeyValueMap> headers = new ArrayList<RESTResultKeyValueMap>();
+    private List<Header> listHeaders = new ArrayList<>();
 
     /**
      * Body value getter.
@@ -121,8 +127,18 @@ public class RESTResponse {
      * 
      * @return The headers value.
      */
-    public List<RESTResultKeyValueMap> getHeaders() {
-        return headers;
+    // public List<RESTResultKeyValueMap> getHeaders() {
+    //     return headers;
+    // }
+    public Map<String, String> getHeadersMap() {
+        Map<String, String> headersMap = new HashMap<>();
+        for (Header header : listHeaders)
+            headersMap.put(header.getName(), header.getValue());
+        return headersMap;
+    }
+
+    public List<Header> getHeaders() {
+        return listHeaders;
     }
 
     /**
@@ -130,8 +146,11 @@ public class RESTResponse {
      * 
      * @param headers The new headers value.
      */
-    public void setHeaders(final List<RESTResultKeyValueMap> headers) {
-        this.headers = headers;
+    // public void setHeaders(final List<RESTResultKeyValueMap> headers) {
+    //        this.headers = headers;
+    // }
+    public void setHeaders(List<Header> headers) {
+        this.listHeaders = headers;
     }
 
     /**
@@ -141,16 +160,44 @@ public class RESTResponse {
      * @param value The lonely value of the new header.
      * @return True if the header has been added or false otherwise.
      */
-    public boolean addHeader(final String key, final String value) {
-        if (headers != null) {
-            final RESTResultKeyValueMap restResultKeyValueMap = new RESTResultKeyValueMap();
-            restResultKeyValueMap.setKey(key);
-            final List<String> values = new ArrayList<String>();
-            values.add(value);
-            restResultKeyValueMap.setValue(values);
-            headers.add(restResultKeyValueMap);
-            return true;
-        }
-        return false;
+    public void addHeader(Header header) {
+        listHeaders.add(header);
+       
+        /*
+         * if (headers != null) {
+         * final RESTResultKeyValueMap restResultKeyValueMap = new RESTResultKeyValueMap();
+         * restResultKeyValueMap.setKey(key);
+         * final List<String> values = new ArrayList<>();
+         * values.add(value);
+         * restResultKeyValueMap.setValue(values);
+         * headers.add(restResultKeyValueMap);
+         * return true;
+         * }
+         * return false;
+         */
     }
+    public void addHeaders(List<Header> header) {
+        listHeaders.addAll(header);
+    }
+    public String getUrlRedirect() {
+        String status = null;
+        String location = null;
+        for (final Header hv : listHeaders) {
+            if (hv.getName().equals("Status")) {
+                status = hv.getValue();
+            }
+            if (hv.getName().equals("Location")) {
+                location = hv.getValue();
+            }
+        }
+        
+        if (statusCode == 301 
+                || statusCode ==302  
+                || (status != null && (status.startsWith("301") || status.startsWith("302")))) {
+            return location;
+        }
+           
+        return null;
+}
+
 }

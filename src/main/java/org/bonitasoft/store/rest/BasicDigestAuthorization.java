@@ -1,4 +1,4 @@
-package org.bonitasoft.store.git.model;
+package org.bonitasoft.store.rest;
 
 /**
  * This class reflects the information for a Basic or Digest authorization of a HTTP request.
