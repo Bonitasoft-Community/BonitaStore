@@ -14,6 +14,8 @@ import org.bonitasoft.engine.session.APISession;
 import org.bonitasoft.engine.util.APITypeManager;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEventFactory;
+import org.bonitasoft.log.event.BEvent.Level;
+import org.bonitasoft.store.BonitaStore.UrlToDownload;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.rest.Content;
 import org.bonitasoft.store.rest.RESTCall;
@@ -42,6 +44,7 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
     private static BEvent eventErrorRestCall = new BEvent(BonitaStoreBonitaExternalServer.class.getName(), 3,
             BEvent.Level.APPLICATIONERROR, "Rest Call Error",
             "The REST Call failed", "Communication failed", "Check the Bonita External server");
+    private static BEvent EVENT_NOT_IMPLEMENTED = new BEvent(BonitaStoreBonitaExternalServer.class.getName(), 4, Level.APPLICATIONERROR, "Not yet implemented", "The function is not yet implemented", "No valid return", "Wait the implementation");
 
     private int connectionTimeout = 60000; // 1 mn
 
@@ -84,15 +87,16 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
     }
 
     @Override
-    public BonitaStoreResult getListArtefacts(DetectionParameters detectionParameters, LoggerStore loggerStore) {
+    public BonitaStoreResult getListArtifacts(DetectionParameters detectionParameters, LoggerStore loggerStore) {
         BonitaStoreResult storeResult = new BonitaStoreResult("getListContent");
 
         return storeResult;
     }
 
     @Override
-    public BonitaStoreResult downloadArtefact(Artifact artefactItem, UrlToDownload urlToDownload, LoggerStore logBox) {
+    public BonitaStoreResult loadArtifact(final Artifact artifact, UrlToDownload urlToDownload, final LoggerStore logBox) {
         BonitaStoreResult storeResult = new BonitaStoreResult("downloadContent");
+        storeResult.addEvent(EVENT_NOT_IMPLEMENTED);
 
         return storeResult;
     }

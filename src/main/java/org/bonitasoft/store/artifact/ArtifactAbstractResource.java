@@ -14,4 +14,5 @@ public abstract class ArtifactAbstractResource extends Artifact {
 
     public abstract String getContentType();
 
+    
 }

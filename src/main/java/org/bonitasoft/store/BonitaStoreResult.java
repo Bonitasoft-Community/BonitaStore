@@ -15,8 +15,8 @@ import org.bonitasoft.store.toolbox.LoggerStore;
 public class BonitaStoreResult {
 
     // public List<Artefact> listStoreItem = new ArrayList<Artefact>();
-    private final List<BEvent> listEvents = new ArrayList<BEvent>();
-    public List<Profile> allListProfiles = new ArrayList<Profile>();
+    private final List<BEvent> listEvents = new ArrayList<>();
+    public List<Profile> allListProfiles = new ArrayList<>();
 
     public Long profileEntry = null;
 
@@ -26,7 +26,7 @@ public class BonitaStoreResult {
 
     public boolean isAllowAddProfile = false;
 
-    public List<Artifact> listArtifacts = new ArrayList<Artifact>();
+    public List<Artifact> listArtifacts = new ArrayList<>();
     // public Map<String, Object> mStatusResultJson = new HashMap<String,
     // Object>();
 

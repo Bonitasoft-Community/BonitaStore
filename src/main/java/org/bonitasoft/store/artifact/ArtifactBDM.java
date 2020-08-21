@@ -15,12 +15,14 @@ public class ArtifactBDM extends Artifact {
     }
 
     public List<BEvent> loadFromFile(File file) {
-        return new ArrayList<BEvent>();
+        return new ArrayList<>();
     }
 
     @Override
     public boolean isBinaryContent() {
         return false;
     }
+
+   
 
 }

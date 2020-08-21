@@ -13,6 +13,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.log.event.BEventFactory;
+import org.bonitasoft.store.BonitaStore.UrlToDownload;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.artifact.FactoryArtifact;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
@@ -79,7 +80,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
 
     public Map<String, Object> toMap() {
         Map<String, Object> map = new HashMap<String, Object>();
-        map.put(BonitaStoreType, "BonitaStoreCommunity");
+        map.put(CST_BONITA_STORE_TYPE, "BonitaStoreCommunity");
         return map;
     }
 
@@ -87,7 +88,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
      * Get all repository, wich must have a special structure
      */
     @Override
-    public BonitaStoreResult getListArtefacts(DetectionParameters detectionParameters, LoggerStore logBox) {
+    public BonitaStoreResult getListArtifacts(DetectionParameters detectionParameters, LoggerStore logBox) {
 
         // public StoreResult getListArtefacts(final List<TypeArtefact> listTypeApps, boolean withNotAvailable, final LoggerStore logBox) {
         final SimpleDateFormat sdfParseRelease = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -354,23 +355,23 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
     }
 
     @Override
-    public BonitaStoreResult downloadArtefact(final Artifact artifactItem, UrlToDownload urlToDownload, final LoggerStore logBox) {
+    public BonitaStoreResult loadArtifact(final Artifact artifact, UrlToDownload urlToDownload, final LoggerStore logBox) {
         final BonitaStoreResult storeResult = new BonitaStoreResult("DownloadOneCustomPage");
         String url = null;
         switch (urlToDownload) {
             case URLCONTENT:
-                url = artifactItem.urlContent;
+                url = artifact.urlContent;
                 break;
             case LASTRELEASE:
-                url = artifactItem.getLastUrlDownload();
+                url = artifact.getLastUrlDownload();
                 break;
             case URLDOWNLOAD:
-                url = artifactItem.urlDownload;
+                url = artifact.urlDownload;
                 break;
 
         }
         if (url == null) {
-            storeResult.addEvent(new BEvent(noContribFile, "Apps[" + artifactItem.getName() + "]"));
+            storeResult.addEvent(new BEvent(noContribFile, "Apps[" + artifact.getName() + "]"));
             return storeResult;
         }
         if (logBox.isLog(LOGLEVEL.MAIN)) {
@@ -378,7 +379,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
         }
 
         ResultGithub resultListing = null;
-        if (artifactItem.isBinaryContent())
+        if (artifact.isBinaryContent())
             resultListing = mGithubAccessor.getBinaryContent(url, "GET", null, null);
         else
             resultListing = mGithubAccessor.getContent(url, "GET", null, null);

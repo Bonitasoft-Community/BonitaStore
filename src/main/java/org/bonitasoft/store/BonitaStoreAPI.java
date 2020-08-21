@@ -41,18 +41,15 @@ public class BonitaStoreAPI {
         return getBonitaStoreFactory().getBonitaCommunityStore(specificRepository, registerTheStore);
     }
 
-    public BonitaStoreGit getGitStore(String gituserName, String gitPassword, String gitUrlRepository) {
-        BonitaStoreGit bonitaStoreGit = new BonitaStoreGit(gituserName, gitPassword, gitUrlRepository);
-        return bonitaStoreGit;
+    public BonitaStoreGit getGitStore(String gituserName, String gitPassword, String gitUrlRepository,boolean registerTheStore) {
+        return getBonitaStoreFactory().getGitStore(gituserName, gitPassword, gitUrlRepository, registerTheStore);
     }
 
     /*
      * get a store from a local disk
      */
-    public BonitaStoreDirectory getDirectoryStore(File pathDirectory) {
-        BonitaStoreDirectory bonitaDirectory = new BonitaStoreDirectory(pathDirectory);
-        return bonitaDirectory;
-    }
+    public BonitaStoreDirectory getDirectoryStore(File pathDirectory,boolean registerTheStore) {
+        return getBonitaStoreFactory().getDirectoryStore(pathDirectory, registerTheStore);    }
 
     /*
      * get a store from a local disk

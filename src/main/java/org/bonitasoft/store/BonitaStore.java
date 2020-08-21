@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.bonitasoft.store.BonitaStore.UrlToDownload;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
 import org.bonitasoft.store.toolbox.LoggerStore;
@@ -39,11 +40,17 @@ public abstract class BonitaStore {
      * 
      * @return
      */
-    public static String BonitaStoreType = "Type";
-    public static String BonitaStoreName = "name";
+    public final static String CST_BONITA_STORE_TYPE = "type";
+    public final static String CST_BONITA_STORE_NAME = "name";
 
+    /**
+     * Serialization. Note, the unserailisation is part of each Store
+     * @return
+     */
     public abstract Map<String, Object> toMap();
 
+  
+        
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Operation expected from a store */
@@ -68,24 +75,21 @@ public abstract class BonitaStore {
         public boolean isByTopics = true;
     }
 
-    public abstract BonitaStoreResult getListArtefacts(DetectionParameters detectionParameters, final LoggerStore loggerStore);
+    public abstract BonitaStoreResult getListArtifacts(DetectionParameters detectionParameters, final LoggerStore loggerStore);
 
     public enum UrlToDownload {
         LASTRELEASE, URLCONTENT, URLDOWNLOAD
     };
 
     /**
-     * download one artefact
+     * Load one artifact
      * 
      * @param artefactItem
-     * @param urlToDownload : which type of artefact to download? LastRealease? Specific URL?
+     * @param urlToDownload : which type of artifact to download? LastRealease? Specific one ?
      * @param logBox
      * @return
      */
-    public abstract BonitaStoreResult downloadArtefact(final Artifact artefactItem, UrlToDownload urlToDownload, /*
-                                                                                                            * boolean
-                                                                                                            * isBinaryContent,
-                                                                                                            */ final LoggerStore logBox);
+    public abstract BonitaStoreResult loadArtifact(final Artifact artifact, UrlToDownload urlToDownload, final LoggerStore logBox);
 
     /**
      * check if the sore it available, and can be reach

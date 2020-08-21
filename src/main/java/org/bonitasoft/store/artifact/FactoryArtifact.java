@@ -16,14 +16,14 @@ import java.util.zip.ZipInputStream;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.store.BonitaStore;
-import org.bonitasoft.store.artefactdeploy.DeployStrategyBDM;
-import org.bonitasoft.store.artefactdeploy.DeployStrategyLivingApplication;
-import org.bonitasoft.store.artefactdeploy.DeployStrategyLookAndFeel;
-import org.bonitasoft.store.artefactdeploy.DeployStrategyOrganization;
-import org.bonitasoft.store.artefactdeploy.DeployStrategyProcess;
-import org.bonitasoft.store.artefactdeploy.DeployStrategyProfile;
-import org.bonitasoft.store.artefactdeploy.DeployStrategyResource;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
+import org.bonitasoft.store.artifactdeploy.DeployStrategyBDM;
+import org.bonitasoft.store.artifactdeploy.DeployStrategyLivingApplication;
+import org.bonitasoft.store.artifactdeploy.DeployStrategyLookAndFeel;
+import org.bonitasoft.store.artifactdeploy.DeployStrategyOrganization;
+import org.bonitasoft.store.artifactdeploy.DeployStrategyProcess;
+import org.bonitasoft.store.artifactdeploy.DeployStrategyProfile;
+import org.bonitasoft.store.artifactdeploy.DeployStrategyResource;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 /**
@@ -31,9 +31,9 @@ import org.bonitasoft.store.toolbox.LoggerStore;
  */
 public class FactoryArtifact {
 
-    public static BEvent EVENT_NO_DETECTION = new BEvent(FactoryArtifact.class.getName(), 1, Level.APPLICATIONERROR, "This file does not match any artefact", "The artefact can't be deployed", "No detection", "Check the file");
+    public final static BEvent EVENT_NO_DETECTION = new BEvent(FactoryArtifact.class.getName(), 1, Level.APPLICATIONERROR, "This file does not match any artefact", "The artefact can't be deployed", "No detection", "Check the file");
 
-    protected static BEvent EVENT_FAILED_DETECTION = new BEvent(FactoryArtifact.class.getName(), 2, Level.APPLICATIONERROR, "Error during detection", "An error is detected during the exploitation", "No detection", "Check the file");
+    protected final static BEvent EVENT_FAILED_DETECTION = new BEvent(FactoryArtifact.class.getName(), 2, Level.APPLICATIONERROR, "Error during detection", "An error is detected during the exploitation", "No detection", "Check the file");
 
     public static FactoryArtifact getInstance() {
         return new FactoryArtifact();
@@ -47,15 +47,15 @@ public class FactoryArtifact {
      * @param bonitaStore
      * @return
      */
-    public static class ArtefactResult {
+    public static class ArtifactResult {
 
-        public Artifact artefact;
+        public Artifact artifact;
         public String logAnalysis = "";
-        public List<BEvent> listEvents = new ArrayList<BEvent>();
+        public List<BEvent> listEvents = new ArrayList<>();
     }
 
-    public ArtefactResult getInstanceArtefact(String fileName, File fileContent, BonitaStore bonitaStore, LoggerStore logStore) {
-        ArtefactResult artefactResult = new ArtefactResult();
+    public ArtifactResult getInstanceArtefact(String fileName, File fileContent, boolean loadArtifact, BonitaStore bonitaStore,  LoggerStore logStore) {
+        ArtifactResult artefactResult = new ArtifactResult();
 
         artefactResult.logAnalysis = "analysis[" + fileName + "]";
         Date dateFile = null;
@@ -82,7 +82,7 @@ public class FactoryArtifact {
                 processVersion = processVersion.substring(0, processVersion.length() - 4); // remove
                 // .bar
                 artefactResult.logAnalysis += "Process[" + processName + "] version[" + processVersion + "] detected";
-                artefactResult.artefact = new ArtifactProcess(processName, processVersion, "", dateFile, bonitaStore);
+                artefactResult.artifact = new ArtifactProcess(processName, processVersion, "", dateFile, bonitaStore);
             }
             // XML file : profile
         } else if (fileName.endsWith(".xml")) {
@@ -97,24 +97,24 @@ public class FactoryArtifact {
 
                     if (profileNamePos != -1) {
                         profileNamePos += "name=\"".length();
-                        int endProfileName = line.indexOf("\"", profileNamePos);
+                        int endProfileName = line.indexOf('\"', profileNamePos);
                         String name = line.substring(profileNamePos, endProfileName);
                         artefactResult.logAnalysis += "profile[" + name + "] detected";
 
-                        artefactResult.artefact = new ArtifactProfile(name, null, "", dateFile, bonitaStore);
+                        artefactResult.artifact = new ArtifactProfile(name, null, "", dateFile, bonitaStore);
                     }
                 }
                 if (line != null && line.trim().startsWith("<customUserInfoDefinitions")) {
                     // this is an organization
                     String name = fileName.substring(0, fileName.length() - ".xml".length());
-                    artefactResult.artefact = new ArtifactOrganization(name, null, "", dateFile, bonitaStore);
+                    artefactResult.artifact = new ArtifactOrganization(name, null, "", dateFile, bonitaStore);
                 }
                 if (line != null && line.trim().startsWith("<application")) {
                     String name = searchInXmlContent(fileContent, "displayName");
                     String description = searchInXmlContent(fileContent, "description");
                     artefactResult.logAnalysis += "Application[" + name + "] detected";
 
-                    artefactResult.artefact = new ArtifactLivingApplication(name, null, "", dateFile, bonitaStore);
+                    artefactResult.artifact = new ArtifactLivingApplication(name, null, description, dateFile, bonitaStore);
                 }
             } catch (Exception e) {
 
@@ -135,37 +135,37 @@ public class FactoryArtifact {
             }
 
             if (propertiesAttribute.contentType == null || "page".equals(propertiesAttribute.contentType)) {
-                artefactResult.artefact = new ArtifactCustomPage(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
+                artefactResult.artifact = new ArtifactCustomPage(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
 
             } else if ("apiExtension".equalsIgnoreCase(propertiesAttribute.contentType)) {
-                artefactResult.artefact = new ArtifactRestApi(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
+                artefactResult.artifact = new ArtifactRestApi(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
 
             } else if ("layout".equalsIgnoreCase(propertiesAttribute.contentType)) {
-                artefactResult.artefact = new ArtifactLayout(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
+                artefactResult.artifact = new ArtifactLayout(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
 
             } else if ("form".equalsIgnoreCase(propertiesAttribute.contentType)) {
                 // a form : only possible to deploy it in a process,
                 // so... we need the process
             } else if ("theme".equalsIgnoreCase(propertiesAttribute.contentType)) {
-                artefactResult.artefact = new ArtifactTheme(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
+                artefactResult.artifact = new ArtifactTheme(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
 
             } else {
                 logStore.severe("Unknow artefact contentType=[" + propertiesAttribute.contentType + "]");
             }
         } else if (fileName.endsWith(".groovy")) {
             String name = fileName.substring(0, fileName.length() - ".groovy".length());
-            artefactResult.artefact = new ArtifactGroovy(name, null, "", dateFile, bonitaStore);
+            artefactResult.artifact = new ArtifactGroovy(name, null, "", dateFile, bonitaStore);
 
             // ----------------------- Nothing
         } else {
             artefactResult.logAnalysis += "No detection.";
             artefactResult.listEvents.add(new BEvent(EVENT_NO_DETECTION, "fileName[" + fileName + "]"));
         }
-        if (artefactResult.artefact != null) {
-            artefactResult.listEvents.addAll(artefactResult.artefact.loadFromFile(fileContent));
-
-            applyStrategy(artefactResult.artefact);
+        if (artefactResult.artifact != null && loadArtifact) {
+            artefactResult.listEvents.addAll(artefactResult.artifact.loadFromFile(fileContent));
         }
+        applyStrategy(artefactResult.artifact);
+
         return artefactResult;
     }
 
@@ -320,9 +320,9 @@ public class FactoryArtifact {
      * @throws Exception
      */
     private PropertiesAttribut searchInPagePropertie(File file) throws Exception {
-        ZipInputStream zis = null;
-        try {
-            zis = new ZipInputStream(new FileInputStream(file));
+        
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(file))){
+            
             // get the zipped file list entry
             ZipEntry ze = zis.getNextEntry();
 
@@ -332,7 +332,7 @@ public class FactoryArtifact {
                 String fileName = ze.getName();
                 if (fileName.equals("page.properties")) {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
-                    int sizeEntry = (int) ze.getSize();
+                    // int sizeEntry = (int) ze.getSize();
                     byte[] buffer = new byte[10000];
                     int len;
                     while ((len = zis.read(buffer)) > 0) {
@@ -348,7 +348,6 @@ public class FactoryArtifact {
 
             zis.closeEntry();
             zis.close();
-            zis = null;
             if (content == null)
                 return null;
 
@@ -361,9 +360,7 @@ public class FactoryArtifact {
             propertiesAttribut.contentType = p.getProperty("contentType");
             return propertiesAttribut;
 
-        } catch (Exception e) {
-            if (zis != null)
-                zis.close();
+        } catch (Exception e) {          
             throw e;
         }
     }

@@ -1,4 +1,4 @@
-package org.bonitasoft.store.artefactdeploy;
+package org.bonitasoft.store.artifactdeploy;
 
 import org.bonitasoft.engine.business.application.Application;
 import org.bonitasoft.engine.business.application.ApplicationImportPolicy;
@@ -22,8 +22,8 @@ public class DeployStrategyLivingApplication extends DeployStrategy {
         try {
             Application application = searchByName(artefact, bonitaAccessor);
             if (application != null) {
-                deployOperation.presentDateArtefact = application.getLastUpdateDate();
-                deployOperation.presentVersionArtefact = null;
+                deployOperation.presentDateArtifact = application.getLastUpdateDate();
+                deployOperation.presentVersionArtifact = null;
             }
         } catch (SearchException e) {
             deployOperation.detectionStatus = DetectionStatus.DETECTIONFAILED;

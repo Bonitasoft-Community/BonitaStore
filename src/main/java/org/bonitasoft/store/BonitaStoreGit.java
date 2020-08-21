@@ -1,5 +1,6 @@
 package org.bonitasoft.store;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +28,7 @@ import org.json.simple.JSONObject;
 
 public class BonitaStoreGit extends BonitaStore {
 
-    protected final GithubAccessor mGithubAccessor;
+    protected GithubAccessor mGithubAccessor;
 
     private final static BEvent NoListingFound = new BEvent(BonitaStoreGit.class.getName(), 2, Level.APPLICATIONERROR, "No Listing Found", "The Githbub repository is supposed to have a file 'listing.xml' which describe all objects available. THis file is not found.",
             "result is not consistent",
@@ -50,7 +51,7 @@ public class BonitaStoreGit extends BonitaStore {
     public BonitaStoreGit(final String userName, final String password, final String urlRepository) {
         mGithubAccessor = new GithubAccessor(userName, password, urlRepository);
     }
-
+   
     /**
      * return the name
      *
@@ -70,13 +71,38 @@ public class BonitaStoreGit extends BonitaStore {
         return true;
     }
 
+    public final static String CST_TYPE_GIT = "git";
     @Override
     public Map<String, Object> toMap() {
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put(BonitaStoreType, "Git");
+        Map<String, Object> map = new HashMap<>();
+        map.put(CST_BONITA_STORE_TYPE, CST_TYPE_GIT);
+        map.put("gitaccessor", mGithubAccessor.getMap());
         return map;
     }
 
+    private BonitaStoreGit() {
+        mGithubAccessor = null;
+    }
+    /**
+     * 
+     * @param source
+     * @return
+     */
+    public static BonitaStore getInstancefromMap(Map<String, Object> source) {
+        try {
+            String type = (String) source.get(CST_BONITA_STORE_TYPE);
+            if (!CST_TYPE_GIT.equals(type))
+                return null;
+            BonitaStoreGit store = new BonitaStoreGit();
+            store.mGithubAccessor = GithubAccessor.getInstanceFromMap((Map<String,Object>)source.get("gitaccessor")); 
+            return store;
+        } catch (Exception e) {
+            return null;
+        }
+
+    }
+    
+    
     public String specificRepository = null;
 
     public void setSpecificRepository(String specificRepository) {
@@ -87,7 +113,7 @@ public class BonitaStoreGit extends BonitaStore {
      * Get all repository, wich must have a special structure
      */
     @Override
-    public BonitaStoreResult getListArtefacts(DetectionParameters detectionParameters, LoggerStore logBox) {
+    public BonitaStoreResult getListArtifacts(DetectionParameters detectionParameters, LoggerStore logBox) {
         final SimpleDateFormat sdfParseRelease = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
         final BonitaStoreResult storeResult = new BonitaStoreResult("getListAvailableItems");
@@ -191,23 +217,24 @@ public class BonitaStoreGit extends BonitaStore {
     }
 
     @Override
-    public BonitaStoreResult downloadArtefact(final Artifact artefactItem, UrlToDownload urlToDownload, final LoggerStore logBox) {
+    public BonitaStoreResult loadArtifact(final Artifact artifact, UrlToDownload urlToDownload, final LoggerStore logBox) {
+
         final BonitaStoreResult storeResult = new BonitaStoreResult("DownloadOneCustomPage");
         String url = null;
         switch (urlToDownload) {
             case URLCONTENT:
-                url = artefactItem.urlContent;
+                url = artifact.urlContent;
                 break;
             case LASTRELEASE:
-                url = artefactItem.getLastUrlDownload();
+                url = artifact.getLastUrlDownload();
                 break;
             case URLDOWNLOAD:
-                url = artefactItem.urlDownload;
+                url = artifact.urlDownload;
                 break;
 
         }
         if (url == null) {
-            storeResult.addEvent(new BEvent(noContribFile, "Apps[" + artefactItem.getName() + "]"));
+            storeResult.addEvent(new BEvent(noContribFile, "Apps[" + artifact.getName() + "]"));
             return storeResult;
         }
         if (logBox.isLog(LOGLEVEL.MAIN)) {
@@ -215,7 +242,7 @@ public class BonitaStoreGit extends BonitaStore {
         }
 
         ResultGithub resultListing = null;
-        if (artefactItem.isBinaryContent())
+        if (artifact.isBinaryContent())
             resultListing = mGithubAccessor.getBinaryContent(url, "GET", null, null);
         else
             resultListing = mGithubAccessor.getContent(url, "GET", null, null);

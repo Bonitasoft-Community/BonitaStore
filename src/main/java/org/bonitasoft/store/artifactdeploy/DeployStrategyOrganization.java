@@ -1,4 +1,4 @@
-package org.bonitasoft.store.artefactdeploy;
+package org.bonitasoft.store.artifactdeploy;
 
 import org.bonitasoft.engine.identity.ImportPolicy;
 import org.bonitasoft.engine.identity.OrganizationImportException;

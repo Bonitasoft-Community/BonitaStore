@@ -27,7 +27,7 @@ public class ArtifactCustomPage extends ArtifactAbstractResource {
     public ArtifactCustomPage(Page page, BonitaStore sourceOrigin) {
         super(TypeArtifact.CUSTOMPAGE, page.getName(), "1.0", page.getDescription(), new Date(), sourceOrigin);
         setProvided( page.isProvided());
-        setDisplayName(page.getDisplayName());
+        setDisplayName( page.getDisplayName());
         setBonitaBaseElement( page );
     }
 
@@ -42,6 +42,8 @@ public class ArtifactCustomPage extends ArtifactAbstractResource {
         return true;
     }
 
+  
+    
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Page are register in profile / and application */
@@ -78,7 +80,7 @@ public class ArtifactCustomPage extends ArtifactAbstractResource {
         ArtifactProfile artifactProfile = new ArtifactProfile(profile, this.getStore());
         listProfiles.add(artifactProfile);
     }
-    
+
     
 
 }

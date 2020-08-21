@@ -27,15 +27,15 @@ import org.bonitasoft.engine.util.APITypeManager;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.log.event.BEventFactory;
-import org.bonitasoft.store.artefactdeploy.DeployStrategy;
-import org.bonitasoft.store.artefactdeploy.DeployStrategy.DeployOperation;
-import org.bonitasoft.store.artefactdeploy.DeployStrategy.DetectionStatus;
-import org.bonitasoft.store.artefactdeploy.DeployStrategy.UPDATE_STRATEGY;
 import org.bonitasoft.store.artifact.ArtifactCustomPage;
 import org.bonitasoft.store.artifact.ArtifactProfile;
 import org.bonitasoft.store.artifact.FactoryArtifact;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
-import org.bonitasoft.store.artifact.FactoryArtifact.ArtefactResult;
+import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
+import org.bonitasoft.store.artifactdeploy.DeployStrategy;
+import org.bonitasoft.store.artifactdeploy.DeployStrategy.DeployOperation;
+import org.bonitasoft.store.artifactdeploy.DeployStrategy.DetectionStatus;
+import org.bonitasoft.store.artifactdeploy.DeployStrategy.UPDATE_STRATEGY;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 /* ******************************************************************************** */
@@ -47,7 +47,7 @@ import org.bonitasoft.store.toolbox.LoggerStore;
 
 public class BonitaStoreAccessorClient {
 
-    private static BEvent EVENT_DEPLOY_FAILED = new BEvent(BonitaStoreAccessorClient.class.getName(), 1, Level.APPLICATIONERROR, "Error during a deploy", "The artefact can't be deployed", "Artefact can't be deployed", "Check the exception");
+    private final static BEvent EVENT_DEPLOY_FAILED = new BEvent(BonitaStoreAccessorClient.class.getName(), 1, Level.APPLICATIONERROR, "Error during a deploy", "The artefact can't be deployed", "Artefact can't be deployed", "Check the exception");
 
     private APISession apiSession = null;
     private boolean alreadyLogged = false;
@@ -100,7 +100,7 @@ public class BonitaStoreAccessorClient {
         File fileArtefact = new File(fileName);
         // Copy the file
         // backupFile(fileArtefact);
-        DeployOperation deploy = bonitaAccessorClient.deployArtefact(fileArtefact, strategy);
+        DeployOperation deploy = bonitaAccessorClient.deployArtifact(fileArtefact, strategy);
         if (BEventFactory.isError(deploy.listEvents)) {
             System.out.println("FAILED " + deploy.listEvents.toString());
         } else {
@@ -110,7 +110,7 @@ public class BonitaStoreAccessorClient {
             if (insertIntoProfile != null) {
                 ArtifactProfile profileBo = bonitaAccessorClient.getOrCreateProfile(insertIntoProfile);
                 if (profileBo != null) {
-                    List<BEvent> listEvents = bonitaAccessorClient.registerInProfile(profileBo, (ArtifactCustomPage) deploy.artefact);
+                    List<BEvent> listEvents = bonitaAccessorClient.registerInProfile(profileBo, (ArtifactCustomPage) deploy.artifact);
                     System.out.println("Registration:" + listEvents);
                 }
 
@@ -157,13 +157,13 @@ public class BonitaStoreAccessorClient {
             alreadyLogged = true;
             return true;
         } catch (final BonitaHomeNotSetException e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             return false;
         } catch (final ServerAPIException e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             return false;
         } catch (final UnknownAPITypeException e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             return false;
         } catch (final LoginException e) {
             e.printStackTrace();
@@ -201,13 +201,13 @@ public class BonitaStoreAccessorClient {
     /*                                                                                  */
     /* ******************************************************************************** */
 
-    public DeployOperation deployArtefact(File fileArtefact, UPDATE_STRATEGY strategy) {
+    public DeployOperation deployArtifact(File fileArtifact, UPDATE_STRATEGY strategy) {
         try {
-            System.out.println("Start Deploying Artefact [" + fileArtefact.getAbsolutePath() + "]");
+            System.out.println("Start Deploying Artefact [" + fileArtifact.getAbsolutePath() + "]");
 
-            File pathDirectory = new File(fileArtefact.getAbsolutePath());
+            File pathDirectory = new File(fileArtifact.getAbsolutePath());
             BonitaStoreAPI bonitaStoreAPI = BonitaStoreAPI.getInstance();
-            BonitaStore bonitaStore = bonitaStoreAPI.getDirectoryStore(pathDirectory);
+            BonitaStore bonitaStore = bonitaStoreAPI.getDirectoryStore(pathDirectory,true);
 
             FactoryArtifact factoryArtefact = FactoryArtifact.getInstance();
             LoggerStore loggerStore = new LoggerStore();
@@ -215,11 +215,11 @@ public class BonitaStoreAccessorClient {
             BonitaStoreAccessor BonitaAccessor = new BonitaStoreAccessor(apiSession);
 
             System.out.println("  Load Artefact");
-            ArtefactResult artefactResult = factoryArtefact.getInstanceArtefact(fileArtefact.getName(), fileArtefact, bonitaStore, loggerStore);
+            ArtifactResult artefactResult = factoryArtefact.getInstanceArtefact(fileArtifact.getName(), fileArtifact, true, bonitaStore, loggerStore);
             if (BEventFactory.isError(artefactResult.listEvents)) {
                 System.out.println("Load error " + artefactResult.listEvents.toString());
                 DeployOperation deployOperation = new DeployOperation();
-                deployOperation.artefact = artefactResult.artefact;
+                deployOperation.artifact = artefactResult.artifact;
                 deployOperation.listEvents = artefactResult.listEvents;
                 return deployOperation;
             }
@@ -227,20 +227,20 @@ public class BonitaStoreAccessorClient {
             System.out.println("  Deploy Artefact");
 
             // update the deploy Strategy
-            DeployStrategy deployStrategy = artefactResult.artefact.getDeployStrategy();
+            DeployStrategy deployStrategy = artefactResult.artifact.getDeployStrategy();
             deployStrategy.setUpdateStrategy(strategy);
-            artefactResult.artefact.setDeployStrategy(deployStrategy);
+            artefactResult.artifact.setDeployStrategy(deployStrategy);
 
             // then deploy
-            DeployOperation deployOperation = artefactResult.artefact.deploy(BonitaAccessor, loggerStore);
-            deployOperation.artefact = artefactResult.artefact;
+            DeployOperation deployOperation = artefactResult.artifact.deploy(BonitaAccessor, loggerStore);
+            deployOperation.artifact = artefactResult.artifact;
             System.out.println("Deploiment Status:" + deployOperation.deploymentStatus.toString());
             System.out.println("Deploiment Details:" + deployOperation.listEvents.toString());
 
             return deployOperation;
         } catch (Exception e) {
             DeployOperation deploy = new DeployOperation();
-            deploy.listEvents.add(new BEvent(EVENT_DEPLOY_FAILED, e, "During deploy[" + fileArtefact.getName() + "]"));
+            deploy.listEvents.add(new BEvent(EVENT_DEPLOY_FAILED, e, "During deploy[" + fileArtifact.getName() + "]"));
             return deploy;
         }
 

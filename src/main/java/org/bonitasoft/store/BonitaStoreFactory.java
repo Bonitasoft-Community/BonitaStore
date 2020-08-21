@@ -1,5 +1,6 @@
 package org.bonitasoft.store;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,36 @@ public class BonitaStoreFactory {
         return new BonitaStoreFactory();
     }
 
+    
+    /**
+     * get a store from a serialization information
+     * Each BonitaStore has a GetMap() function, to serialize the source. This method is the oposite, to recreate the source form the serialization
+     * Each store setted a type
+     * @param sourceOb
+     * @return
+     */
+    public BonitaStore getBonitaStore(Map<String, Object> source) {
+        // we have to parse all the different know store
+
+        BonitaStore store;
+        if ((store = BonitaStoreDirectory.getInstancefromMap(source))!=null)
+            return store;
+        if ((store = BonitaStoreGit.getInstancefromMap(source))!=null)
+            return store;
+        
+        // Community
+        
+        // LocalServer
+        
+        // BonitaExternalServer
+        
+        
+        return null;
+    }
+    
+    
+    
+    
     private List<BonitaStore> listBonitaStore = new ArrayList<>();
 
     public List<BonitaStore> getBonitaStores() {
@@ -31,15 +62,8 @@ public class BonitaStoreFactory {
         this.listBonitaStore.add(bonitaStore);
     }
 
-    /**
-     * get a store from a serialisation information
-     * 
-     * @param sourceOb
-     * @return
-     */
-    public BonitaStore getBonitaStore(Map<String, Object> sourceOb) {
-        return null;
-    }
+    
+   
 
     /**
      * getStoreByName
@@ -98,6 +122,15 @@ public class BonitaStoreFactory {
         return bonitaStoreGit;
     }
 
+    public BonitaStoreDirectory getDirectoryStore(File pathDirectory,boolean registerTheStore) {
+        BonitaStoreDirectory bonitaStoreDirectory = new BonitaStoreDirectory(pathDirectory);
+        if (registerTheStore)
+            registerStore(bonitaStoreDirectory);
+        return bonitaStoreDirectory;
+        
+    }
+
+        
     /**
      * return the local server as a local store
      * 

@@ -10,6 +10,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -104,23 +105,23 @@ public class GithubAccessor {
      * }
      */
 
-    private final String mUserName;
+    private String mUserName;
 
-    private final String mPassword;
-    private final String mUrlRepository;
+    private String mPassword;
+    private String mUrlRepository;
 
     public GithubAccessor(final String userName, final String password, final String urlRepository) {
         mUserName = userName;
         mPassword = password;
         mUrlRepository = urlRepository;
     }
-
+        
     public static class ResultGithub {
 
         public String content;
         public byte[] contentByte;
 
-        public List<BEvent> listEvents = new ArrayList<BEvent>();
+        public List<BEvent> listEvents = new ArrayList<>();
 
         // the result may be a JSONObject (an hashmap) or a JSONArray (a list) : two type are not compatible...
         public Object jsonResult = null;
@@ -178,6 +179,40 @@ public class GithubAccessor {
         return mUserName;
     }
 
+    /**
+     * serialization
+     * @return
+     */
+    public Map<String,Object> getMap() {
+        Map<String,Object> result = new HashMap<>();
+        
+        result.put("username", mUserName );
+        result.put("password", mPassword);
+        result.put("urlrepo", mUrlRepository);
+
+        return result;
+        
+    }
+    
+    /**
+     * only for the getInstanceFromMap
+     * Default Constructor.
+     */
+    private GithubAccessor()
+    {};
+    /**
+     * serialization
+     * @return
+     */
+    public static GithubAccessor getInstanceFromMap(Map<String,Object> source) {
+        GithubAccessor githubAccessor = new GithubAccessor();
+        githubAccessor.mUserName = (String) source.get("username");
+        githubAccessor.mPassword = (String) source.get("password" );
+        githubAccessor.mUrlRepository = (String) source.get("urlrepo" );
+        return githubAccessor;
+    }
+    
+    
     /**
      * check if the information give for this Github repository are correct
      *

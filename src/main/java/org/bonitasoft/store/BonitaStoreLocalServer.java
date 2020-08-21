@@ -21,6 +21,7 @@ import org.bonitasoft.engine.search.SearchResult;
 import org.bonitasoft.engine.session.APISession;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
+import org.bonitasoft.store.BonitaStore.UrlToDownload;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.artifact.ArtifactCustomPage;
 import org.bonitasoft.store.artifact.ArtifactLayout;
@@ -73,7 +74,7 @@ public class BonitaStoreLocalServer extends BonitaStore {
     }
 
     @Override
-    public BonitaStoreResult getListArtefacts(DetectionParameters detectionParameters, LoggerStore logBox) {
+    public BonitaStoreResult getListArtifacts(DetectionParameters detectionParameters, LoggerStore logBox) {
         BonitaStoreResult storeResult = new BonitaStoreResult("getListContent");
 
         // get list of pages
@@ -147,7 +148,7 @@ public class BonitaStoreLocalServer extends BonitaStore {
     }
 
     @Override
-    public BonitaStoreResult downloadArtefact(Artifact artefactItem, UrlToDownload urlToDownload, LoggerStore logBox) {
+    public BonitaStoreResult loadArtifact(final Artifact artifact, UrlToDownload urlToDownload, final LoggerStore logBox) {
         BonitaStoreResult storeResult = new BonitaStoreResult("getListContent");
         storeResult.addEvent(EVENT_NOT_IMPLEMENTED);
         return storeResult;

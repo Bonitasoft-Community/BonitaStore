@@ -1,4 +1,4 @@
-package org.bonitasoft.store.artefactdeploy;
+package org.bonitasoft.store.artifactdeploy;
 
 import java.lang.reflect.Method;
 
@@ -25,7 +25,7 @@ public class DeployStrategyProfile extends DeployStrategy {
 
                     artefactProfile.bonitaBaseElement = profile;
 
-                    deployOperation.presentDateArtefact = profile.getLastUpdateDate();
+                    deployOperation.presentDateArtifact = profile.getLastUpdateDate();
 
                     if (profile.getLastUpdateDate().equals(artefactProfile.getDate())) {
                         deployOperation.detectionStatus = DetectionStatus.SAME;

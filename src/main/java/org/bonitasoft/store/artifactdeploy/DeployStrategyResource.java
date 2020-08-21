@@ -1,4 +1,4 @@
-package org.bonitasoft.store.artefactdeploy;
+package org.bonitasoft.store.artifactdeploy;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -33,12 +33,12 @@ public class DeployStrategyResource extends DeployStrategy {
 
                     artefact.bonitaBaseElement = page;
 
-                    deployOperation.presentDateArtefact = page.getLastModificationDate();
-                    deployOperation.presentVersionArtefact = null;
+                    deployOperation.presentDateArtifact = page.getLastModificationDate();
+                    deployOperation.presentVersionArtifact = null;
                     logToDebug += "Found existing page deployed at " + page.getLastModificationDate();
                 }
             }
-            if (deployOperation.presentDateArtefact == null)
+            if (deployOperation.presentDateArtifact == null)
                 logToDebug += "Not exist;";
             logBox.info(logToDebug);
         } catch (Exception e) {

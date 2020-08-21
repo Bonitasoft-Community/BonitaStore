@@ -15,8 +15,8 @@ import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.store.BonitaStore;
 import org.bonitasoft.store.BonitaStoreAccessor;
-import org.bonitasoft.store.artefactdeploy.DeployStrategy;
-import org.bonitasoft.store.artefactdeploy.DeployStrategy.DeployOperation;
+import org.bonitasoft.store.artifactdeploy.DeployStrategy;
+import org.bonitasoft.store.artifactdeploy.DeployStrategy.DeployOperation;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 /**
@@ -24,7 +24,7 @@ import org.bonitasoft.store.toolbox.LoggerStore;
  */
 public abstract class Artifact {
 
-    protected static BEvent EventReadFile = new BEvent(Artifact.class.getName(), 1, Level.APPLICATIONERROR, "File error", "The file can't be read", "The artefact is ignored", "Check the exception");
+    protected final static BEvent EventReadFile = new BEvent(Artifact.class.getName(), 1, Level.APPLICATIONERROR, "File error", "The file can't be read", "The artefact is ignored", "Check the exception");
 
     public enum TypeArtifact {
         CUSTOMPAGE, CUSTOMWIDGET, GROOVY, PROCESS, BDM, LAYOUT, LIVINGAPP, THEME, RESTAPI, PROFILE, ORGANIZATION, LOOKANDFEEL, ELSE
@@ -66,13 +66,14 @@ public abstract class Artifact {
     // the GroovyExample page)
     protected boolean isProvided = false;
 
+    
     /**
      * calculate the whatsnews between the current version and the store one
      */
     protected String whatsnews;
     // add description... profile...
 
-    protected List<BEvent> listEvents = new ArrayList<BEvent>();
+    protected List<BEvent> listEvents = new ArrayList<>();
 
     /**
      * Bonita Id (pageid for a Page, etc...), if the artefact is Deployed in a Bonita server
@@ -184,6 +185,9 @@ public abstract class Artifact {
         this.bonitaBaseElement = bonitaBaseElement;
     }
 
+  
+    
+    
     public String getWhatsnews() {
         return whatsnews;
     }
@@ -274,7 +278,7 @@ public abstract class Artifact {
      * local information
      */
     public long getNumberOfDownload() {
-        if (listReleases.size() > 0) {
+        if (! listReleases.isEmpty()) {
             long total = 0;
             for (final ArtefactRelease appsRelease : listReleases) {
                 total += appsRelease.numberOfDownload == null ? 0 : appsRelease.numberOfDownload;
@@ -285,7 +289,7 @@ public abstract class Artifact {
     }
 
     public String getLastUrlDownload() {
-        if (listReleases.size() > 0) {
+        if (! listReleases.isEmpty()) {
             return listReleases.get(0).urlDownload;
         }
         return lastUrlDownload;
@@ -294,6 +298,25 @@ public abstract class Artifact {
     public void setLastUrlDownload(String lastUrlDownload) {
         this.lastUrlDownload = lastUrlDownload;
     }
+    
+    /**
+     * Artifact may be loaded, or not. When it's loaded, the content is here and can be deployed
+     * Remark : to load the content, it must be done via the BonitaStore
+     * @return
+     */
+    public boolean isLoaded() {
+        return bonitaBaseElement!=null;
+    }
+    
+    /**
+     * Content may be huge, and we don't need to keep in memory. So, a clean will remove all non necessary information
+     * @return
+     */
+    public void clean() {
+        bonitaBaseElement=null;
+    }
+    
+
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Content information */
@@ -313,13 +336,13 @@ public abstract class Artifact {
      */
 
     public List<BEvent> loadFromFile(File file) {
-        List<BEvent> listEvents = new ArrayList<BEvent>();
+        List<BEvent> listEventsLoad = new ArrayList<>();
         try {
             content = readFile(file);
         } catch (Exception e) {
-            listEvents.add(new BEvent(EventReadFile, e, "Page[" + getName() + "] file[" + file.getAbsolutePath() + "]"));
+            listEventsLoad.add(new BEvent(EventReadFile, e, "Page[" + getName() + "] file[" + file.getAbsolutePath() + "]"));
         }
-        return listEvents;
+        return listEventsLoad;
     }
 
     public ByteArrayOutputStream getContent() {
@@ -334,7 +357,7 @@ public abstract class Artifact {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    private ByteArrayOutputStream readFile(File file) throws FileNotFoundException, IOException {
+    private ByteArrayOutputStream readFile(File file) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         IOUtils.copy(new FileInputStream(file), out);
         return out;
@@ -376,7 +399,7 @@ public abstract class Artifact {
     }
 
     public Date getLastReleaseDate() {
-        if (listReleases.size() > 0) {
+        if (! listReleases.isEmpty()) {
             return listReleases.get(0).dateRelease;
         }
         return lastReleaseDate;

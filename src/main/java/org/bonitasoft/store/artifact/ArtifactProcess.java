@@ -30,7 +30,7 @@ public class ArtifactProcess extends Artifact {
     }
 
     /**
-     * load from the filefile
+     * load from the file
      * 
      * @param file
      * @throws IOException
@@ -38,7 +38,7 @@ public class ArtifactProcess extends Artifact {
      */
     @Override
     public List<BEvent> loadFromFile(File file) {
-        List<BEvent> listEvents = new ArrayList<BEvent>();
+        List<BEvent> listEvents = new ArrayList<>();
 
         try {
             businessArchive = BusinessArchiveFactory.readBusinessArchive(file);
@@ -52,4 +52,13 @@ public class ArtifactProcess extends Artifact {
         return businessArchive;
     }
 
+    @Override
+    public boolean isLoaded() {
+        return businessArchive != null;
+    }
+
+    @Override
+    public void clean() {
+        businessArchive=null;
+    }
 }

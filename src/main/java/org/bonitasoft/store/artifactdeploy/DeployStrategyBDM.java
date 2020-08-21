@@ -1,4 +1,4 @@
-package org.bonitasoft.store.artefactdeploy;
+package org.bonitasoft.store.artifactdeploy;
 
 import org.bonitasoft.store.BonitaStoreAccessor;
 import org.bonitasoft.store.artifact.Artifact;
