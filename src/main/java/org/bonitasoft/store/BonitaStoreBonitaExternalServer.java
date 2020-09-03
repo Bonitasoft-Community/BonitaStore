@@ -13,9 +13,8 @@ import org.bonitasoft.engine.api.TenantAPIAccessor;
 import org.bonitasoft.engine.session.APISession;
 import org.bonitasoft.engine.util.APITypeManager;
 import org.bonitasoft.log.event.BEvent;
-import org.bonitasoft.log.event.BEventFactory;
 import org.bonitasoft.log.event.BEvent.Level;
-import org.bonitasoft.store.BonitaStore.UrlToDownload;
+import org.bonitasoft.log.event.BEventFactory;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.rest.Content;
 import org.bonitasoft.store.rest.RESTCall;
@@ -48,6 +47,8 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
 
     private int connectionTimeout = 60000; // 1 mn
 
+    RESTRequest restRequest;
+
     private String protocol; // "http" 
     private String server; // "localhost" 
     private int port; //8080
@@ -69,6 +70,10 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
     public String getName() {
         return "BonitaExternalServer";
     }
+    @Override
+    public String getExplanation() {
+        return "Give information to connect an External Bonita Server. All artifacts deployed on this server will be study to be deployed on this server.";
+    }
 
     @Override
     public String getId() {
@@ -81,13 +86,19 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
         return false;
     }
 
-    @Override
-    public Map<String, Object> toMap() {
-        return new HashMap<>();
+    private final static String CST_TYPE_EXERNALSERVER="ExternalServer";
+    
+    @Override 
+    public String getType() {
+        return CST_TYPE_EXERNALSERVER;
     }
 
     @Override
-    public BonitaStoreResult getListArtifacts(DetectionParameters detectionParameters, LoggerStore loggerStore) {
+    public void fullfillMap( Map<String,Object> map) {
+    }
+
+    @Override
+    public BonitaStoreResult getListArtifacts(BonitaStoreParameters detectionParameters, LoggerStore loggerStore) {
         BonitaStoreResult storeResult = new BonitaStoreResult("getListContent");
 
         return storeResult;
@@ -127,32 +138,74 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
         public Object jsonResult;
         public long httpStatus;
         public long executionTime;
+        public RESTResponse restResponse;
     }
 
     public RestApiResult callRestJson(String uri, String method, String body, String contentType, String charset) {
         RestApiResult restApiResult = new RestApiResult();
-        restApiResult.listEvents.addAll(connectViaRestAPI());
+        long timeBegin = System.currentTimeMillis();
+        // create a new REST REQUEST
+        restRequest = new RESTRequest();
+        restApiResult.listEvents.addAll( connectViaRestAPI());
         if (BEventFactory.isError(restApiResult.listEvents))
             return restApiResult;
 
-        // test a simple call first
         try {
-            RESTResponse restResponseUnused = callRest("API/system/session/unusedId", "GET", "", "application/json;charset=UTF-8", charset);
-            restApiResult.jsonResult = JSONValue.parse(restResponseUnused.getBody());
+            // test a simple call first
+            // RESTResponse restResponseUnused = callRest("API/system/session/unusedId", "GET", "", "application/json;charset=UTF-8", charset);
+            // restApiResult.jsonResult = JSONValue.parse(restResponseUnused.getBody());
 
             // do the call now
 
-            RESTResponse restResponse = callRest(uri, method, body, contentType, charset);
-            restApiResult.jsonResult = JSONValue.parse(restResponse.getBody());
-            restApiResult.httpStatus = restResponse.getStatusCode();
-            restApiResult.executionTime = restResponse.getExecutionTime();
+            restApiResult.restResponse = callRest(uri, method, body, contentType, charset);
+            restApiResult.jsonResult = JSONValue.parse(restApiResult.restResponse.getBody());
+            restApiResult.httpStatus = restApiResult.restResponse.getStatusCode();
+            // include the Connection and the result
+            long timeEnd = System.currentTimeMillis();
+            restApiResult.executionTime = timeEnd - timeBegin;
+
             return restApiResult;
         } catch (Exception e) {
             restApiResult.listEvents.add(new BEvent(eventErrorRestCall, e, "During call " + uri));
         }
+        long timeEnd = System.currentTimeMillis();
+        restApiResult.executionTime = timeEnd - timeBegin;
         return restApiResult;
     }
 
+    public RestApiResult callRestFile(String uri, String method, String body, String contentType, String charset) {
+        RestApiResult restApiResult = new RestApiResult();
+        long timeBegin = System.currentTimeMillis();
+        // create a new REST REQUEST
+        restRequest = new RESTRequest();
+        restApiResult.listEvents.addAll( connectViaRestAPI());
+        if (BEventFactory.isError(restApiResult.listEvents))
+            return restApiResult;
+
+        try {
+            // test a simple call first
+            // RESTResponse restResponseUnused = callRest("API/system/session/unusedId", "GET", "", "application/json;charset=UTF-8", charset);
+            // restApiResult.jsonResult = JSONValue.parse(restResponseUnused.getBody());
+
+            // do the call now
+
+            restApiResult.restResponse = callRest(uri, method, body, contentType, charset);
+            
+            restApiResult.httpStatus = restApiResult.restResponse.getStatusCode();
+            // include the Connection and the result
+            long timeEnd = System.currentTimeMillis();
+            restApiResult.executionTime = timeEnd - timeBegin;
+
+            return restApiResult;
+        } catch (Exception e) {
+            restApiResult.listEvents.add(new BEvent(eventErrorRestCall, e, "During call " + uri));
+        }
+        long timeEnd = System.currentTimeMillis();
+        restApiResult.executionTime = timeEnd - timeBegin;
+        return restApiResult;
+    }
+
+    
     /* -------------------------------------------------------------------- */
     /*                                                                      */
     /* Connection */
@@ -214,10 +267,11 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
      * @throws Exception
      */
     private RESTResponse callRest(String uri, String method, String body, String contentType, String charset) throws Exception {
+        // the RESTRequest restRequest must be created first. it contains all cookies
 
-        RESTRequest restRequest = new RESTRequest();
-        restRequest.headerUrl = protocol + "://" + server + ":" + port + "/" + applicationName + "/" ;
-        restRequest.uri =  uri;
+        restRequest.headerUrl = protocol + "://" + server + ":" + port + "/" ;
+        // applicatione is based in the URI. In case of a redirect, we just need to call the same server, so end at the port number. The Redirect will contains the application name inside.
+        restRequest.uri =  applicationName + "/" + uri;
         try {
             restRequest.calculateUrlFromUri();
         } catch (final MalformedURLException e) {

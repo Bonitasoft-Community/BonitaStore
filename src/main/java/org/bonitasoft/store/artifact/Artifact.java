@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -15,6 +16,8 @@ import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.store.BonitaStore;
 import org.bonitasoft.store.BonitaStoreAccessor;
+import org.bonitasoft.store.BonitaStoreParameters;
+import org.bonitasoft.store.BonitaStoreParameters.POLICY_NEWVERSION;
 import org.bonitasoft.store.artifactdeploy.DeployStrategy;
 import org.bonitasoft.store.artifactdeploy.DeployStrategy.DeployOperation;
 import org.bonitasoft.store.toolbox.LoggerStore;
@@ -28,12 +31,17 @@ public abstract class Artifact {
 
     public enum TypeArtifact {
         CUSTOMPAGE, CUSTOMWIDGET, GROOVY, PROCESS, BDM, LAYOUT, LIVINGAPP, THEME, RESTAPI, PROFILE, ORGANIZATION, LOOKANDFEEL, ELSE
-    };
+    }
 
     /**
-     * name of the application. THis name is unique on the Store and locally
+     * name of the application. THis name is unique on the Store and locally. This name is set to LOWER CASE to be sure to manipulate the same iteù
      */
     private String name;
+    
+    /**
+     * Name manipulated by Bonita
+     */
+    private String bonitaName;
     private String version;
     private Date dateVersion;
     protected String description;
@@ -66,7 +74,10 @@ public abstract class Artifact {
     // the GroovyExample page)
     protected boolean isProvided = false;
 
-    
+    /**
+     * The signature is something who identify unicaly the artifact in the store, and help to retrieve it
+     */
+    protected Object signature;
     /**
      * calculate the whatsnews between the current version and the store one
      */
@@ -83,7 +94,8 @@ public abstract class Artifact {
     public Artifact(TypeArtifact typeArtefact, String name, String version, String description, Date dateVersion, BonitaStore store) {
         this.typeArtifact = typeArtefact;
         this.name = name.toLowerCase();
-        this.version = version;
+        this.bonitaName=name;
+        this.version = version==null ? null : version.trim();
         this.description = description;
         this.dateVersion = dateVersion;
         this.store = store;
@@ -105,6 +117,7 @@ public abstract class Artifact {
     public void setName(final String appsName) {
 
         this.name = appsName == null ? "" : appsName.toLowerCase();
+        this.bonitaName = appsName == null ? "" : appsName;
 
     }
 
@@ -116,11 +129,15 @@ public abstract class Artifact {
     public String getName() {
         return name;
     }
-
+    public String getBonitaName() {
+        return bonitaName;
+    }
     public String getVersion() {
         return version;
     }
-
+    public void setVersion(String version) {
+        this.version = version;
+    }
     public String getDescription() {
         return description;
     }
@@ -220,6 +237,14 @@ public abstract class Artifact {
         this.numberOfDownload = numberOfDownload;
     }
 
+    public Object getSignature() {
+        return signature;
+}
+    public void setSignature(Object signature) {
+        this.signature = signature;
+}
+
+
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Deploy strategy */
@@ -237,6 +262,21 @@ public abstract class Artifact {
         return deployStrategy;
     }
 
+    /**
+     * some store must override the policy. For example, with BCD, file change at any generation (so every day). This is not pertinent to base the policy on date
+     */
+    private POLICY_NEWVERSION policyNewVersion=null;
+    /**
+     * 
+     * @param defaultPolicy
+     * @return
+     */
+    public POLICY_NEWVERSION getPolicyNewVersion(POLICY_NEWVERSION defaultPolicy ) {
+        return policyNewVersion==null ? defaultPolicy : policyNewVersion;
+    }
+    public void setPolicyNewVersion( POLICY_NEWVERSION policyNewVersion ) {
+        this.policyNewVersion = policyNewVersion;
+    }
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Contextual information */
@@ -326,6 +366,7 @@ public abstract class Artifact {
 
     protected ByteArrayOutputStream content;
 
+    
     /**
      * all Bonita artefact want to be manage as... a file :-(
      * So, whatever is the source of the artefact, it has to be saved at one moment and be ready to be
@@ -340,7 +381,7 @@ public abstract class Artifact {
         try {
             content = readFile(file);
         } catch (Exception e) {
-            listEventsLoad.add(new BEvent(EventReadFile, e, "Page[" + getName() + "] file[" + file.getAbsolutePath() + "]"));
+            listEventsLoad.add(new BEvent(EventReadFile, e, "Artifact[" + getName() + "] file[" + file.getAbsolutePath() + "]"));
         }
         return listEventsLoad;
     }
@@ -363,6 +404,17 @@ public abstract class Artifact {
         return out;
     }
 
+    public List<BEvent> loadFromInputStream(InputStream inputStream) {
+        List<BEvent> listEventsLoad = new ArrayList<>();
+        try {            
+            content = new ByteArrayOutputStream();
+            IOUtils.copy(inputStream, content);
+        } catch (Exception e) {
+            listEventsLoad.add(new BEvent(EventReadFile, e, "Artifact[" + getName() + "]"));
+        }
+        return listEventsLoad;
+    }
+    
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Release information */
@@ -379,7 +431,7 @@ public abstract class Artifact {
         public String releaseNote;
     }
 
-    public final List<ArtefactRelease> listReleases = new ArrayList<ArtefactRelease>();
+    public final List<ArtefactRelease> listReleases = new ArrayList<>();
 
     // release
     public ArtefactRelease newInstanceRelease() {
@@ -415,12 +467,12 @@ public abstract class Artifact {
     /*                                                                                  */
     /*                                                                                  */
     /* ******************************************************************************** */
-    public DeployOperation detectDeployment(BonitaStoreAccessor bonitaAccessor, LoggerStore loggerStore) {
-        return deployStrategy.detectDeployment(this, bonitaAccessor, loggerStore);
+    public DeployOperation detectDeployment(BonitaStoreParameters bonitaStoreParameters, BonitaStoreAccessor bonitaAccessor, LoggerStore loggerStore) {
+        return deployStrategy.detectDeployment(this, bonitaStoreParameters, bonitaAccessor, loggerStore);
     }
 
-    public DeployOperation deploy(BonitaStoreAccessor bonitaAccessor, LoggerStore loggerStore) {
-        return deployStrategy.deploy(this, bonitaAccessor, loggerStore);
+    public DeployOperation deploy(BonitaStoreParameters bonitaStoreParameters, BonitaStoreAccessor bonitaAccessor, LoggerStore loggerStore) {
+        return deployStrategy.deploy(this, bonitaStoreParameters, bonitaAccessor, loggerStore);
     }
 
 }

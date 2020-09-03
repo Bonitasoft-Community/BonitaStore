@@ -3,8 +3,8 @@ package org.bonitasoft.store.artifact;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,6 +16,7 @@ import java.util.zip.ZipInputStream;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.store.BonitaStore;
+import org.bonitasoft.store.InputArtifact.BonitaStoreInput;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
 import org.bonitasoft.store.artifactdeploy.DeployStrategyBDM;
 import org.bonitasoft.store.artifactdeploy.DeployStrategyLivingApplication;
@@ -54,7 +55,7 @@ public class FactoryArtifact {
         public List<BEvent> listEvents = new ArrayList<>();
     }
 
-    public ArtifactResult getInstanceArtefact(String fileName, File fileContent, boolean loadArtifact, BonitaStore bonitaStore,  LoggerStore logStore) {
+    public ArtifactResult getInstanceArtefact(String fileName, BonitaStoreInput fileContent, boolean loadArtifact, BonitaStore bonitaStore,  LoggerStore logStore) {
         ArtifactResult artefactResult = new ArtifactResult();
 
         artefactResult.logAnalysis = "analysis[" + fileName + "]";
@@ -79,9 +80,11 @@ public class FactoryArtifact {
                 String processName = fileName.substring(0, separator);
 
                 String processVersion = fileName.substring(separator + 2);
-                processVersion = processVersion.substring(0, processVersion.length() - 4); // remove
-                // .bar
+                // remove .bar
+                processVersion = processVersion.substring(0, processVersion.length() - 4); 
+                processVersion = processVersion.trim();
                 artefactResult.logAnalysis += "Process[" + processName + "] version[" + processVersion + "] detected";
+                // Note: this name / version may be completely wrong actually, there is no way to detect it (no way to load the business Archive and ask the name....)
                 artefactResult.artifact = new ArtifactProcess(processName, processVersion, "", dateFile, bonitaStore);
             }
             // XML file : profile
@@ -90,41 +93,64 @@ public class FactoryArtifact {
             // so, do not use the XML Parse which take time, try a
             // direct approach reading the file
             try {
-                String line = readLine(fileContent, 2);
-                if (line != null && line.trim().startsWith("<profile ")) {
+                String content = fileContent.getContentText();
+                if (content==null)
+                    return artefactResult;
+                // remove the first <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                if (content.startsWith("<?xml")) {
+                    int pos=content.indexOf("?>");
+                    if (pos!=-1)
+                        content=content.substring(pos+2+1);
+                }
+                if (content.startsWith("<profile ")) {
                     // this is a profile
-                    int profileNamePos = line.indexOf("name=\"");
+                    int profileNamePos = content.indexOf("name=\"");
 
                     if (profileNamePos != -1) {
                         profileNamePos += "name=\"".length();
-                        int endProfileName = line.indexOf('\"', profileNamePos);
-                        String name = line.substring(profileNamePos, endProfileName);
+                        int endProfileName = content.indexOf('\"', profileNamePos);
+                        String name = content.substring(profileNamePos, endProfileName);
                         artefactResult.logAnalysis += "profile[" + name + "] detected";
 
                         artefactResult.artifact = new ArtifactProfile(name, null, "", dateFile, bonitaStore);
                     }
                 }
-                if (line != null && line.trim().startsWith("<customUserInfoDefinitions")) {
+                if (content.startsWith("<customUserInfoDefinitions")) {
                     // this is an organization
                     String name = fileName.substring(0, fileName.length() - ".xml".length());
                     artefactResult.artifact = new ArtifactOrganization(name, null, "", dateFile, bonitaStore);
                 }
-                if (line != null && line.trim().startsWith("<application")) {
-                    String name = searchInXmlContent(fileContent, "displayName");
-                    String description = searchInXmlContent(fileContent, "description");
+                if (content.startsWith("<application")) {
+                    // we may have MULTIPLE application, so the first one is important
+                    String name = searchInXmlContent(content, "displayName");
+                    String description = searchInXmlContent(content, "description");
                     artefactResult.logAnalysis += "Application[" + name + "] detected";
 
                     artefactResult.artifact = new ArtifactLivingApplication(name, null, description, dateFile, bonitaStore);
                 }
-            } catch (Exception e) {
+                if (content.startsWith("<organization"))
+                {
+                    String name = fileName;
+                    if (name.endsWith(".xml"))
+                        name=name.substring(0,name.length()-".xml".length());
+                    String description = "organization";
+                    artefactResult.logAnalysis += "Application[" + name + "] detected";
 
+                    artefactResult.artifact = new ArtifactOrganization(name, null, description, dateFile, bonitaStore);
+                }
+               
+            } catch (Exception e) {
+                
             }
 
         } else if (fileName.endsWith(".zip")) {
+            try {
+            InputStream contentStream = fileContent.getContentInputStream();
+
             // ZIP file : may be a lot of thing !
             PropertiesAttribut propertiesAttribute = null;
             try {
-                propertiesAttribute = searchInPagePropertie(fileContent);
+                propertiesAttribute = searchInPagePropertie(contentStream);
                 if (propertiesAttribute == null) {
                     artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, "propertiesAttribute is null fileName[" + fileName + "]"));
                     return artefactResult;
@@ -152,6 +178,9 @@ public class FactoryArtifact {
             } else {
                 logStore.severe("Unknow artefact contentType=[" + propertiesAttribute.contentType + "]");
             }
+            }catch(Exception e) {
+                artefactResult.listEvents.add( new BEvent(EVENT_FAILED_DETECTION, e, ""));
+            }
         } else if (fileName.endsWith(".groovy")) {
             String name = fileName.substring(0, fileName.length() - ".groovy".length());
             artefactResult.artifact = new ArtifactGroovy(name, null, "", dateFile, bonitaStore);
@@ -162,10 +191,18 @@ public class FactoryArtifact {
             artefactResult.listEvents.add(new BEvent(EVENT_NO_DETECTION, "fileName[" + fileName + "]"));
         }
         if (artefactResult.artifact != null && loadArtifact) {
-            artefactResult.listEvents.addAll(artefactResult.artifact.loadFromFile(fileContent));
+            try {
+                InputStream contentStream = fileContent.getContentInputStream();
+                artefactResult.listEvents.addAll(artefactResult.artifact.loadFromInputStream(contentStream));
+            }
+            catch(Exception e) {
+                artefactResult.listEvents.add( new BEvent(EVENT_FAILED_DETECTION, e, ""));
+            }
         }
         applyStrategy(artefactResult.artifact);
-
+        if (artefactResult.artifact !=null)
+            artefactResult.artifact.signature= fileContent.getSignature();
+        
         return artefactResult;
     }
 
@@ -289,8 +326,7 @@ public class FactoryArtifact {
      * @return
      * @throws Exception
      */
-    private String searchInXmlContent(File file, String xmlTag) throws Exception {
-        String content = readFileContent(file);
+    private String searchInXmlContent(String content, String xmlTag) throws Exception {
         int beginPos = content.indexOf("<" + xmlTag + ">");
 
         if (beginPos != -1) {
@@ -319,9 +355,9 @@ public class FactoryArtifact {
      * @return
      * @throws Exception
      */
-    private PropertiesAttribut searchInPagePropertie(File file) throws Exception {
+    private PropertiesAttribut searchInPagePropertie(InputStream inputStream) throws Exception {
         
-        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(file))){
+        try (ZipInputStream zis = new ZipInputStream(inputStream)){
             
             // get the zipped file list entry
             ZipEntry ze = zis.getNextEntry();

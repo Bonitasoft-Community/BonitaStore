@@ -11,29 +11,46 @@ import org.bonitasoft.engine.search.SearchOptionsBuilder;
 import org.bonitasoft.engine.search.SearchResult;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.store.BonitaStoreAccessor;
+import org.bonitasoft.store.BonitaStoreParameters;
+import org.bonitasoft.store.BonitaStoreParameters.POLICY_NEWVERSION;
 import org.bonitasoft.store.artifact.Artifact;
+import org.bonitasoft.store.artifactdeploy.DeployStrategy.DetectionStatus;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 public class DeployStrategyLivingApplication extends DeployStrategy {
 
     @Override
-    public DeployOperation detectDeployment(Artifact artefact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public DeployOperation detectDeployment(Artifact artifact, BonitaStoreParameters deployParameters, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
         DeployOperation deployOperation = new DeployOperation();
+        deployOperation.detectionStatus = DetectionStatus.NEWARTEFAC;
+
         try {
-            Application application = searchByName(artefact, bonitaAccessor);
+            Application application = searchByName(artifact, bonitaAccessor);
             if (application != null) {
                 deployOperation.presentDateArtifact = application.getLastUpdateDate();
-                deployOperation.presentVersionArtifact = null;
+                deployOperation.presentVersionArtifact = "";
+                if (POLICY_NEWVERSION.BYDATE.equals(artifact.getPolicyNewVersion(deployParameters.policyNewVersion))) {
+                    if (artifact.getLastReleaseDate().before(application.getLastUpdateDate())) {
+                        deployOperation.detectionStatus = DetectionStatus.SAME; // or OLD...
+                        deployOperation.report = "A version exists with the date more recent(" + DeployStrategy.sdf.format(application.getLastUpdateDate()) + ")";
+                    } else {
+                        deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
+                        deployOperation.report = "The version is new";
+                    }
+                } else {
+                    // well, no way to know
+                    deployOperation.detectionStatus = DetectionStatus.UNDETERMINED;
+                }
             }
         } catch (SearchException e) {
             deployOperation.detectionStatus = DetectionStatus.DETECTIONFAILED;
-            deployOperation.listEvents.add(new BEvent(EventErrorAtDetection, e, "Application [" + artefact.getName() + "]"));
+            deployOperation.listEvents.add(new BEvent(EventErrorAtDetection, e, "Application [" + artifact.getName() + "]"));
         }
         return deployOperation;
     }
 
     @Override
-    public DeployOperation deploy(Artifact artefact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public DeployOperation deploy(Artifact artefact, BonitaStoreParameters deployParameters, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
         DeployOperation deployOperation = new DeployOperation();
 
         try {

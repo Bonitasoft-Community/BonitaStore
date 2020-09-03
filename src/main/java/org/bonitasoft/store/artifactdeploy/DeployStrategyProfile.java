@@ -10,13 +10,14 @@ import org.bonitasoft.engine.search.SearchOptionsBuilder;
 import org.bonitasoft.engine.search.SearchResult;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.store.BonitaStoreAccessor;
+import org.bonitasoft.store.BonitaStoreParameters;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 public class DeployStrategyProfile extends DeployStrategy {
 
     @Override
-    public DeployOperation detectDeployment(Artifact artefactProfile, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public DeployOperation detectDeployment(Artifact artefactProfile, BonitaStoreParameters deployParameters, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
         DeployOperation deployOperation = new DeployOperation();
         try {
             SearchResult<Profile> searchProfile = bonitaAccessor.profileAPI.searchProfiles(new SearchOptionsBuilder(0, 1000).done());
@@ -55,7 +56,7 @@ public class DeployStrategyProfile extends DeployStrategy {
      * 
      */
     @Override
-    public DeployOperation deploy(Artifact artefactProfile, BonitaStoreAccessor bonitaAccessor, LoggerStore logStore) {
+    public DeployOperation deploy(Artifact artefactProfile, BonitaStoreParameters deployParameters, BonitaStoreAccessor bonitaAccessor, LoggerStore logStore) {
 
         DeployOperation deployOperation = new DeployOperation();
         deployOperation.deploymentStatus = DeploymentStatus.NOTHINGDONE;

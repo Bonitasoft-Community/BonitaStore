@@ -30,6 +30,7 @@ import org.bonitasoft.log.event.BEventFactory;
 import org.bonitasoft.store.artifact.ArtifactCustomPage;
 import org.bonitasoft.store.artifact.ArtifactProfile;
 import org.bonitasoft.store.artifact.FactoryArtifact;
+import org.bonitasoft.store.InputArtifact.BonitaStoreInputFile;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
 import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
 import org.bonitasoft.store.artifactdeploy.DeployStrategy;
@@ -215,7 +216,7 @@ public class BonitaStoreAccessorClient {
             BonitaStoreAccessor BonitaAccessor = new BonitaStoreAccessor(apiSession);
 
             System.out.println("  Load Artefact");
-            ArtifactResult artefactResult = factoryArtefact.getInstanceArtefact(fileArtifact.getName(), fileArtifact, true, bonitaStore, loggerStore);
+            ArtifactResult artefactResult = factoryArtefact.getInstanceArtefact(fileArtifact.getName(), new BonitaStoreInputFile( fileArtifact), true, bonitaStore, loggerStore);
             if (BEventFactory.isError(artefactResult.listEvents)) {
                 System.out.println("Load error " + artefactResult.listEvents.toString());
                 DeployOperation deployOperation = new DeployOperation();
@@ -232,7 +233,7 @@ public class BonitaStoreAccessorClient {
             artefactResult.artifact.setDeployStrategy(deployStrategy);
 
             // then deploy
-            DeployOperation deployOperation = artefactResult.artifact.deploy(BonitaAccessor, loggerStore);
+            DeployOperation deployOperation = artefactResult.artifact.deploy(new BonitaStoreParameters(), BonitaAccessor, loggerStore);
             deployOperation.artifact = artefactResult.artifact;
             System.out.println("Deploiment Status:" + deployOperation.deploymentStatus.toString());
             System.out.println("Deploiment Details:" + deployOperation.listEvents.toString());
@@ -284,9 +285,9 @@ public class BonitaStoreAccessorClient {
         String profileContent = profileTemplate.replace("@@PROFILENAME@@", profileName);
 
         artefactProfileBO.loadFromString(profileContent);
-        DeployOperation deploy = artefactProfileBO.detectDeployment(bonitaAccessor, loggerStore);
+        DeployOperation deploy = artefactProfileBO.detectDeployment(new BonitaStoreParameters(), bonitaAccessor, loggerStore);
         if (deploy.detectionStatus == DetectionStatus.NEWARTEFAC) {
-            deploy = artefactProfileBO.deploy(bonitaAccessor, loggerStore);
+            deploy = artefactProfileBO.deploy(new BonitaStoreParameters(), bonitaAccessor, loggerStore);
             if (BEventFactory.isError(deploy.listEvents)) {
                 System.out.println("CreateProfile [" + profileName + "] failed " + deploy.listEvents.toString());
                 return null;

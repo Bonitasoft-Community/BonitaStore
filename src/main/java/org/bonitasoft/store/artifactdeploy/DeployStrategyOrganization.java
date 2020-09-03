@@ -4,20 +4,21 @@ import org.bonitasoft.engine.identity.ImportPolicy;
 import org.bonitasoft.engine.identity.OrganizationImportException;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.store.BonitaStoreAccessor;
+import org.bonitasoft.store.BonitaStoreParameters;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 public class DeployStrategyOrganization extends DeployStrategy {
 
     @Override
-    public DeployOperation detectDeployment(Artifact artefact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public DeployOperation detectDeployment(Artifact artefact, BonitaStoreParameters deployParameters, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
         DeployOperation deployOperation = new DeployOperation();
-        deployOperation.detectionStatus = DetectionStatus.NEWARTEFAC;
+        deployOperation.detectionStatus = DetectionStatus.UNDETERMINED;
         return deployOperation;
     }
 
     @Override
-    public DeployOperation deploy(Artifact artefact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public DeployOperation deploy(Artifact artefact, BonitaStoreParameters deployParameters, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
         DeployOperation deployOperation = new DeployOperation();
         try {
             bonitaAccessor.organisationAPI.importOrganization(artefact.getContent().toString(), ImportPolicy.MERGE_DUPLICATES);

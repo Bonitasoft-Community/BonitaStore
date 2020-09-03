@@ -25,6 +25,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -37,6 +38,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.bonitasoft.store.BonitaStore.UrlToDownload;
@@ -88,7 +90,6 @@ public class RESTCall {
 
         try {
             final URL url = request.getUrl();
-            final String urlHost = url.getHost();
 
             final Builder requestConfigurationBuilder = RequestConfig.custom();
             requestConfigurationBuilder.setConnectionRequestTimeout(connectionTimeout);
@@ -99,12 +100,7 @@ public class RESTCall {
             httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(0, false));
 
             final RequestBuilder requestBuilder = getRequestBuilderFromMethod(request.getRestMethod());
-            requestBuilder.setVersion(new ProtocolVersion(HTTP_PROTOCOL, HTTP_PROTOCOL_VERSION_MAJOR, HTTP_PROTOCOL_VERSION_MINOR));
-            int urlPort = url.getPort();
-            if (url.getPort() == -1) {
-                urlPort = url.getDefaultPort();
-            }
-            final String urlProtocol = url.getProtocol();
+            requestBuilder.setVersion(new ProtocolVersion(HTTP_PROTOCOL, HTTP_PROTOCOL_VERSION_MAJOR, HTTP_PROTOCOL_VERSION_MINOR));            
             final String urlStr = url.toString();
             requestBuilder.setUri(urlStr);
             for (Header header : request.getHeaders()) {
@@ -122,16 +118,15 @@ public class RESTCall {
 
             requestBuilder.setConfig(requestConfig);
 
-            final HttpContext httpContext = setAuthorization(
+            final HttpContext httpContext = getHttpContext(
                     requestConfigurationBuilder,
                     request.getAuthorization(),
-                    urlHost,
-                    urlPort,
-                    urlProtocol,
                     httpClientBuilder,
-                    requestBuilder);
+                    requestBuilder,
+                    request);
 
             final HttpUriRequest httpRequest = requestBuilder.build();
+
 
             httpClient = httpClientBuilder.build();
 
@@ -203,18 +198,39 @@ public class RESTCall {
         }
     }
 
-    private static HttpContext setAuthorization(
+    /**
+     * get the HTTP Context
+     * @param requestConfigurationBuilder
+     * @param authorization
+     * @param urlHost
+     * @param urlPort
+     * @param urlProtocol
+     * @param httpClientBuilder
+     * @param requestBuilder
+     * @param request
+     * @return
+     */
+    private static HttpClientContext getHttpContext(
             final Builder requestConfigurationBuilder,
             final Authorization authorization,
-            final String urlHost,
-            final int urlPort,
-            final String urlProtocol,
             final HttpClientBuilder httpClientBuilder,
-            final RequestBuilder requestBuilder) {
-        HttpContext httpContext = null;
+            final RequestBuilder requestBuilder,
+            RESTRequest request) {
+        
+        final URL url = request.getUrl();
+        final String urlHost = url.getHost();
+        int urlPort = url.getPort();
+        if (url.getPort() == -1) {
+            urlPort = url.getDefaultPort();
+        }
+        final String urlProtocol = url.getProtocol();
+
+        
+        HttpClientContext httpContext = null;
+        
         if (authorization != null) {
             if (authorization instanceof BasicDigestAuthorization) {
-                final List<String> authPrefs = new ArrayList<String>();
+                final List<String> authPrefs = new ArrayList<>();
                 if (((BasicDigestAuthorization) authorization).isBasic()) {
                     authPrefs.add(AuthSchemes.BASIC);
                 } else {
@@ -274,6 +290,10 @@ public class RESTCall {
                 }
             }
         }
+        if (httpContext == null) {
+            httpContext = new HttpClientContext();
+        }
+        httpContext.setCookieStore(request.getCookieStore());
 
         return httpContext;
     }

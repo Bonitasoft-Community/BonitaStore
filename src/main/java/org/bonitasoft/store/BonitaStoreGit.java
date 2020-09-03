@@ -1,8 +1,6 @@
 package org.bonitasoft.store;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -10,8 +8,8 @@ import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.log.event.BEventFactory;
 import org.bonitasoft.store.artifact.Artifact;
-import org.bonitasoft.store.artifact.FactoryArtifact;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
+import org.bonitasoft.store.artifact.FactoryArtifact;
 import org.bonitasoft.store.source.git.GithubAccessor;
 import org.bonitasoft.store.source.git.GithubAccessor.ResultGithub;
 import org.bonitasoft.store.toolbox.LoggerStore;
@@ -61,7 +59,10 @@ public class BonitaStoreGit extends BonitaStore {
     public String getName() {
         return mGithubAccessor.getUrlRepository();
     }
-
+    @Override
+    public String getExplanation() {
+        return "Give information to connect Git Repository. All artifacts saved in this directory, as RELEASE, will be study to be deployed on this server.";
+    }
     public String getId() {
         return "Git-" + mGithubAccessor.getUrlRepository() + "-" + mGithubAccessor.getUserName();
     }
@@ -72,12 +73,15 @@ public class BonitaStoreGit extends BonitaStore {
     }
 
     public final static String CST_TYPE_GIT = "git";
+    
+    @Override 
+    public String getType() {
+        return CST_TYPE_GIT;
+    }
+
     @Override
-    public Map<String, Object> toMap() {
-        Map<String, Object> map = new HashMap<>();
-        map.put(CST_BONITA_STORE_TYPE, CST_TYPE_GIT);
+    public void fullfillMap( Map<String,Object> map) {
         map.put("gitaccessor", mGithubAccessor.getMap());
-        return map;
     }
 
     private BonitaStoreGit() {
@@ -88,6 +92,7 @@ public class BonitaStoreGit extends BonitaStore {
      * @param source
      * @return
      */
+    @SuppressWarnings("unchecked")
     public static BonitaStore getInstancefromMap(Map<String, Object> source) {
         try {
             String type = (String) source.get(CST_BONITA_STORE_TYPE);
@@ -113,7 +118,7 @@ public class BonitaStoreGit extends BonitaStore {
      * Get all repository, wich must have a special structure
      */
     @Override
-    public BonitaStoreResult getListArtifacts(DetectionParameters detectionParameters, LoggerStore logBox) {
+    public BonitaStoreResult getListArtifacts(BonitaStoreParameters detectionParameters, LoggerStore logBox) {
         final SimpleDateFormat sdfParseRelease = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
         final BonitaStoreResult storeResult = new BonitaStoreResult("getListAvailableItems");
@@ -148,7 +153,7 @@ public class BonitaStoreGit extends BonitaStore {
             final JSONObject oneRepository = (JSONObject) oneRepositoryOb;
 
             final String repositoryName = (String) oneRepository.get("name");
-            TypeArtifact typeArtefact = match(detectionParameters.listTypeArtifact, repositoryName);
+            TypeArtifact typeArtefact = match(detectionParameters.listTypeArtifacts, repositoryName);
             if (typeArtefact == null)
                 continue;
 
@@ -167,7 +172,7 @@ public class BonitaStoreGit extends BonitaStore {
 
             // set the name. If a page.properties exist, then we will get the
             // information inside
-            String traceOneApps = "name[" + artefactItem.getName() + "]";
+            String traceOneApps = "name[" + artefactItem.getBonitaName() + "]";
             String shortName = artefactItem.getName();
             if (shortName.toUpperCase().startsWith(typeArtefact.toString().toUpperCase() + "_")) {
                 // remove the typeApps
@@ -182,9 +187,9 @@ public class BonitaStoreGit extends BonitaStore {
             logBox.log(LoggerStore.LOGLEVEL.INFO, traceOneApps);
             if (!artefactItem.isAvailable()) {
                 if (detectionParameters.withNotAvailable)
-                    storeResult.listArtifacts.add(artefactItem);
+                    storeResult.addDetectedArtifact(detectionParameters, artefactItem);
             } else
-                storeResult.listArtifacts.add(artefactItem);
+                storeResult.addDetectedArtifact(detectionParameters, artefactItem);
         } // end loop repo
 
         storeResult.endOperation();
@@ -234,7 +239,7 @@ public class BonitaStoreGit extends BonitaStore {
 
         }
         if (url == null) {
-            storeResult.addEvent(new BEvent(noContribFile, "Apps[" + artifact.getName() + "]"));
+            storeResult.addEvent(new BEvent(noContribFile, "Apps[" + artifact.getBonitaName() + "]"));
             return storeResult;
         }
         if (logBox.isLog(LOGLEVEL.MAIN)) {

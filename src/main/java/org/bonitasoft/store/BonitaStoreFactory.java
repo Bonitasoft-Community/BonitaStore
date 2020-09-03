@@ -29,7 +29,9 @@ public class BonitaStoreFactory {
             return store;
         if ((store = BonitaStoreGit.getInstancefromMap(source))!=null)
             return store;
-        
+        if ((store = BonitaStoreBCD.getInstancefromMap(source))!=null)
+            return store;
+     
         // Community
         
         // LocalServer

@@ -1,17 +1,11 @@
 package org.bonitasoft.store;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
-import org.bonitasoft.store.BonitaStore.UrlToDownload;
+import org.bonitasoft.store.InputArtifact.BonitaStoreInputFile;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.artifact.FactoryArtifact;
 import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
@@ -29,9 +23,7 @@ public class BonitaStoreDirectory extends BonitaStore {
 
     public static final String CST_TYPE_DIR = "Dir";
     
-    private final static BEvent EVENT_LOAD_FAILED = new BEvent(BonitaStoreDirectory.class.getName(), 1, Level.APPLICATIONERROR, "Error at load time", "The artefact can't be loaded", "Artefact is not accessible", "Check the exception");
-    private final static BEvent EVENT_CANT_MOVE_TO_ARCHIVE = new BEvent(BonitaStoreDirectory.class.getName(), 2, Level.APPLICATIONERROR, "Can't move to archived", "The artefact can't be move to the archive directory", "Artefact will be study a new time, but then mark as 'already loaded'",
-            "Check the exception (access right ?)");
+    // private final static BEvent EVENT_LOAD_FAILED = new BEvent(BonitaStoreDirectory.class.getName(), 1, Level.APPLICATIONERROR, "Error at load time", "The artefact can't be loaded", "Artefact is not accessible", "Check the exception");
     private final static BEvent EVENT_DIRECTORY_NOT_EXIST = new BEvent(BonitaStoreDirectory.class.getName(), 3, Level.APPLICATIONERROR, "Directory don't exist", "Bad directory name, directory don't exist (or it's not a directory?)", "No artefacts can be detected", "Check the directory name");
     private final static BEvent EVENT_READ_DIRECTORY_ERROR = new BEvent(BonitaStoreDirectory.class.getName(), 4, Level.APPLICATIONERROR, "Read directory error", "Error during reading the directory", "No artefacts can be detected", "Check the directory name");
 
@@ -50,13 +42,14 @@ public class BonitaStoreDirectory extends BonitaStore {
     public BonitaStoreDirectory(final File pathDirectory) {
         this.directoryFilePath = pathDirectory;
     }
+    @Override 
+    public String getType() {
+        return CST_TYPE_DIR;
+    }
 
     @Override
-    public Map<String, Object> toMap() {
-        Map<String, Object> map = new HashMap<>();
-        map.put(CST_BONITA_STORE_TYPE, CST_TYPE_DIR);
+    public void fullfillMap( Map<String,Object> map) {
         map.put("directory", directoryFilePath.getAbsolutePath());
-        return map;
     }
 
     /**
@@ -71,6 +64,7 @@ public class BonitaStoreDirectory extends BonitaStore {
                 return null;
             File file = new File((String) source.get("directory"));
             BonitaStore store = new BonitaStoreDirectory(file);
+            store.setDisplayName((String) source.get( CST_BONITA_STORE_DISPLAYNAME));
             return store;
         } catch (Exception e) {
             return null;
@@ -88,6 +82,10 @@ public class BonitaStoreDirectory extends BonitaStore {
     @Override
     public String getName() {
         return "Dir " + directoryFilePath;
+    }
+    @Override
+    public String getExplanation() {
+        return "Set the directory as parameter. Then, all Artifact present in this directory will be explode to be deployed";
     }
 
     public String getId() {
@@ -108,7 +106,7 @@ public class BonitaStoreDirectory extends BonitaStore {
      * 
      */
     @Override
-    public BonitaStoreResult getListArtifacts(DetectionParameters detectionParameters, LoggerStore logBox) {
+    public BonitaStoreResult getListArtifacts(BonitaStoreParameters detectionParameters, LoggerStore logBox) {
         BonitaStoreResult storeResult = new BonitaStoreResult("getListContent");
         if (directoryFilePath == null || !directoryFilePath.exists()) {
             storeResult.addEvent(new BEvent(EVENT_DIRECTORY_NOT_EXIST, "Directory[" + (directoryFilePath == null ? "null" : directoryFilePath.getAbsolutePath()) + "]"));
@@ -124,7 +122,7 @@ public class BonitaStoreDirectory extends BonitaStore {
 
                 String logAnalysis = "analysis[" + fileName + "]";
 
-                ArtifactResult artifactResult = factoryArtifact.getInstanceArtefact(fileName, fileContent, false, this, logBox);
+                ArtifactResult artifactResult = factoryArtifact.getInstanceArtefact(fileName, new BonitaStoreInputFile( fileContent), false, this, logBox);
                 // directory can contains additional file : no worry about that
                 if (artifactResult.listEvents.size() == 1 && artifactResult.listEvents.get(0).isSameEvent(FactoryArtifact.EVENT_NO_DETECTION)) {
                     logAnalysis += "File not recognized";
@@ -132,10 +130,10 @@ public class BonitaStoreDirectory extends BonitaStore {
                     continue;
                 }
                 storeResult.addEvents(artifactResult.listEvents);
-                if (artifactResult.artifact != null) {
+                if (artifactResult.artifact != null && detectionParameters.listTypeArtifacts.contains( artifactResult.artifact.getType())) {
                     artifactResult.artifact.setFileName(fileName);
 
-                    storeResult.listArtifacts.add(artifactResult.artifact);
+                    storeResult.addDetectedArtifact(detectionParameters, artifactResult.artifact);
                 }
                 logBox.info("BonitaStore.SourceDirectory " + logAnalysis);
 
@@ -159,6 +157,8 @@ public class BonitaStoreDirectory extends BonitaStore {
         return storeResult;
     }
 
+    
+        
     /**
      * 
      */

@@ -8,6 +8,7 @@ import java.util.List;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.store.BonitaStoreAccessor;
+import org.bonitasoft.store.BonitaStoreParameters;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
@@ -32,7 +33,7 @@ public abstract class DeployStrategy {
     public static SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:MM:ss");
 
     public enum DetectionStatus {
-        NEWARTEFAC, SAME, OLDVERSION, NEWVERSION, DETECTIONFAILED
+        NEWARTEFAC, SAME, OLDVERSION, NEWVERSION, DETECTIONFAILED, UNDETERMINED
     };
 
     public enum Action {
@@ -83,8 +84,8 @@ public abstract class DeployStrategy {
     /*                                                                                  */
     /*                                                                                  */
     /* ******************************************************************************** */
-    public abstract DeployOperation detectDeployment(Artifact artifact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox);
+    public abstract DeployOperation detectDeployment(Artifact artifact, BonitaStoreParameters deployParameters, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox);
 
-    public abstract DeployOperation deploy(Artifact artifact, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox);
+    public abstract DeployOperation deploy(Artifact artifact, BonitaStoreParameters deployParameters, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox);
 
 }

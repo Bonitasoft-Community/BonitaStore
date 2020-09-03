@@ -22,6 +22,8 @@ public class SerialiseJsonArtifact {
 
     public static String cstJsonType = "type";
     public static String cstJsonName = "name";
+    public static String cstJsonBonitaName = "bonitaname";
+
     public static String cstJsonVersion = "version";
     public static String cstJsonDescription = "description";
     public static String cstJsonDateCreation = "datecreation";
@@ -96,6 +98,7 @@ public class SerialiseJsonArtifact {
         appsDetails.put("displayname", artifact.getDisplayName());
         appsDetails.put(cstJsonType, artifact.getType().toString());
         appsDetails.put(cstJsonName, artifact.getName());
+        appsDetails.put(cstJsonBonitaName, artifact.getBonitaName());        
         appsDetails.put("description", artifact.getDescription());
         appsDetails.put("isprovided", artifact.isProvided());
         appsDetails.put("urldownload", artifact.getLastUrlDownload());

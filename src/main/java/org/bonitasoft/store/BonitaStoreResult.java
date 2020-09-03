@@ -124,4 +124,14 @@ public class BonitaStoreResult {
         return timeOperation;
     }
 
+    /**
+     * Add the detected artifact, if it is in the detection list
+     * @param detectionParameters
+     * @param artifact
+     */
+    public void addDetectedArtifact(BonitaStoreParameters detectionParameters, Artifact artifact) {
+        if (detectionParameters.listTypeArtifacts.contains( artifact.getType()))
+            listArtifacts.add( artifact);
+        
+    }
 }

@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.http.Header;
+import org.apache.http.client.CookieStore;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.message.BasicHeader;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.store.source.git.RESTResultKeyValueMap;
@@ -71,8 +73,18 @@ public class RESTRequest {
      */
     private String body = "";
 
-    public List<BEvent> listEvents = new ArrayList<BEvent>();
+    public List<BEvent> listEvents = new ArrayList<>();
 
+    private CookieStore cookieStore;
+    
+    public RESTRequest() {
+        cookieStore = new BasicCookieStore();
+        
+    }
+    
+    public CookieStore getCookieStore() {
+        return cookieStore;
+    }
     /**
      * URL value getter.
      * 
