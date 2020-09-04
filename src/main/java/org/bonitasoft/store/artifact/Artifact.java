@@ -43,7 +43,17 @@ public abstract class Artifact {
      */
     private String bonitaName;
     private String version;
+    
+    /**
+     * Date Version : last time the artifact was updated
+     */
     private Date dateVersion;
+    
+    /**
+     * Date Creation
+     */
+    private Date dateCreation;
+    
     protected String description;
 
     private TypeArtifact typeArtifact;
@@ -91,12 +101,13 @@ public abstract class Artifact {
      */
     public BaseElement bonitaBaseElement;
 
-    public Artifact(TypeArtifact typeArtefact, String name, String version, String description, Date dateVersion, BonitaStore store) {
+    public Artifact(TypeArtifact typeArtefact, String name, String version, String description, Date dateCreation, Date dateVersion, BonitaStore store) {
         this.typeArtifact = typeArtefact;
         this.name = name.toLowerCase();
         this.bonitaName=name;
         this.version = version==null ? null : version.trim();
         this.description = description;
+        this.dateCreation = dateCreation;
         this.dateVersion = dateVersion;
         this.store = store;
 
@@ -461,6 +472,18 @@ public abstract class Artifact {
         this.lastReleaseDate = lastReleaseDate;
     }
 
+    /**
+     * get the last date of the artifact, depends of the DateVersion, last release, then creation date
+     * @return
+     */
+    public Date getLastDateArtifact() {
+        if (dateVersion!=null)
+            return dateVersion;
+        Date release= getLastReleaseDate();
+        if (release!=null)
+            return release;
+        return dateCreation;
+    }
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Strategy operation : deploy */

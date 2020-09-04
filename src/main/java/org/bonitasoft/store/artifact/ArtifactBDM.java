@@ -10,8 +10,8 @@ import org.bonitasoft.store.BonitaStore;
 
 public class ArtifactBDM extends Artifact {
 
-    public ArtifactBDM(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
-        super(TypeArtifact.BDM, name, version, description, dateCreation, sourceOrigin);
+    public ArtifactBDM(String name, String version, String description, Date dateCreation,Date dateVersion, BonitaStore sourceOrigin) {
+        super(TypeArtifact.BDM, name, version, description, dateCreation, dateVersion, sourceOrigin);
     }
 
     public List<BEvent> loadFromFile(File file) {

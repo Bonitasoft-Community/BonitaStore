@@ -281,7 +281,7 @@ public class BonitaStoreAccessorClient {
         BonitaStoreAccessor bonitaAccessor = new BonitaStoreAccessor(apiSession);
 
         System.out.println("  Load Artefact Profile[" + profileName + "]");
-        ArtifactProfile artefactProfileBO = (ArtifactProfile) factoryArtefact.getFromType(TypeArtifact.PROFILE, "BOTools", "1.0", "Profile to access Custom page", new Date(), bonitaStore);
+        ArtifactProfile artefactProfileBO = (ArtifactProfile) factoryArtefact.getFromType(TypeArtifact.PROFILE, "BOTools", "1.0", "Profile to access Custom page", new Date(),new Date(), bonitaStore);
         String profileContent = profileTemplate.replace("@@PROFILENAME@@", profileName);
 
         artefactProfileBO.loadFromString(profileContent);

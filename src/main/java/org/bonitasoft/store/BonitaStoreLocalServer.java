@@ -132,7 +132,7 @@ public class BonitaStoreLocalServer extends BonitaStore {
                     final String name = profileEntry.getPage();
                     profileId = profileEntry.getProfileId();
                     final Artifact artefactPage = storeResult.getArtefactByName(name);
-                    if (artefactPage != null && artefactPage instanceof ArtifactCustomPage) {
+                    if (artefactPage instanceof ArtifactCustomPage) {
                         final Profile profile = profileAPI.getProfile(profileId);
                         ArtifactProfile artefactProfile = new ArtifactProfile(profile, this);
                         ((ArtifactCustomPage) artefactPage).addOneProfile(artefactProfile);

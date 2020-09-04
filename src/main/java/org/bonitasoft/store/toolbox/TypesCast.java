@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-public class Toolbox {
+public class TypesCast {
 
     /**
      * this is the logger to use in FoodTruck Attention to reduce the usage, and
@@ -15,8 +15,9 @@ public class Toolbox {
      */
 
     public static SimpleDateFormat sdfJavasscript = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    public static SimpleDateFormat sdfBonitaRest = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-    static Long getLong(final Object parameter, final Long defaultValue) {
+    public static Long getLong(final Object parameter, final Long defaultValue) {
         if (parameter == null) {
             return defaultValue;
         }
@@ -28,7 +29,7 @@ public class Toolbox {
         }
     }
 
-    static Integer getInteger(final Object parameter, final Integer defaultValue) {
+    public static Integer getInteger(final Object parameter, final Integer defaultValue) {
         if (parameter == null) {
             return defaultValue;
         }
@@ -40,7 +41,7 @@ public class Toolbox {
         }
     }
 
-    static Boolean getBoolean(final Object parameter, final Boolean defaultValue) {
+    public static Boolean getBoolean(final Object parameter, final Boolean defaultValue) {
         if (parameter == null) {
             return defaultValue;
         }
@@ -52,7 +53,7 @@ public class Toolbox {
         }
     }
 
-    static String getString(final Object parameter, final String defaultValue) {
+    public static String getString(final Object parameter, final String defaultValue) {
         if (parameter == null) {
             return defaultValue;
         }
@@ -63,7 +64,7 @@ public class Toolbox {
         }
     }
 
-    static Date getDate(final Object parameter, final Date defaultValue) {
+    public static Date getDate(final Object parameter, final Date defaultValue) {
         if (parameter == null) {
             return defaultValue;
         }
@@ -74,13 +75,24 @@ public class Toolbox {
             return defaultValue;
         }
     }
+    public static Date getDateBonitaRest(final Object parameter, final Date defaultValue) {
+        if (parameter == null) {
+            return defaultValue;
+        }
+        try {
+
+            return sdfBonitaRest.parse(parameter.toString());
+        } catch (final Exception e) {
+            return defaultValue;
+        }
+    }
 
     /**
      * @param parameter
      * @param defaultValue
      * @return
      */
-    static List<Map<String, String>> getList(final Object parameter, final List<Map<String, String>> defaultValue) {
+    public static List<Map<String, String>> getList(final Object parameter, final List<Map<String, String>> defaultValue) {
         if (parameter == null) {
             return defaultValue;
         }
@@ -96,7 +108,7 @@ public class Toolbox {
      * @param defaultValue
      * @return
      */
-    static Map<String, Object> getMap(final Object parameter, final Map<String, Object> defaultValue) {
+    public static Map<String, Object> getMap(final Object parameter, final Map<String, Object> defaultValue) {
         if (parameter == null) {
             return defaultValue;
         }

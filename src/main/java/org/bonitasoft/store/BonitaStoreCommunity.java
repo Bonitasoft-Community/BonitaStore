@@ -67,7 +67,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
      */
     @Override
     public String getName() {
-        return mGithubAccessor.getUrlRepository();
+        return "Community";
     }
     @Override
     public String getExplanation() {
@@ -160,6 +160,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
 
                     final Artifact artefactItem = factoryArtefact.getFromType(typeArtefact, (String) oneRepository.get("name"), null,
                             (String) oneRepository.get("description"),
+                            null,
                             null,
                             this);
 

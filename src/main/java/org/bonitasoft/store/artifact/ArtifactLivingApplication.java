@@ -10,8 +10,8 @@ public class ArtifactLivingApplication extends Artifact {
     public String version;
     public Date dateCreation;
 
-    public ArtifactLivingApplication(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
-        super(TypeArtifact.LIVINGAPP, name, version, description, dateCreation, sourceOrigin);
+    public ArtifactLivingApplication(String name, String version, String description, Date dateCreation, Date dateVersion, BonitaStore sourceOrigin) {
+        super(TypeArtifact.LIVINGAPP, name, version, description, dateCreation,  dateVersion,sourceOrigin);
     }
 
     @Override

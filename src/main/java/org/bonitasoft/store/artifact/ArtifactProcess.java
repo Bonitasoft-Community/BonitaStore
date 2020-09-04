@@ -35,8 +35,8 @@ public class ArtifactProcess extends Artifact {
 
     private static BEvent EventInvalidBarFile = new BEvent(ArtifactProcess.class.getName(), 1, Level.APPLICATIONERROR, "Invalid Bar file", "The bar file can't be read", "The artefact is ignored", "Check the exception");
 
-    public ArtifactProcess(String processName, String processVersion, String processDescription, Date dateProcess, BonitaStore sourceOrigin) {
-        super(TypeArtifact.PROCESS, processName, processVersion, processDescription, dateProcess, sourceOrigin);
+    public ArtifactProcess(String processName, String processVersion, String processDescription, Date dateProcess, Date dateVersion, BonitaStore sourceOrigin) {
+        super(TypeArtifact.PROCESS, processName, processVersion, processDescription, dateProcess, dateVersion,sourceOrigin);
     }
 
     @Override

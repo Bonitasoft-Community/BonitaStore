@@ -7,14 +7,12 @@ import org.bonitasoft.store.BonitaStore;
 
 public class ArtifactTheme extends ArtifactAbstractResource {
 
-    public ArtifactTheme(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
-        super(TypeArtifact.THEME, name, version, description, dateCreation, sourceOrigin);
+    public ArtifactTheme(String name, String version, String description, Date dateCreation, Date dateVersion, BonitaStore sourceOrigin) {
+        super(TypeArtifact.THEME, name, version, description, dateCreation,  dateVersion, sourceOrigin);
     }
 
     public ArtifactTheme(Page page, BonitaStore sourceOrigin) {
-        super(TypeArtifact.THEME, page.getName(), "1.0", page.getDescription(), new Date(), sourceOrigin);
-        setProvided( page.isProvided());
-        setDisplayName(page.getDisplayName());
+        super(TypeArtifact.THEME, page, sourceOrigin);
     }
     @Override
     public String getContentType() {

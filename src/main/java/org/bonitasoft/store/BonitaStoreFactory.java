@@ -37,7 +37,9 @@ public class BonitaStoreFactory {
         // LocalServer
         
         // BonitaExternalServer
-        
+        if ((store = BonitaStoreBonitaExternalServer.getInstancefromMap(source))!=null)
+            return store;
+     
         
         return null;
     }

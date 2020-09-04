@@ -14,8 +14,8 @@ public class ArtifactLookAndFeel extends Artifact {
     public String version;
     public Date dateCreation;
 
-    public ArtifactLookAndFeel(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
-        super(TypeArtifact.LOOKANDFEEL, name, version, description, dateCreation, sourceOrigin);
+    public ArtifactLookAndFeel(String name, String version, String description, Date dateCreation, Date dateVersion, BonitaStore sourceOrigin) {
+        super(TypeArtifact.LOOKANDFEEL, name, version, description, dateCreation, dateVersion, sourceOrigin);
     }
 
     public List<BEvent> loadFromFile(File file) {

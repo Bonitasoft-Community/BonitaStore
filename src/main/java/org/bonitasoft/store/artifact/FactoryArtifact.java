@@ -13,6 +13,8 @@ import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.bonitasoft.engine.page.ContentType;
+import org.bonitasoft.engine.page.Page;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.store.BonitaStore;
@@ -85,7 +87,7 @@ public class FactoryArtifact {
                 processVersion = processVersion.trim();
                 artefactResult.logAnalysis += "Process[" + processName + "] version[" + processVersion + "] detected";
                 // Note: this name / version may be completely wrong actually, there is no way to detect it (no way to load the business Archive and ask the name....)
-                artefactResult.artifact = new ArtifactProcess(processName, processVersion, "", dateFile, bonitaStore);
+                artefactResult.artifact = new ArtifactProcess(processName, processVersion, "", dateFile, dateFile, bonitaStore);
             }
             // XML file : profile
         } else if (fileName.endsWith(".xml")) {
@@ -112,13 +114,13 @@ public class FactoryArtifact {
                         String name = content.substring(profileNamePos, endProfileName);
                         artefactResult.logAnalysis += "profile[" + name + "] detected";
 
-                        artefactResult.artifact = new ArtifactProfile(name, null, "", dateFile, bonitaStore);
+                        artefactResult.artifact = new ArtifactProfile(name, null, "", dateFile, dateFile, bonitaStore);
                     }
                 }
                 if (content.startsWith("<customUserInfoDefinitions")) {
                     // this is an organization
                     String name = fileName.substring(0, fileName.length() - ".xml".length());
-                    artefactResult.artifact = new ArtifactOrganization(name, null, "", dateFile, bonitaStore);
+                    artefactResult.artifact = new ArtifactOrganization(name, null, "", dateFile, dateFile, bonitaStore);
                 }
                 if (content.startsWith("<application")) {
                     // we may have MULTIPLE application, so the first one is important
@@ -126,7 +128,7 @@ public class FactoryArtifact {
                     String description = searchInXmlContent(content, "description");
                     artefactResult.logAnalysis += "Application[" + name + "] detected";
 
-                    artefactResult.artifact = new ArtifactLivingApplication(name, null, description, dateFile, bonitaStore);
+                    artefactResult.artifact = new ArtifactLivingApplication(name, null, description, dateFile, dateFile, bonitaStore);
                 }
                 if (content.startsWith("<organization"))
                 {
@@ -136,7 +138,7 @@ public class FactoryArtifact {
                     String description = "organization";
                     artefactResult.logAnalysis += "Application[" + name + "] detected";
 
-                    artefactResult.artifact = new ArtifactOrganization(name, null, description, dateFile, bonitaStore);
+                    artefactResult.artifact = new ArtifactOrganization(name, null, description, dateFile, dateFile, bonitaStore);
                 }
                
             } catch (Exception e) {
@@ -161,19 +163,19 @@ public class FactoryArtifact {
             }
 
             if (propertiesAttribute.contentType == null || "page".equals(propertiesAttribute.contentType)) {
-                artefactResult.artifact = new ArtifactCustomPage(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
+                artefactResult.artifact = new ArtifactCustomPage(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile, bonitaStore);
 
             } else if ("apiExtension".equalsIgnoreCase(propertiesAttribute.contentType)) {
-                artefactResult.artifact = new ArtifactRestApi(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
+                artefactResult.artifact = new ArtifactRestApi(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile, bonitaStore);
 
             } else if ("layout".equalsIgnoreCase(propertiesAttribute.contentType)) {
-                artefactResult.artifact = new ArtifactLayout(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
+                artefactResult.artifact = new ArtifactLayout(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile, bonitaStore);
 
             } else if ("form".equalsIgnoreCase(propertiesAttribute.contentType)) {
                 // a form : only possible to deploy it in a process,
                 // so... we need the process
             } else if ("theme".equalsIgnoreCase(propertiesAttribute.contentType)) {
-                artefactResult.artifact = new ArtifactTheme(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, bonitaStore);
+                artefactResult.artifact = new ArtifactTheme(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile,bonitaStore);
 
             } else {
                 logStore.severe("Unknow artefact contentType=[" + propertiesAttribute.contentType + "]");
@@ -183,7 +185,7 @@ public class FactoryArtifact {
             }
         } else if (fileName.endsWith(".groovy")) {
             String name = fileName.substring(0, fileName.length() - ".groovy".length());
-            artefactResult.artifact = new ArtifactGroovy(name, null, "", dateFile, bonitaStore);
+            artefactResult.artifact = new ArtifactGroovy(name, null, "", dateFile, dateFile, bonitaStore);
 
             // ----------------------- Nothing
         } else {
@@ -218,33 +220,33 @@ public class FactoryArtifact {
      * @return
      */
 
-    public Artifact getFromType(TypeArtifact type, String name, String version, String description, Date dateCreation, BonitaStore bonitaStore) {
+    public Artifact getFromType(TypeArtifact type, String name, String version, String description, Date dateCreation, Date dateVersion, BonitaStore bonitaStore) {
 
         Artifact artefact = null;
         if (type == TypeArtifact.BDM)
-            artefact = new ArtifactBDM(name, version, description, dateCreation, bonitaStore);
+            artefact = new ArtifactBDM(name, version, description, dateCreation,  dateVersion,bonitaStore);
         if (type == TypeArtifact.PROCESS)
-            artefact = new ArtifactProcess(name, version, description, dateCreation, bonitaStore);
+            artefact = new ArtifactProcess(name, version, description, dateCreation,  dateVersion,bonitaStore);
         if (type == TypeArtifact.CUSTOMPAGE)
-            artefact = new ArtifactCustomPage(name, version, description, dateCreation, bonitaStore);
+            artefact = new ArtifactCustomPage(name, version, description, dateCreation,  dateVersion,bonitaStore);
         if (type == TypeArtifact.CUSTOMWIDGET)
             artefact = null;
         if (type == TypeArtifact.LAYOUT)
-            artefact = new ArtifactLayout(name, version, description, dateCreation, bonitaStore);
+            artefact = new ArtifactLayout(name, version, description, dateCreation, dateVersion,bonitaStore);
         if (type == TypeArtifact.LIVINGAPP)
-            artefact = new ArtifactLivingApplication(name, version, description, dateCreation, bonitaStore);
+            artefact = new ArtifactLivingApplication(name, version, description, dateCreation, dateVersion, bonitaStore);
         if (type == TypeArtifact.LOOKANDFEEL)
-            artefact = new ArtifactLookAndFeel(name, version, description, dateCreation, bonitaStore);
+            artefact = new ArtifactLookAndFeel(name, version, description, dateCreation, dateVersion, bonitaStore);
         if (type == TypeArtifact.ORGANIZATION)
-            artefact = new ArtifactLookAndFeel(name, version, description, dateCreation, bonitaStore);
+            artefact = new ArtifactLookAndFeel(name, version, description, dateCreation, dateVersion, bonitaStore);
         if (type == TypeArtifact.PROFILE)
-            artefact = new ArtifactProfile(name, version, description, dateCreation, bonitaStore);
+            artefact = new ArtifactProfile(name, version, description, dateCreation,  dateVersion,bonitaStore);
         if (type == TypeArtifact.RESTAPI)
-            artefact = new ArtifactRestApi(name, version, description, dateCreation, bonitaStore);
+            artefact = new ArtifactRestApi(name, version, description, dateCreation, dateVersion, bonitaStore);
         if (type == TypeArtifact.THEME)
-            artefact = new ArtifactTheme(name, version, description, dateCreation, bonitaStore);
+            artefact = new ArtifactTheme(name, version, description, dateCreation, dateVersion,bonitaStore);
         if (type == TypeArtifact.GROOVY)
-            artefact = new ArtifactGroovy(name, version, description, dateCreation, bonitaStore);
+            artefact = new ArtifactGroovy(name, version, description, dateCreation,  dateVersion,bonitaStore);
 
         if (artefact != null)
             applyStrategy(artefact);
@@ -252,32 +254,37 @@ public class FactoryArtifact {
         return artefact;
     }
 
-    /*
-     * apply all strategy in artefact
+    /**
+     * get the artifact for an existing page
+     * @param page
+     * @param bonitaStore
+     * @return
      */
-    private void applyStrategy(Artifact artefact) {
-        if (artefact instanceof ArtifactBDM)
-            artefact.setDeployStrategy(new DeployStrategyBDM());
-        if (artefact instanceof ArtifactProcess)
-            artefact.setDeployStrategy(new DeployStrategyProcess());
-        if (artefact instanceof ArtifactProfile)
-            artefact.setDeployStrategy(new DeployStrategyProfile());
-        if (artefact instanceof ArtifactCustomPage)
-            artefact.setDeployStrategy(new DeployStrategyResource());
-        if (artefact instanceof ArtifactLayout)
-            artefact.setDeployStrategy(new DeployStrategyResource());
-        if (artefact instanceof ArtifactLivingApplication)
-            artefact.setDeployStrategy(new DeployStrategyLivingApplication());
-        if (artefact instanceof ArtifactLookAndFeel)
-            artefact.setDeployStrategy(new DeployStrategyLookAndFeel());
-        if (artefact instanceof ArtifactOrganization)
-            artefact.setDeployStrategy(new DeployStrategyOrganization());
-        if (artefact instanceof ArtifactRestApi)
-            artefact.setDeployStrategy(new DeployStrategyResource());
-        if (artefact instanceof ArtifactTheme)
-            artefact.setDeployStrategy(new DeployStrategyResource());
+    public Artifact getFromPage( Page page, BonitaStore bonitaStore) {
+        Artifact artefact = null;
+        if (ContentType.API_EXTENSION.equals( page.getContentType()))
+            artefact = new ArtifactRestApi( page, bonitaStore);
+        else if (ContentType.FORM.equals( page.getContentType()))
+            artefact = new ArtifactCustomPage(page, bonitaStore);
+        else if (ContentType.LAYOUT.equals( page.getContentType()))
+            artefact = new ArtifactLayout(page, bonitaStore);
+        else if (ContentType.PAGE.equals( page.getContentType()))
+            artefact = new ArtifactCustomPage(page, bonitaStore);
+        else if (ContentType.THEME.equals( page.getContentType()))
+            artefact = new ArtifactTheme(page, bonitaStore);
+                
+        if (artefact != null)
+            applyStrategy(artefact);
+
+        return artefact;
 
     }
+
+    /* -------------------------------------------------------------------- */
+    /*                                                                      */
+    /* read line */
+    /*                                                                      */
+    /* -------------------------------------------------------------------- */
 
     /**
      * read a line
@@ -316,6 +323,43 @@ public class FactoryArtifact {
             }
         }
     }
+    /* -------------------------------------------------------------------- */
+    /*                                                                      */
+    /* Private */
+    /*                                                                      */
+    /* -------------------------------------------------------------------- */
+    /*
+     * apply all strategy in artifact
+     */
+    private void applyStrategy(Artifact artefact) {
+        if (artefact instanceof ArtifactBDM)
+            artefact.setDeployStrategy(new DeployStrategyBDM());
+        if (artefact instanceof ArtifactProcess)
+            artefact.setDeployStrategy(new DeployStrategyProcess());
+        if (artefact instanceof ArtifactProfile)
+            artefact.setDeployStrategy(new DeployStrategyProfile());
+        if (artefact instanceof ArtifactCustomPage)
+            artefact.setDeployStrategy(new DeployStrategyResource());
+        if (artefact instanceof ArtifactLayout)
+            artefact.setDeployStrategy(new DeployStrategyResource());
+        if (artefact instanceof ArtifactLivingApplication)
+            artefact.setDeployStrategy(new DeployStrategyLivingApplication());
+        if (artefact instanceof ArtifactLookAndFeel)
+            artefact.setDeployStrategy(new DeployStrategyLookAndFeel());
+        if (artefact instanceof ArtifactOrganization)
+            artefact.setDeployStrategy(new DeployStrategyOrganization());
+        if (artefact instanceof ArtifactRestApi)
+            artefact.setDeployStrategy(new DeployStrategyResource());
+        if (artefact instanceof ArtifactTheme)
+            artefact.setDeployStrategy(new DeployStrategyResource());
+
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*                                                                      */
+    /* Tools for detection */
+    /*                                                                      */
+    /* -------------------------------------------------------------------- */
 
     /**
      * search in the XML content and search the content of <Hello>this is

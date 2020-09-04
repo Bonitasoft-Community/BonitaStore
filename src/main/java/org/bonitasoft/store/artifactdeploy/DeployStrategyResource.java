@@ -2,9 +2,9 @@ package org.bonitasoft.store.artifactdeploy;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Date;
 
 import org.bonitasoft.engine.page.Page;
-import org.bonitasoft.engine.page.PageNotFoundException;
 import org.bonitasoft.engine.page.PageSearchDescriptor;
 import org.bonitasoft.engine.search.SearchOptionsBuilder;
 import org.bonitasoft.engine.search.SearchResult;
@@ -14,7 +14,6 @@ import org.bonitasoft.store.BonitaStoreParameters;
 import org.bonitasoft.store.BonitaStoreParameters.POLICY_NEWVERSION;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.artifact.ArtifactAbstractResource;
-import org.bonitasoft.store.artifactdeploy.DeployStrategy.DetectionStatus;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 public class DeployStrategyResource extends DeployStrategy {
@@ -29,25 +28,26 @@ public class DeployStrategyResource extends DeployStrategy {
         ArtifactAbstractResource artifactResource = (ArtifactAbstractResource) artifact;
         try {
             String logToDebug = "DeployStrategyResource.DetectDeployment: Detect for[" + artifactResource.getContentType() + "]";
-             Page page = searchPage(artifactResource,  bonitaAccessor );
-             if (page!=null) {
-                 artifactResource.bonitaBaseElement = page;
-                 deployOperation.presentDateArtifact = page.getLastModificationDate();
-                 deployOperation.presentVersionArtifact = null;
-                 logToDebug += "Found existing page deployed at " + page.getLastModificationDate();
+            Page page = searchPage(artifactResource, bonitaAccessor);
+            if (page != null) {
+                artifactResource.bonitaBaseElement = page;
+                deployOperation.presentDateArtifact = page.getLastModificationDate();
+                deployOperation.presentVersionArtifact = null;
+                logToDebug += "Found existing page deployed at " + page.getLastModificationDate();
 
-                 if (POLICY_NEWVERSION.BYDATE.equals(artifact.getPolicyNewVersion(deployParameters.policyNewVersion))) {
-                     if (artifactResource.getLastReleaseDate().before(page.getLastModificationDate())) {
-                         deployOperation.detectionStatus = DetectionStatus.SAME; // or OLD...
-                         deployOperation.report = "A version exists with the date more recent(" + DeployStrategy.sdf.format(page.getLastModificationDate()) + ")";
-                     } else {
-                         deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
-                         deployOperation.report = "The version is new";
-                     }
-                 } else {
-                     // well, no way to know
-                     deployOperation.detectionStatus = DetectionStatus.UNDETERMINED;
-                 }
+                if (POLICY_NEWVERSION.BYDATE.equals(artifact.getPolicyNewVersion(deployParameters.policyNewVersion))) {
+                    Date lastDateArtifact=artifactResource.getLastDateArtifact(); 
+                    if (lastDateArtifact!=null && lastDateArtifact.before(page.getLastModificationDate())) {
+                        deployOperation.detectionStatus = DetectionStatus.SAME; // or OLD...
+                        deployOperation.report = "A version exists with the date more recent(" + DeployStrategy.sdf.format(page.getLastModificationDate()) + ")";
+                    } else {
+                        deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
+                        deployOperation.report = "The version is new";
+                    }
+                } else {
+                    // well, no way to know
+                    deployOperation.detectionStatus = DetectionStatus.UNDETERMINED;
+                }
             }
             if (deployOperation.presentDateArtifact == null)
                 logToDebug += "Not exist;";
@@ -70,7 +70,7 @@ public class DeployStrategyResource extends DeployStrategy {
         ArtifactAbstractResource artefactResource = (ArtifactAbstractResource) artefact;
         String logToDebug = "DeployStrategyResource.deploy: Starting for[" + artefactResource.getName() + "];";
 
-        Page page = searchPage(artefactResource,  bonitaAccessor );
+        Page page = searchPage(artefactResource, bonitaAccessor);
 
         try {
             /**
@@ -110,15 +110,15 @@ public class DeployStrategyResource extends DeployStrategy {
 
         return deployOperation;
     }
-    
-    private Page searchPage(ArtifactAbstractResource artefactResource, BonitaStoreAccessor bonitaAccessor ) {
- try {
-            
+
+    private Page searchPage(ArtifactAbstractResource artefactResource, BonitaStoreAccessor bonitaAccessor) {
+        try {
+
             // pageAPI.getPageByName() doesn't work, search manually
             SearchOptionsBuilder searchOptionsBuilder = new SearchOptionsBuilder(0, 10000);
             searchOptionsBuilder.filter(PageSearchDescriptor.CONTENT_TYPE, artefactResource.getContentType());
             final SearchResult<Page> searchResultPage = bonitaAccessor.pageAPI.searchPages(searchOptionsBuilder.done());
-            String logToDebug = "DeployStrategyResource.DetectDeployment: Detect for[" + artefactResource.getContentType() + "]";
+            // String logToDebug = "DeployStrategyResource.DetectDeployment: Detect for[" + artefactResource.getContentType() + "]";
             for (final Page page : searchResultPage.getResult()) {
                 // logToDebug += "[" + page.getName() + "/" + page.getContentName() + "/" + page.getContentType() + "]";
                 if (page.getName().equalsIgnoreCase(artefactResource.getName()) && page.getContentType().equals(artefactResource.getContentType())) {
@@ -126,9 +126,8 @@ public class DeployStrategyResource extends DeployStrategy {
                 }
             }
             return null;
- }
- catch(Exception e) {
-     return null;
- }
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

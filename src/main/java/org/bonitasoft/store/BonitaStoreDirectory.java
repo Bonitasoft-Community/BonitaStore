@@ -81,7 +81,7 @@ public class BonitaStoreDirectory extends BonitaStore {
 
     @Override
     public String getName() {
-        return "Dir " + directoryFilePath;
+        return "Directory ";
     }
     @Override
     public String getExplanation() {

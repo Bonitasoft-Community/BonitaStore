@@ -1,5 +1,6 @@
 package org.bonitasoft.store;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,13 +10,23 @@ import java.util.Map;
 import org.apache.http.Header;
 import org.bonitasoft.engine.api.ApiAccessType;
 import org.bonitasoft.engine.api.LoginAPI;
+import org.bonitasoft.engine.api.PageAPI;
+import org.bonitasoft.engine.api.ProcessAPI;
 import org.bonitasoft.engine.api.TenantAPIAccessor;
+import org.bonitasoft.engine.page.ContentType;
+import org.bonitasoft.engine.page.Page;
+import org.bonitasoft.engine.page.PageSearchDescriptor;
+import org.bonitasoft.engine.search.SearchOptionsBuilder;
+import org.bonitasoft.engine.search.SearchResult;
 import org.bonitasoft.engine.session.APISession;
 import org.bonitasoft.engine.util.APITypeManager;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.log.event.BEventFactory;
+import org.bonitasoft.store.BonitaStoreBonitaExternalServer.RestApiResult;
 import org.bonitasoft.store.artifact.Artifact;
+import org.bonitasoft.store.artifact.FactoryArtifact;
+import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
 import org.bonitasoft.store.rest.Content;
 import org.bonitasoft.store.rest.RESTCall;
 import org.bonitasoft.store.rest.RESTCharsets;
@@ -23,7 +34,10 @@ import org.bonitasoft.store.rest.RESTHTTPMethod;
 import org.bonitasoft.store.rest.RESTRequest;
 import org.bonitasoft.store.rest.RESTResponse;
 import org.bonitasoft.store.toolbox.LoggerStore;
+import org.bonitasoft.store.toolbox.TypesCast;
 import org.json.simple.JSONValue;
+
+import com.sun.xml.bind.v2.util.TypeCast;
 
 /**
  * Access an external Bonita server
@@ -40,9 +54,14 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
     private static BEvent eventConnectionError = new BEvent(BonitaStoreBonitaExternalServer.class.getName(), 2,
             BEvent.Level.APPLICATIONERROR, "Connection error",
             "Connection is impossible (bad parameters, or server is not started", "Connection impossible", "Check the Bonita External server");
+
     private static BEvent eventErrorRestCall = new BEvent(BonitaStoreBonitaExternalServer.class.getName(), 3,
             BEvent.Level.APPLICATIONERROR, "Rest Call Error",
             "The REST Call failed", "Communication failed", "Check the Bonita External server");
+
+    private static BEvent eventErrorJavaCall = new BEvent(BonitaStoreBonitaExternalServer.class.getName(), 4,
+            BEvent.Level.APPLICATIONERROR, "Java Call Error",
+            "The Java Call failed", "Communication failed", "Check the Bonita External server");
     private static BEvent EVENT_NOT_IMPLEMENTED = new BEvent(BonitaStoreBonitaExternalServer.class.getName(), 4, Level.APPLICATIONERROR, "Not yet implemented", "The function is not yet implemented", "No valid return", "Wait the implementation");
 
     private int connectionTimeout = 60000; // 1 mn
@@ -55,6 +74,7 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
     private String applicationName; // "bonita"
     private String userName;
     private String password;
+    private int scopeInHour = 72 * 24;
 
     protected BonitaStoreBonitaExternalServer(String protocole, String server, int port, String applicationName, String userName, String password) {
         this.protocol = protocole;
@@ -70,6 +90,7 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
     public String getName() {
         return "BonitaExternalServer";
     }
+
     @Override
     public String getExplanation() {
         return "Give information to connect an External Bonita Server. All artifacts deployed on this server will be study to be deployed on this server.";
@@ -86,20 +107,126 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
         return false;
     }
 
-    private final static String CST_TYPE_EXERNALSERVER="ExternalServer";
-    
-    @Override 
+    private final static String CST_TYPE_BONITASERVER = "BonitaServer";
+
+    @Override
     public String getType() {
-        return CST_TYPE_EXERNALSERVER;
+        return CST_TYPE_BONITASERVER;
+    }
+
+    public int getScopeInHour() {
+        return scopeInHour;
+    };
+
+    public void setScopeInHour(int scopeInHour) {
+        this.scopeInHour = scopeInHour;
     }
 
     @Override
-    public void fullfillMap( Map<String,Object> map) {
+    public void fullfillMap(Map<String, Object> map) {
+        map.put("protocole", protocol);
+        map.put("host", server);
+        map.put("port", port);
+        map.put("applicationName", applicationName);
+        map.put("login", userName);
+        map.put("password", password);
+        map.put("scopeinhour", scopeInHour);
+    }
+
+    /**
+     * @param source
+     * @return
+     */
+    public static BonitaStore getInstancefromMap(Map<String, Object> source) {
+        try {
+            String type = (String) source.get(CST_BONITA_STORE_TYPE);
+            if (!CST_TYPE_BONITASERVER.equals(type))
+                return null;
+
+            String protocole = TypesCast.getString(source.get("protocole"), "http");
+            String server = TypesCast.getString(source.get("host"), null);
+            int port = TypesCast.getInteger(source.get("port"), 8080);
+            String applicationName = TypesCast.getString(source.get("applicationName"), "bonita");
+            String userName = TypesCast.getString(source.get("login"), null);
+            String password = TypesCast.getString(source.get("password"), null);
+            int scopeInHour = TypesCast.getInteger(source.get("scopeinhour"), 24 * 7);
+            BonitaStoreBonitaExternalServer store = new BonitaStoreBonitaExternalServer(protocole, server, port, applicationName, userName, password);
+            store.setScopeInHour(scopeInHour);
+            store.setDisplayName((String) source.get(CST_BONITA_STORE_DISPLAYNAME));
+            return store;
+        } catch (Exception e) {
+            return null;
+        }
+
     }
 
     @Override
     public BonitaStoreResult getListArtifacts(BonitaStoreParameters detectionParameters, LoggerStore loggerStore) {
         BonitaStoreResult storeResult = new BonitaStoreResult("getListContent");
+        FactoryArtifact factoryArtifact = FactoryArtifact.getInstance();
+        try {
+
+            // get list process
+            // get list ressource
+            // API/portal/page?p=0&c=1000&o=lastUpdateDate%20DESC&f=processDefinitionId%3d&f=isHidden%3dfalse&f=contentType%3dpage
+            String uri = "API/portal/page?p=0&c=1000";
+            RestApiResult restApiResult = callRestJson(uri.toString(), "GET", "", "application/json;charset=UTF-8", RESTCharsets.UTF_8.getValue());
+            storeResult.addEvents(restApiResult.listEvents);
+            if (restApiResult.httpStatus != 200) {
+                storeResult.addEvent(eventConnectionError);
+            }
+            if (BEventFactory.isError(storeResult.getEvents()))
+                return storeResult;
+            List<Map<String, Object>> listResources = (List<Map<String, Object>>) restApiResult.jsonResult;
+            for (Map<String, Object> mapResource : listResources) {
+                Artifact artifact = null;
+
+                if (Boolean.TRUE.equals(TypesCast.getBoolean(mapResource.get("isProvided"), false)))
+                    continue;
+                TypeArtifact type = null;
+                String name ="urlToken";
+                // the information behind page.getName() is the displayName in the REST Result !
+                
+                //              contentName                         displayName          urlToken                   page
+                // page         "CustomPageForklift-1.5.0.zip"      "ForkLift"           "custompage_forklift"      "custompage_ForkLift"
+                // RestApi      "custompage_contextaccess"          "Rest Context"       "custompage_ContextAccess" "custompage_contextaccess"
+                // Layout:      "layout-MyLayoutBlue.zip"           MyLayoutBlue         "custompage_MyLayoutBlue"
+                // theme:       contentName: "bonita-redtheme.zip"  "My Red theme"       "custompage_redthem"      "custompage_redtheme"
+                if ("page".equalsIgnoreCase(TypesCast.getString(mapResource.get("contentType"), ""))) {
+                    type = TypeArtifact.CUSTOMPAGE;
+                }
+                
+                if ("layout".equalsIgnoreCase(TypesCast.getString(mapResource.get("contentType"), ""))) {
+                    type = TypeArtifact.LAYOUT;
+                }
+
+                if ("theme".equalsIgnoreCase(TypesCast.getString(mapResource.get("contentType"), ""))) {
+                    type = TypeArtifact.THEME;
+                }
+
+                if ("form".equalsIgnoreCase(TypesCast.getString(mapResource.get("contentType"), ""))) {
+                    type = TypeArtifact.CUSTOMPAGE;
+                }
+
+                if ("apiExtension".equalsIgnoreCase(TypesCast.getString(mapResource.get("contentType"), ""))) {
+                    type = TypeArtifact.RESTAPI;
+                }
+
+                if (type != null)
+                    artifact = factoryArtifact.getFromType(type,
+                            TypesCast.getString(mapResource.get(name), ""), 
+                            null,
+                            TypesCast.getString(mapResource.get("description"), ""),
+                            TypesCast.getDateBonitaRest(mapResource.get("creationDate"), null),
+                            TypesCast.getDateBonitaRest(mapResource.get("lastUpdateDate"), null),
+                            this);
+
+                storeResult.addDetectedArtifact(detectionParameters, artifact);
+            }
+
+        } catch (Exception e) {
+            storeResult.addEvent(new BEvent(eventErrorJavaCall, e, "Call server[" + server + "] port[" + port + "]"));
+        }
 
         return storeResult;
     }
@@ -146,7 +273,7 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
         long timeBegin = System.currentTimeMillis();
         // create a new REST REQUEST
         restRequest = new RESTRequest();
-        restApiResult.listEvents.addAll( connectViaRestAPI());
+        restApiResult.listEvents.addAll(connectViaRestAPI());
         if (BEventFactory.isError(restApiResult.listEvents))
             return restApiResult;
 
@@ -178,7 +305,7 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
         long timeBegin = System.currentTimeMillis();
         // create a new REST REQUEST
         restRequest = new RESTRequest();
-        restApiResult.listEvents.addAll( connectViaRestAPI());
+        restApiResult.listEvents.addAll(connectViaRestAPI());
         if (BEventFactory.isError(restApiResult.listEvents))
             return restApiResult;
 
@@ -190,7 +317,7 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
             // do the call now
 
             restApiResult.restResponse = callRest(uri, method, body, contentType, charset);
-            
+
             restApiResult.httpStatus = restApiResult.restResponse.getStatusCode();
             // include the Connection and the result
             long timeEnd = System.currentTimeMillis();
@@ -205,7 +332,6 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
         return restApiResult;
     }
 
-    
     /* -------------------------------------------------------------------- */
     /*                                                                      */
     /* Connection */
@@ -237,7 +363,7 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
 
     }
 
-    public  List<Header> listHeaderRest = new ArrayList<>();;
+    public List<Header> listHeaderRest = new ArrayList<>();;
 
     /**
      * @return
@@ -269,13 +395,13 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
     private RESTResponse callRest(String uri, String method, String body, String contentType, String charset) throws Exception {
         // the RESTRequest restRequest must be created first. it contains all cookies
 
-        restRequest.headerUrl = protocol + "://" + server + ":" + port + "/" ;
+        restRequest.headerUrl = protocol + "://" + server + ":" + port + "/";
         // applicatione is based in the URI. In case of a redirect, we just need to call the same server, so end at the port number. The Redirect will contains the application name inside.
-        restRequest.uri =  applicationName + "/" + uri;
+        restRequest.uri = applicationName + "/" + uri;
         try {
             restRequest.calculateUrlFromUri();
         } catch (final MalformedURLException e) {
-            throw new BadUrlException(restRequest.headerUrl + restRequest.uri );
+            throw new BadUrlException(restRequest.headerUrl + restRequest.uri);
         }
 
         final Content content = new Content();
@@ -289,14 +415,15 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
         restRequest.setRestMethod(RESTHTTPMethod.getRESTHTTPMethodFromValue(method));
         //request.setRedirect(true);
         //request.setIgnore(false);
-        if (! listHeaderRest.isEmpty())
-            restRequest.addHeaders( listHeaderRest );
+        if (!listHeaderRest.isEmpty())
+            restRequest.addHeaders(listHeaderRest);
 
         return RESTCall.executeWithRedirect(restRequest, connectionTimeout);
 
     }
 
     private class BadUrlException extends Exception {
+
         private static final long serialVersionUID = 1L;
         public String url;
 

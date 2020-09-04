@@ -160,7 +160,7 @@ public class BonitaStoreBCD extends BonitaStore {
 
     
     public String getId() {
-        return "BCD-" + directoryFilePath;
+        return "BCD";
 
     }
 

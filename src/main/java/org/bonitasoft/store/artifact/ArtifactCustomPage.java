@@ -16,19 +16,16 @@ public class ArtifactCustomPage extends ArtifactAbstractResource {
     public String description;
     public Date dateCreation = new Date();
 
-    public ArtifactCustomPage(String name, String version, String description, Date dateCreation, BonitaStore sourceOrigin) {
-        super(TypeArtifact.CUSTOMPAGE, name, version, description, dateCreation, sourceOrigin);
+    public ArtifactCustomPage(String name, String version, String description, Date dateCreation, Date dateVersion, BonitaStore sourceOrigin) {
+        super(TypeArtifact.CUSTOMPAGE, name, version, description, dateCreation, dateVersion, sourceOrigin);
     }
 
-    public ArtifactCustomPage(File fileName, BonitaStore sourceOrigin) {
-        super(TypeArtifact.CUSTOMPAGE, "name", "1.0", "Description", new Date(), sourceOrigin);
+    public ArtifactCustomPage(File file, BonitaStore sourceOrigin) {
+        super(TypeArtifact.CUSTOMPAGE, "name", "1.0", "Description", new Date(file.lastModified()), new Date(file.lastModified()), sourceOrigin);
     }
 
     public ArtifactCustomPage(Page page, BonitaStore sourceOrigin) {
-        super(TypeArtifact.CUSTOMPAGE, page.getName(), "1.0", page.getDescription(), new Date(), sourceOrigin);
-        setProvided( page.isProvided());
-        setDisplayName( page.getDisplayName());
-        setBonitaBaseElement( page );
+        super(TypeArtifact.CUSTOMPAGE, page, sourceOrigin);
     }
 
     @Override
