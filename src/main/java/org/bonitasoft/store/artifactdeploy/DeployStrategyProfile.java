@@ -30,20 +30,20 @@ public class DeployStrategyProfile extends DeployStrategy {
 
                     if (profile.getLastUpdateDate().equals(artefactProfile.getDate())) {
                         deployOperation.detectionStatus = DetectionStatus.SAME;
-                        deployOperation.report = "the profile exist with the same date (" + sdf.format(artefactProfile.getDate()) + ")";
+                        deployOperation.addAnalysisLine( "the profile exist with the same date (" + sdf.format(artefactProfile.getDate()) + ")");
 
                     } else if (profile.getLastUpdateDate().before(artefactProfile.getDate())) {
                         deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
-                        deployOperation.report = "The profile has a newest date";
+                        deployOperation.addAnalysisLine( "The profile has a newest date" );
 
                     } else {
                         deployOperation.detectionStatus = DetectionStatus.OLDVERSION;
-                        deployOperation.report = "The profile on the server is newest";
+                        deployOperation.addAnalysisLine( "The profile on the server is newest" );
                     }
                     return deployOperation;
                 }
             }
-            deployOperation.report = "This profile is new";
+            deployOperation.addReportLine( "This profile is new" );
             deployOperation.detectionStatus = DetectionStatus.NEWARTEFAC;
         } catch (Exception e) {
             deployOperation.listEvents.add(new BEvent(EventErrorAtDetection, e, "Profile name[" + artefactProfile.getName() + "]"));

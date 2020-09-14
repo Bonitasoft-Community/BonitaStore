@@ -2,28 +2,32 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.bonitasoft.store</groupId>
 	<artifactId>bonita-store</artifactId>
-	<version>2.4.0</version>
+	<version>2.5.0</version>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-	</properties>
+	    <bonita.version>7.10.0</bonita.version>
+    </properties>
 	<dependencies>
 
 
 		<dependency>
 			<groupId>org.bonitasoft.engine</groupId>
 			<artifactId>bonita-client</artifactId>
-			<version>7.9.0</version>
+            <version>${bonita.version}</version>
 		</dependency>
+		<!--  This library is not need by BonitaStore itself, but for any other external usage of the BonitaStoreAccessorClient (like in the mvn install which use this java soft to deploy the page), this is required to create the profile -->
+		<!--  mvn install  -->
 		<dependency>
 			<groupId>com.bonitasoft.engine</groupId>
 			<artifactId>bonita-client-sp</artifactId>
-			<version>7.9.0</version>
+            <version>${bonita.version}</version>
 		</dependency>
+		 
 		<dependency>
 			<groupId>org.bonitasoft.engine</groupId>
 			<artifactId>bonita-server</artifactId>
-			<version>7.9.0</version>
+            <version>${bonita.version}</version>
 		</dependency>
 
 		<dependency>

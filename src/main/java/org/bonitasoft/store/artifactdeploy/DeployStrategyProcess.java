@@ -52,7 +52,6 @@ public class DeployStrategyProcess extends DeployStrategy {
 
     protected final static BEvent EventProcessCategoryError = new BEvent(DeployStrategyProcess.class.getName(), 5, Level.APPLICATIONERROR, "Can't create a category", "A category can't be created", "Process is not registered in the category", "Check the exception");
 
-    
     protected final static BEvent EventProcessCategoryReferenced = new BEvent(DeployStrategyProcess.class.getName(), 6, Level.SUCCESS, "Process Manager referenced in category", "Process is referenced in category");
 
     /* *********************************************************************** */
@@ -66,70 +65,47 @@ public class DeployStrategyProcess extends DeployStrategy {
     public DeployOperation detectDeployment(Artifact process, BonitaStoreParameters deployParameters, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
         DeployOperation deployOperation = new DeployOperation();
         deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
-
-        Long processDefinitionId = null;
         try {
-            // bob
-            SearchOptionsBuilder sob = new SearchOptionsBuilder(0, 100);
-            sob.filter(ProcessDeploymentInfoSearchDescriptor.NAME, process.getName());
-            SearchResult<ProcessDeploymentInfo> searchResult = bonitaAccessor.processAPI.searchProcessDeploymentInfos(sob.done());
-            // search for the same version maybe
-            for (ProcessDeploymentInfo processDeploymentInfo : searchResult.getResult())
-            {
-                // all the process should have the same name, so set it because the file may not respect the correct casse
-                if (processDefinitionId==null) {
-                    processDefinitionId = processDeploymentInfo.getProcessId();
-                    process.setName(processDeploymentInfo.getName());
-                    process.setDisplayName(processDeploymentInfo.getDisplayName());
-                }
+            deployOperation.addReportLine("Search process[" + process.getName() + "] Version[" + process.getVersion() + "] ");
 
-                // if we have the same version here, then set the processDefinition
-                if (processDeploymentInfo.getVersion().equalsIgnoreCase(process.getVersion())) {
-                    processDefinitionId= processDeploymentInfo.getProcessId();
-                    process.setVersion( processDeploymentInfo.getVersion() );
-                }
-            }
-            // processDefinitionId = bonitaAccessor.processAPI.getProcessDefinitionId(process.getName(), process.getVersion());
+            ProcessResult processResult = searchProcess(process, deployParameters, bonitaAccessor, logBox);
 
-        } catch ( SearchException pe) {
-            // nothing to do here
-        }
+            for (String analysis : processResult.analysis)
+                deployOperation.addReportLine(analysis);
 
-        if (processDefinitionId==null)
-        {
-            deployOperation.detectionStatus = DetectionStatus.NEWARTEFAC;
-            deployOperation.report = "This process is completely new";
-        } else {
-            try {
-                ProcessDeploymentInfo processDeploymentInfo = bonitaAccessor.processAPI.getProcessDeploymentInfo(processDefinitionId);
-                deployOperation.presentDateArtifact = processDeploymentInfo.getDeploymentDate();
+            if (processResult.bestProposition == null) {
+                deployOperation.detectionStatus = DetectionStatus.NEWARTEFAC;
+                deployOperation.addReportLine("This process is completely new");
+            } else {
+
+                deployOperation.presentDateArtifact = processResult.bestProposition.getDeploymentDate();
                 deployOperation.presentVersionArtifact = process.getVersion();
                 // we base the deployment status on what ? 
-                if (POLICY_NEWVERSION.BYDATE.equals( process.getPolicyNewVersion( deployParameters.policyNewVersion))) 
-                {
-                    if (processDeploymentInfo.getDeploymentDate().equals(process.getDate())) {
-    
-                        process.bonitaBaseElement = bonitaAccessor.processAPI.getProcessDefinition(processDeploymentInfo.getProcessId());
-    
+                if (POLICY_NEWVERSION.BYDATE.equals(process.getPolicyNewVersion(deployParameters.policyNewVersion))) {
+                    if (processResult.bestProposition.getDeploymentDate().equals(process.getDate())) {
+
+                        process.bonitaBaseElement = bonitaAccessor.processAPI.getProcessDefinition(processResult.bestProposition.getProcessId());
+
                         deployOperation.detectionStatus = DetectionStatus.SAME;
-                        deployOperation.report = "A version exists with the same date (" + DeployStrategy.sdf.format(process.getDate()) + ")";
-                    } else if (processDeploymentInfo.getDeploymentDate().before(process.getDate())) {
+                        deployOperation.addAnalysisLine("A version exists with the same date (" + DeployStrategy.sdf.format(process.getDate()) + ")");
+                    } else if (processResult.bestProposition.getDeploymentDate().before(process.getDate())) {
                         deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
-                        deployOperation.report = "The version is new";
+                        deployOperation.addAnalysisLine("The version is new");
                     } else {
                         deployOperation.detectionStatus = DetectionStatus.OLDVERSION;
-                        deployOperation.report = "The version is older, you should ignore this process";
+                        deployOperation.addAnalysisLine("The version is older, you should ignore this process");
                     }
-                }
-                else {
+                } else {
                     // the process, at this version, must not exist
                     deployOperation.detectionStatus = DetectionStatus.SAME;
                 }
-                return deployOperation;
-            } catch (ProcessDefinitionNotFoundException pe) {
-                // this one is not normal : engine just get back the processDefinitionId
             }
+            return deployOperation;
+        } catch (Exception pe) {
+            // this one is not normal : engine just get back the processDefinitionId
+            deployOperation.addAnalysisLine("Process not found " + pe.getMessage());
         }
+
         return deployOperation;
     }
 
@@ -145,13 +121,14 @@ public class DeployStrategyProcess extends DeployStrategy {
         boolean doLoad = true;
         // if the artifact is not loaded, stop now
         if (!process.isLoaded()) {
-            deployOperation.listEvents.add(new BEvent(EventProcessNotLoaded, getLabelProcess( process )));
+            deployOperation.listEvents.add(new BEvent(EventProcessNotLoaded, getLabelProcess(process)));
             doLoad = false;
         }
 
         // first, delete the current one
         if (doLoad) {
             try {
+                // Here, the procesds Name and the process Version is updated from the database.
                 SearchOptionsBuilder sob = new SearchOptionsBuilder(0, 100);
                 sob.filter(ProcessDeploymentInfoSearchDescriptor.NAME, process.getName());
                 sob.filter(ProcessDeploymentInfoSearchDescriptor.VERSION, process.getVersion());
@@ -172,9 +149,9 @@ public class DeployStrategyProcess extends DeployStrategy {
                 doLoad = true; // this not exist
             } catch (DeletionException | ProcessActivationException e) {
                 if (e.getMessage().contains("active process instance"))
-                    deployOperation.listEvents.add(new BEvent(EventCantRemoveCurrentProcess, "Active instances in "+getLabelProcess( process ) ));
+                    deployOperation.listEvents.add(new BEvent(EventCantRemoveCurrentProcess, "Active instances in " + getLabelProcess(process)));
                 else
-                    deployOperation.listEvents.add(new BEvent(EventCantRemoveCurrentProcess, e, getLabelProcess( process ) ));
+                    deployOperation.listEvents.add(new BEvent(EventCantRemoveCurrentProcess, e, getLabelProcess(process)));
                 doLoad = false;
             }
         }
@@ -182,8 +159,7 @@ public class DeployStrategyProcess extends DeployStrategy {
 
             try {
                 // bonitaAccessor.processAPI.deployAndEnableProcess(businessArchive);
-                
-                
+
                 ProcessDefinition processDefinition = bonitaAccessor.processAPI.deploy(((ArtifactProcess) process).getBusinessArchive());
                 deployOperation.deploymentStatus = DeploymentStatus.LOADED;
 
@@ -282,18 +258,18 @@ public class DeployStrategyProcess extends DeployStrategy {
         String listCategoryString = description.substring(pos + CST_CATEGORY.length());
         pos = listCategoryString.toUpperCase().indexOf('\n');
         if (pos != -1)
-            listCategoryString = listCategoryString.substring(0,pos);
+            listCategoryString = listCategoryString.substring(0, pos);
         // search the end of the line
         StringTokenizer st = new StringTokenizer(listCategoryString, ",");
         List<Category> listPortalCategory = bonitaAccessor.processAPI.getCategories(0, 10000, CategoryCriterion.NAME_ASC);
-        Map<String,Category> mapPortalCategory = new HashMap<>();
+        Map<String, Category> mapPortalCategory = new HashMap<>();
         for (Category categoryI : listPortalCategory) {
-            mapPortalCategory.put( categoryI.getName(),  categoryI);
+            mapPortalCategory.put(categoryI.getName(), categoryI);
         }
         List<Long> categoryIds = new ArrayList<>();
         // generate one category per string
         String categoryName = "";
-        StringBuilder categoryNameList= new StringBuilder();
+        StringBuilder categoryNameList = new StringBuilder();
         try {
             while (st.hasMoreTokens()) {
                 categoryName = st.nextToken();
@@ -305,13 +281,13 @@ public class DeployStrategyProcess extends DeployStrategy {
                     mapPortalCategory.put(category.getName(), category);
                 }
                 categoryIds.add(category.getId());
-                categoryNameList.append(category.getName()+",");
+                categoryNameList.append(category.getName() + ",");
             }
             if (categoryIds.isEmpty())
                 return listEvents;
 
             bonitaAccessor.processAPI.addCategoriesToProcess(processDefinition.getId(), categoryIds);
-            listEvents.add( new BEvent(EventProcessCategoryReferenced, categoryNameList.toString()));
+            listEvents.add(new BEvent(EventProcessCategoryReferenced, categoryNameList.toString()));
 
         } catch (CreationException e) {
             listEvents.add(new BEvent(EventProcessCategoryError, e, "Category [" + categoryName + "]"));
@@ -319,8 +295,52 @@ public class DeployStrategyProcess extends DeployStrategy {
 
         return listEvents;
     }
-    
+
     private String getLabelProcess(Artifact process) {
         return "Process Name[" + process.getName() + "] Version[" + process.getVersion() + "]";
+    }
+
+    /**
+     * Search the process
+     * Name must be the same, but the version may be different *
+     */
+    private class ProcessResult {
+
+        SearchResult<ProcessDeploymentInfo> searchResult;
+        ProcessDeploymentInfo bestProposition = null;
+        List<String> analysis = new ArrayList();
+    }
+
+    private ProcessResult searchProcess(Artifact process, BonitaStoreParameters deployParameters, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+        ProcessResult processResult = new ProcessResult();
+        try {
+            SearchOptionsBuilder sob = new SearchOptionsBuilder(0, 100);
+            sob.filter(ProcessDeploymentInfoSearchDescriptor.NAME, process.getName());
+            processResult.searchResult = bonitaAccessor.processAPI.searchProcessDeploymentInfos(sob.done());
+            // search for the same version maybe
+            for (ProcessDeploymentInfo processDeploymentInfo : processResult.searchResult.getResult()) {
+                String reportLine = " Found [" + processDeploymentInfo.getName() + "] Version[" + processDeploymentInfo.getVersion()
+                        + "] Deployed at " + DeployStrategy.sdf.format(processDeploymentInfo.getDeploymentDate());
+                // all the process should have the same name, so set it because the file may not respect the correct casse
+                if (processResult.bestProposition == null) {
+                    processResult.bestProposition = processDeploymentInfo;
+                    process.setName(processDeploymentInfo.getName());
+                    process.setDisplayName(processDeploymentInfo.getDisplayName());
+                }
+
+                // if we have the same version here, then set the processDefinition
+                if (processDeploymentInfo.getVersion().equalsIgnoreCase(process.getVersion())) {
+                    processResult.bestProposition = processDeploymentInfo;
+                    process.setName(processDeploymentInfo.getName());
+                    process.setVersion(processDeploymentInfo.getVersion());
+                    reportLine += " MATCH ";
+                }
+                processResult.analysis.add(reportLine);
+            }
+        } catch (SearchException pe) {
+            // nothing to do here
+            processResult.analysis.add("Search Exception " + pe.getMessage());
+        }
+        return processResult;
     }
 }

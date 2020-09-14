@@ -66,8 +66,17 @@ public abstract class DeployStrategy {
         public String presentVersionArtifact;
 
         public List<BEvent> listEvents = new ArrayList<>();
-        public String report;
-
+        
+        public StringBuilder analysis = new StringBuilder();
+        public void addAnalysisLine(String line) {
+            analysis.append(line+"\n");
+            addReportLine( line );
+        };
+        
+        public StringBuilder report = new StringBuilder();
+        public void addReportLine(String line) {
+            report.append(line+"\n");
+        }
     }
 
     public UPDATE_STRATEGY getUpdateStrategy() {
