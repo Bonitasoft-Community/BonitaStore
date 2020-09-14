@@ -32,10 +32,10 @@ public class DeployStrategyLivingApplication extends DeployStrategy {
                 if (POLICY_NEWVERSION.BYDATE.equals(artifact.getPolicyNewVersion(deployParameters.policyNewVersion))) {
                     if (artifact.getLastReleaseDate().before(application.getLastUpdateDate())) {
                         deployOperation.detectionStatus = DetectionStatus.SAME; // or OLD...
-                        deployOperation.report = "A version exists with the date more recent(" + DeployStrategy.sdf.format(application.getLastUpdateDate()) + ")";
+                        deployOperation.addAnalysisLine( "A version exists with the date more recent(" + DeployStrategy.sdf.format(application.getLastUpdateDate()) + ")");
                     } else {
                         deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
-                        deployOperation.report = "The version is new";
+                        deployOperation.addAnalysisLine( "The version is new");
                     }
                 } else {
                     // well, no way to know

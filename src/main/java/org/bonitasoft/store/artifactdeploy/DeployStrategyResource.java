@@ -39,10 +39,10 @@ public class DeployStrategyResource extends DeployStrategy {
                     Date lastDateArtifact=artifactResource.getLastDateArtifact(); 
                     if (lastDateArtifact!=null && lastDateArtifact.before(page.getLastModificationDate())) {
                         deployOperation.detectionStatus = DetectionStatus.SAME; // or OLD...
-                        deployOperation.report = "A version exists with the date more recent(" + DeployStrategy.sdf.format(page.getLastModificationDate()) + ")";
+                        deployOperation.addAnalysisLine( "A version exists with the date more recent(" + DeployStrategy.sdf.format(page.getLastModificationDate()) + ")");
                     } else {
                         deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
-                        deployOperation.report = "The version is new";
+                        deployOperation.addAnalysisLine( "The version is new" );
                     }
                 } else {
                     // well, no way to know
@@ -55,6 +55,7 @@ public class DeployStrategyResource extends DeployStrategy {
         } catch (Exception e) {
             deployOperation.detectionStatus = DetectionStatus.DETECTIONFAILED;
             deployOperation.listEvents.add(new BEvent(EventErrorAtDetection, e, "Page [" + artifactResource.getName() + "]"));
+            deployOperation.addReportLine("Exception "+e.getMessage());
             logBox.severe("DeployStrategyResource: DetectionFailed " + e.getMessage());
         }
         // do not update the deployStatus: the synchronize will do it
