@@ -22,8 +22,9 @@ public class DeployStrategyProfile extends DeployStrategy {
         try {
             SearchResult<Profile> searchProfile = bonitaAccessor.profileAPI.searchProfiles(new SearchOptionsBuilder(0, 1000).done());
             for (Profile profile : searchProfile.getResult()) {
-                if (profile.getName().equals(artefactProfile.getName())) {
-
+                // in Bonita, profileis case unsensitive
+                if (profile.getName().equalsIgnoreCase(artefactProfile.getName())) {
+                    artefactProfile.setName( profile.getName() ); // override the real name
                     artefactProfile.bonitaBaseElement = profile;
 
                     deployOperation.presentDateArtifact = profile.getLastUpdateDate();

@@ -1,6 +1,5 @@
 package org.bonitasoft.store;
 
-import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,23 +9,16 @@ import java.util.Map;
 import org.apache.http.Header;
 import org.bonitasoft.engine.api.ApiAccessType;
 import org.bonitasoft.engine.api.LoginAPI;
-import org.bonitasoft.engine.api.PageAPI;
-import org.bonitasoft.engine.api.ProcessAPI;
 import org.bonitasoft.engine.api.TenantAPIAccessor;
-import org.bonitasoft.engine.page.ContentType;
-import org.bonitasoft.engine.page.Page;
-import org.bonitasoft.engine.page.PageSearchDescriptor;
-import org.bonitasoft.engine.search.SearchOptionsBuilder;
-import org.bonitasoft.engine.search.SearchResult;
 import org.bonitasoft.engine.session.APISession;
 import org.bonitasoft.engine.util.APITypeManager;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.log.event.BEventFactory;
-import org.bonitasoft.store.BonitaStoreBonitaExternalServer.RestApiResult;
 import org.bonitasoft.store.artifact.Artifact;
-import org.bonitasoft.store.artifact.FactoryArtifact;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
+import org.bonitasoft.store.artifact.FactoryArtifact;
+import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
 import org.bonitasoft.store.rest.Content;
 import org.bonitasoft.store.rest.RESTCall;
 import org.bonitasoft.store.rest.RESTCharsets;
@@ -36,8 +28,6 @@ import org.bonitasoft.store.rest.RESTResponse;
 import org.bonitasoft.store.toolbox.LoggerStore;
 import org.bonitasoft.store.toolbox.TypesCast;
 import org.json.simple.JSONValue;
-
-import com.sun.xml.bind.v2.util.TypeCast;
 
 /**
  * Access an external Bonita server
@@ -171,16 +161,17 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
             // API/portal/page?p=0&c=1000&o=lastUpdateDate%20DESC&f=processDefinitionId%3d&f=isHidden%3dfalse&f=contentType%3dpage
             String uri = "API/portal/page?p=0&c=1000";
             RestApiResult restApiResult = callRestJson(uri.toString(), "GET", "", "application/json;charset=UTF-8", RESTCharsets.UTF_8.getValue());
-            storeResult.addEvents(restApiResult.listEvents);
-            if (restApiResult.httpStatus != 200) {
+
+            if (restApiResult.httpStatus != 200) { // replace the event 
                 storeResult.addEvent(eventConnectionError);
+            } else {
+                storeResult.addEvents(restApiResult.listEvents);
             }
             if (BEventFactory.isError(storeResult.getEvents()))
                 return storeResult;
+            @SuppressWarnings("unchecked")
             List<Map<String, Object>> listResources = (List<Map<String, Object>>) restApiResult.jsonResult;
             for (Map<String, Object> mapResource : listResources) {
-                Artifact artifact = null;
-
                 if (Boolean.TRUE.equals(TypesCast.getBoolean(mapResource.get("isProvided"), false)))
                     continue;
                 TypeArtifact type = null;
@@ -212,16 +203,18 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
                     type = TypeArtifact.RESTAPI;
                 }
 
-                if (type != null)
-                    artifact = factoryArtifact.getFromType(type,
+                if (type != null) {
+                    ArtifactResult artifactResult = new ArtifactResult();
+                    artifactResult.artifact = factoryArtifact.getFromType(type,
                             TypesCast.getString(mapResource.get(name), ""), 
                             null,
                             TypesCast.getString(mapResource.get("description"), ""),
                             TypesCast.getDateBonitaRest(mapResource.get("creationDate"), null),
                             TypesCast.getDateBonitaRest(mapResource.get("lastUpdateDate"), null),
                             this);
-
-                storeResult.addDetectedArtifact(detectionParameters, artifact);
+                     
+                    storeResult.addDetectedArtifact(detectionParameters, artifactResult);
+                }
             }
 
         } catch (Exception e) {

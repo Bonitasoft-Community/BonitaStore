@@ -7,6 +7,7 @@ import org.bonitasoft.engine.profile.Profile;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEventFactory;
 import org.bonitasoft.store.artifact.Artifact;
+import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 /**
@@ -26,7 +27,7 @@ public class BonitaStoreResult {
 
     public boolean isAllowAddProfile = false;
 
-    public List<Artifact> listArtifacts = new ArrayList<>();
+    public List<ArtifactResult> listArtifacts = new ArrayList<>();
     // public Map<String, Object> mStatusResultJson = new HashMap<String,
     // Object>();
 
@@ -62,7 +63,7 @@ public class BonitaStoreResult {
     public void addEvent(final BEvent event) {
         BEventFactory.addEventUniqueInList(listEvents, event);
         if (event.isError()) {
-            LoggerStore.logger.severe("FoodTruck.toolbox: Error " + event.toString());
+            LoggerStore.logger.severe("BonitaStoreResult: Error " + event.toString());
         }
     }
 
@@ -70,7 +71,7 @@ public class BonitaStoreResult {
         BEventFactory.addListEventsUniqueInList(listEvents, events);
         for (final BEvent event : events) {
             if (event.isError()) {
-                LoggerStore.logger.severe("FoodTruck.toolbox: Error " + event.toString());
+                LoggerStore.logger.severe("BonitaStoreResult: Error " + event.toString());
             }
         }
     }
@@ -100,9 +101,9 @@ public class BonitaStoreResult {
      * @return
      */
     public Artifact getArtefactByName(final String name) {
-        for (final Artifact apps : listArtifacts) {
-            if (apps.getName().equalsIgnoreCase(name)) {
-                return apps;
+        for (final ArtifactResult apps : listArtifacts) {
+            if (apps.artifact.getName().equalsIgnoreCase(name)) {
+                return apps.artifact;
             }
         }
         return null;
@@ -129,9 +130,9 @@ public class BonitaStoreResult {
      * @param detectionParameters
      * @param artifact
      */
-    public void addDetectedArtifact(BonitaStoreParameters detectionParameters, Artifact artifact) {
-        if (detectionParameters.listTypeArtifacts.contains( artifact.getType()))
-            listArtifacts.add( artifact);
+    public void addDetectedArtifact(BonitaStoreParameters detectionParameters, ArtifactResult artifactResult) {
+        if (detectionParameters.listTypeArtifacts.contains( artifactResult.artifact.getType()))
+            listArtifacts.add( artifactResult );
         
     }
 }

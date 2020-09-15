@@ -52,7 +52,8 @@ public abstract class DeployStrategy {
     public static class DeployOperation {
 
         public Artifact artifact;
-        /**
+        
+          /**
          * in case of detection, the deployStatus is updated
          */
         public DetectionStatus detectionStatus;
@@ -67,7 +68,17 @@ public abstract class DeployStrategy {
 
         public List<BEvent> listEvents = new ArrayList<>();
         
+        /**
+         * Analysis is a sentence,a synthesis
+         */
         public StringBuilder analysis = new StringBuilder();
+        
+        
+        /**
+         *  Log analysis on the detection
+         */
+        public StringBuilder logAnalysis = new StringBuilder();
+   
         public void addAnalysisLine(String line) {
             analysis.append(line+"\n");
             addReportLine( line );
@@ -76,6 +87,7 @@ public abstract class DeployStrategy {
         public StringBuilder report = new StringBuilder();
         public void addReportLine(String line) {
             report.append(line+"\n");
+            logAnalysis.append(line+";");
         }
     }
 

@@ -120,12 +120,13 @@ public class BonitaStoreDirectory extends BonitaStore {
 
                 String fileName = fileContent.getName();
 
-                String logAnalysis = "analysis[" + fileName + "]";
+                StringBuffer logAnalysis = new StringBuffer();
 
                 ArtifactResult artifactResult = factoryArtifact.getInstanceArtefact(fileName, new BonitaStoreInputFile( fileContent), false, this, logBox);
+                logAnalysis.append( artifactResult.logAnalysis);
                 // directory can contains additional file : no worry about that
                 if (artifactResult.listEvents.size() == 1 && artifactResult.listEvents.get(0).isSameEvent(FactoryArtifact.EVENT_NO_DETECTION)) {
-                    logAnalysis += "File not recognized";
+                    logAnalysis.append(  "File not recognized;");
                     logBox.info("BonitaStore.SourceDirectory " + logAnalysis);
                     continue;
                 }
@@ -133,9 +134,9 @@ public class BonitaStoreDirectory extends BonitaStore {
                 if (artifactResult.artifact != null && detectionParameters.listTypeArtifacts.contains( artifactResult.artifact.getType())) {
                     artifactResult.artifact.setFileName(fileName);
 
-                    storeResult.addDetectedArtifact(detectionParameters, artifactResult.artifact);
+                    storeResult.addDetectedArtifact(detectionParameters, artifactResult);
                 }
-                logBox.info("BonitaStore.SourceDirectory " + logAnalysis);
+                logBox.info("BonitaStore.SourceDirectory " + logAnalysis.toString());
 
             }
         } catch (Exception e) {

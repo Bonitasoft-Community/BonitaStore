@@ -9,7 +9,9 @@ import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.log.event.BEventFactory;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
+import org.bonitasoft.store.artifact.ArtifactRestApi;
 import org.bonitasoft.store.artifact.FactoryArtifact;
+import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
 import org.bonitasoft.store.source.git.GithubAccessor;
 import org.bonitasoft.store.source.git.GithubAccessor.ResultGithub;
 import org.bonitasoft.store.toolbox.LoggerStore;
@@ -160,21 +162,22 @@ public class BonitaStoreGit extends BonitaStore {
             // this is what we search
 
             FactoryArtifact factoryArtefact = FactoryArtifact.getInstance();
+            ArtifactResult artifactResult = new ArtifactResult();
 
-            final Artifact artefactItem = factoryArtefact.getFromType(typeArtefact, (String) oneRepository.get("name"), null,
+            artifactResult.artifact = factoryArtefact.getFromType(typeArtefact, (String) oneRepository.get("name"), null,
                     (String) oneRepository.get("description"),
                     null,
                     null,
                     this);
 
-            if (artefactItem == null) {
+            if (artifactResult.artifact == null) {
                 continue;
             }
 
             // set the name. If a page.properties exist, then we will get the
             // information inside
-            String traceOneApps = "name[" + artefactItem.getBonitaName() + "]";
-            String shortName = artefactItem.getName();
+            String traceOneApps = "name[" + artifactResult.artifact.getBonitaName() + "]";
+            String shortName = artifactResult.artifact.getName();
             if (shortName.toUpperCase().startsWith(typeArtefact.toString().toUpperCase() + "_")) {
                 // remove the typeApps
                 shortName = shortName.substring(typeArtefact.toString().length() + 1);
@@ -182,15 +185,15 @@ public class BonitaStoreGit extends BonitaStore {
 
             // --------------------- Content
             // Logo and documentation
-            artefactItem.urlContent = (String) oneRepository.get("url");
-            artefactItem.urlDownload = (String) oneRepository.get("download_url");
+            artifactResult.artifact.urlContent = (String) oneRepository.get("url");
+            artifactResult.artifact.urlDownload = (String) oneRepository.get("download_url");
 
             logBox.log(LoggerStore.LOGLEVEL.INFO, traceOneApps);
-            if (!artefactItem.isAvailable()) {
+            if (!artifactResult.artifact.isAvailable()) {
                 if (detectionParameters.withNotAvailable)
-                    storeResult.addDetectedArtifact(detectionParameters, artefactItem);
+                    storeResult.addDetectedArtifact(detectionParameters, artifactResult);
             } else
-                storeResult.addDetectedArtifact(detectionParameters, artefactItem);
+                storeResult.addDetectedArtifact(detectionParameters, artifactResult);
         } // end loop repo
 
         storeResult.endOperation();

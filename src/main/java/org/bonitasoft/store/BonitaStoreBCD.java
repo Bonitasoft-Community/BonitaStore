@@ -200,7 +200,7 @@ public class BonitaStoreBCD extends BonitaStore {
                                 if (fileBConf.exists() && artifactResult.artifact instanceof ArtifactProcess)
                                     ((ArtifactProcess)artifactResult.artifact).setFileToCompleteTheBar( fileBConf );
                                 
-                                storeResult.addDetectedArtifact(detectionParameters, artifactResult.artifact);
+                                storeResult.addDetectedArtifact(detectionParameters, artifactResult);
                             }
                         }
                     }

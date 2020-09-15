@@ -53,14 +53,14 @@ public class FactoryArtifact {
     public static class ArtifactResult {
 
         public Artifact artifact;
-        public String logAnalysis = "";
+        public StringBuilder logAnalysis = new StringBuilder();
         public List<BEvent> listEvents = new ArrayList<>();
     }
 
     public ArtifactResult getInstanceArtefact(String fileName, BonitaStoreInput fileContent, boolean loadArtifact, BonitaStore bonitaStore,  LoggerStore logStore) {
         ArtifactResult artefactResult = new ArtifactResult();
 
-        artefactResult.logAnalysis = "analysis[" + fileName + "]";
+        artefactResult.logAnalysis.append( "analysis File[" + fileName + "]");
         Date dateFile = null;
         try {
             // JDK 1.7
@@ -85,7 +85,7 @@ public class FactoryArtifact {
                 // remove .bar
                 processVersion = processVersion.substring(0, processVersion.length() - 4); 
                 processVersion = processVersion.trim();
-                artefactResult.logAnalysis += "Process[" + processName + "] version[" + processVersion + "] detected";
+                artefactResult.logAnalysis.append( "Process[" + processName + "] version[" + processVersion + "] detected from filename;");
                 // Note: this name / version may be completely wrong actually, there is no way to detect it (no way to load the business Archive and ask the name....)
                 artefactResult.artifact = new ArtifactProcess(processName, processVersion, "", dateFile, dateFile, bonitaStore);
             }
@@ -112,7 +112,7 @@ public class FactoryArtifact {
                         profileNamePos += "name=\"".length();
                         int endProfileName = content.indexOf('\"', profileNamePos);
                         String name = content.substring(profileNamePos, endProfileName);
-                        artefactResult.logAnalysis += "profile[" + name + "] detected";
+                        artefactResult.logAnalysis.append( "Profile[" + name + "] detected from XML["+fileName+"];");
 
                         artefactResult.artifact = new ArtifactProfile(name, null, "", dateFile, dateFile, bonitaStore);
                     }
@@ -120,13 +120,14 @@ public class FactoryArtifact {
                 if (content.startsWith("<customUserInfoDefinitions")) {
                     // this is an organization
                     String name = fileName.substring(0, fileName.length() - ".xml".length());
+                    artefactResult.logAnalysis.append( "Organisation[" + name + "] detected from XML["+fileName+"];");
                     artefactResult.artifact = new ArtifactOrganization(name, null, "", dateFile, dateFile, bonitaStore);
                 }
                 if (content.startsWith("<application")) {
                     // we may have MULTIPLE application, so the first one is important
                     String name = searchInXmlContent(content, "displayName");
                     String description = searchInXmlContent(content, "description");
-                    artefactResult.logAnalysis += "Application[" + name + "] detected";
+                    artefactResult.logAnalysis.append( "Application[" + name + "] detected from XML["+fileName+"];");
 
                     artefactResult.artifact = new ArtifactLivingApplication(name, null, description, dateFile, dateFile, bonitaStore);
                 }
@@ -136,16 +137,16 @@ public class FactoryArtifact {
                     if (name.endsWith(".xml"))
                         name=name.substring(0,name.length()-".xml".length());
                     String description = "organization";
-                    artefactResult.logAnalysis += "Application[" + name + "] detected";
+                    artefactResult.logAnalysis.append( "Organisation[" + name + "] detected from XML["+fileName+"];");
 
                     artefactResult.artifact = new ArtifactOrganization(name, null, description, dateFile, dateFile, bonitaStore);
                 }
                
             } catch (Exception e) {
-                
+                // ignore error here, just we can't manage the detection                
             }
 
-        } else if (fileName.endsWith(".zip")) {
+        } else if (fileName.endsWith(".zip") && ! fileName.equals("bdm.zip")) {
             try {
             InputStream contentStream = fileContent.getContentInputStream();
 
@@ -163,33 +164,39 @@ public class FactoryArtifact {
             }
 
             if (propertiesAttribute.contentType == null || "page".equals(propertiesAttribute.contentType)) {
+                artefactResult.logAnalysis.append( "CustomPage[" + propertiesAttribute.name + "] detected from Properties["+fileName+"];");
                 artefactResult.artifact = new ArtifactCustomPage(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile, bonitaStore);
 
             } else if ("apiExtension".equalsIgnoreCase(propertiesAttribute.contentType)) {
+                artefactResult.logAnalysis.append( "RestAPIExtention[" + propertiesAttribute.name + "] detected from Properties["+fileName+"];");
                 artefactResult.artifact = new ArtifactRestApi(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile, bonitaStore);
 
             } else if ("layout".equalsIgnoreCase(propertiesAttribute.contentType)) {
+                artefactResult.logAnalysis.append( "Layout[" + propertiesAttribute.name + "] detected from Properties["+fileName+"];");
                 artefactResult.artifact = new ArtifactLayout(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile, bonitaStore);
 
             } else if ("form".equalsIgnoreCase(propertiesAttribute.contentType)) {
                 // a form : only possible to deploy it in a process,
                 // so... we need the process
             } else if ("theme".equalsIgnoreCase(propertiesAttribute.contentType)) {
+                artefactResult.logAnalysis.append( "Theme[" + propertiesAttribute.name + "] detected from Properties["+fileName+"];");
                 artefactResult.artifact = new ArtifactTheme(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile,bonitaStore);
 
             } else {
-                logStore.severe("Unknow artefact contentType=[" + propertiesAttribute.contentType + "]");
+                artefactResult.logAnalysis.append( "Unkown Artifact ContentType[" +   propertiesAttribute.contentType + "] detected from Properties["+fileName+"];");
+                logStore.severe("Unknow artifact contentType=[" + propertiesAttribute.contentType + "]");
             }
             }catch(Exception e) {
                 artefactResult.listEvents.add( new BEvent(EVENT_FAILED_DETECTION, e, ""));
             }
         } else if (fileName.endsWith(".groovy")) {
             String name = fileName.substring(0, fileName.length() - ".groovy".length());
+            artefactResult.logAnalysis.append( "Groovy detected[" +   name + "] detected from Properties["+fileName+"];");
             artefactResult.artifact = new ArtifactGroovy(name, null, "", dateFile, dateFile, bonitaStore);
 
             // ----------------------- Nothing
         } else {
-            artefactResult.logAnalysis += "No detection.";
+            artefactResult.logAnalysis.append( "No detection avaiable for fileName["  + fileName + "]");
             artefactResult.listEvents.add(new BEvent(EVENT_NO_DETECTION, "fileName[" + fileName + "]"));
         }
         if (artefactResult.artifact != null && loadArtifact) {
@@ -320,6 +327,7 @@ public class FactoryArtifact {
                 if (fr != null)
                     fr.close();
             } catch (Exception e) {
+                // this is the close, ignore exception
             }
         }
     }
@@ -449,7 +457,7 @@ public class FactoryArtifact {
      * @param file
      * @return
      * @throws Exception
-     */
+     *
     private String readFileContent(File file) throws Exception {
         BufferedReader br = null;
         FileReader fr = null;
@@ -477,5 +485,5 @@ public class FactoryArtifact {
         }
         return content.toString();
     }
-
+*/
 }

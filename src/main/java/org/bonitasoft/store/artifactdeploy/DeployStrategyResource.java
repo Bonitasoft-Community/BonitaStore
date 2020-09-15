@@ -27,31 +27,36 @@ public class DeployStrategyResource extends DeployStrategy {
 
         ArtifactAbstractResource artifactResource = (ArtifactAbstractResource) artifact;
         try {
-            String logToDebug = "DeployStrategyResource.DetectDeployment: Detect for[" + artifactResource.getContentType() + "]";
+            deployOperation.addReportLine("DeployStrategyResource.DetectDeployment: Detect for[" + artifactResource.getName()+"] Type["+artifactResource.getContentType() + "];");
             Page page = searchPage(artifactResource, bonitaAccessor);
             if (page != null) {
                 artifactResource.bonitaBaseElement = page;
                 deployOperation.presentDateArtifact = page.getLastModificationDate();
                 deployOperation.presentVersionArtifact = null;
-                logToDebug += "Found existing page deployed at " + page.getLastModificationDate();
+                deployOperation.addReportLine( "Found existing page deployed at " +  DeployStrategy.sdf.format(page.getLastModificationDate())+";");
+                deployOperation.addReportLine( "POLICY="+artifact.getPolicyNewVersion(deployParameters.policyNewVersion).toString() + ";" );
 
                 if (POLICY_NEWVERSION.BYDATE.equals(artifact.getPolicyNewVersion(deployParameters.policyNewVersion))) {
                     Date lastDateArtifact=artifactResource.getLastDateArtifact(); 
+                    deployOperation.addReportLine("Local resource Date: "+ (lastDateArtifact==null ? "null": DeployStrategy.sdf.format(lastDateArtifact))+";");
                     if (lastDateArtifact!=null && lastDateArtifact.before(page.getLastModificationDate())) {
+                        deployOperation.addReportLine("BEFORE, consider as SAME");
                         deployOperation.detectionStatus = DetectionStatus.SAME; // or OLD...
                         deployOperation.addAnalysisLine( "A version exists with the date more recent(" + DeployStrategy.sdf.format(page.getLastModificationDate()) + ")");
                     } else {
+                        deployOperation.addReportLine("AFTER, consider as NEW");
                         deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
                         deployOperation.addAnalysisLine( "The version is new" );
                     }
                 } else {
                     // well, no way to know
+                    deployOperation.addReportLine("No policy");
                     deployOperation.detectionStatus = DetectionStatus.UNDETERMINED;
                 }
             }
             if (deployOperation.presentDateArtifact == null)
-                logToDebug += "Not exist;";
-            logBox.info(logToDebug);
+                deployOperation.addReportLine( "Not exist;");
+            logBox.info(deployOperation.analysis.toString());
         } catch (Exception e) {
             deployOperation.detectionStatus = DetectionStatus.DETECTIONFAILED;
             deployOperation.listEvents.add(new BEvent(EventErrorAtDetection, e, "Page [" + artifactResource.getName() + "]"));

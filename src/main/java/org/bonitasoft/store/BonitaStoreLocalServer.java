@@ -24,6 +24,7 @@ import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
+import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
 import org.bonitasoft.store.artifact.ArtifactCustomPage;
 import org.bonitasoft.store.artifact.ArtifactLayout;
 import org.bonitasoft.store.artifact.ArtifactProfile;
@@ -104,21 +105,23 @@ public class BonitaStoreLocalServer extends BonitaStore {
                 SearchOptionsBuilder searchOptionsBuilder = new SearchOptionsBuilder(0, 1000);
                 final SearchResult<Page> searchResultPage = pageAPI.searchPages(searchOptionsBuilder.done());
                 for (final Page page : searchResultPage.getResult()) {
-                    Artifact artefact=null;
+                    ArtifactResult artifactResult = new ArtifactResult();
+
+
                     if ("page".equals(page.getContentType()) && detectionParameters.listTypeArtifacts.contains(TypeArtifact.CUSTOMPAGE)) {
-                        artefact = new ArtifactCustomPage(page, this);
+                        artifactResult.artifact = new ArtifactCustomPage(page, this);
                     }
                     if ("layout".equals(page.getContentType()) && detectionParameters.listTypeArtifacts.contains(TypeArtifact.LAYOUT)) {
-                        artefact = new ArtifactLayout(page, this);
+                        artifactResult.artifact = new ArtifactLayout(page, this);
                     }
                     if ("theme".equals(page.getContentType()) && detectionParameters.listTypeArtifacts.contains(TypeArtifact.THEME)) {
-                        artefact = new ArtifactTheme(page, this);
+                        artifactResult.artifact = new ArtifactTheme(page, this);
                     }
                     if ("apiExtension".equals(page.getContentType()) && detectionParameters.listTypeArtifacts.contains(TypeArtifact.RESTAPI)) {
-                        artefact = new ArtifactRestApi( page, this);
+                        artifactResult.artifact = new ArtifactRestApi( page, this);
                     }
-                    if (artefact!=null)
-                        storeResult.addDetectedArtifact(detectionParameters, artefact);
+                    if (artifactResult.artifact!=null)
+                        storeResult.addDetectedArtifact(detectionParameters, artifactResult);
 
                 } // end page
 

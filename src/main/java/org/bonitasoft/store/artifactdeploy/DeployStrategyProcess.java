@@ -66,7 +66,7 @@ public class DeployStrategyProcess extends DeployStrategy {
         DeployOperation deployOperation = new DeployOperation();
         deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
         try {
-            deployOperation.addReportLine("Search process[" + process.getName() + "] Version[" + process.getVersion() + "] ");
+            deployOperation.addReportLine("Search "+getLabelProcess(process));
 
             ProcessResult processResult = searchProcess(process, deployParameters, bonitaAccessor, logBox);
 
@@ -77,25 +77,32 @@ public class DeployStrategyProcess extends DeployStrategy {
                 deployOperation.detectionStatus = DetectionStatus.NEWARTEFAC;
                 deployOperation.addReportLine("This process is completely new");
             } else {
+                process.setName(processResult.bestProposition.getName());
+                process.setVersion(processResult.bestProposition.getVersion());
+                process.bonitaBaseElement = bonitaAccessor.processAPI.getProcessDefinition(processResult.bestProposition.getProcessId());
 
+                deployOperation.addReportLine("Process Name is overrided with "+getLabelProcess(process));
+                deployOperation.addReportLine("PresentDate Artifact is "+  DeployStrategy.sdf.format( processResult.bestProposition.getDeploymentDate()));
+                
                 deployOperation.presentDateArtifact = processResult.bestProposition.getDeploymentDate();
                 deployOperation.presentVersionArtifact = process.getVersion();
                 // we base the deployment status on what ? 
                 if (POLICY_NEWVERSION.BYDATE.equals(process.getPolicyNewVersion(deployParameters.policyNewVersion))) {
                     if (processResult.bestProposition.getDeploymentDate().equals(process.getDate())) {
-
-                        process.bonitaBaseElement = bonitaAccessor.processAPI.getProcessDefinition(processResult.bestProposition.getProcessId());
-
+                        deployOperation.addReportLine("Same Date: SAME");
                         deployOperation.detectionStatus = DetectionStatus.SAME;
                         deployOperation.addAnalysisLine("A version exists with the same date (" + DeployStrategy.sdf.format(process.getDate()) + ")");
                     } else if (processResult.bestProposition.getDeploymentDate().before(process.getDate())) {
+                        deployOperation.addReportLine("Presentprocess is BEFORE: NEWVERSION");
                         deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
                         deployOperation.addAnalysisLine("The version is new");
                     } else {
+                        deployOperation.addReportLine("Presentprocess is AFTER: OLDVERSION");
                         deployOperation.detectionStatus = DetectionStatus.OLDVERSION;
                         deployOperation.addAnalysisLine("The version is older, you should ignore this process");
                     }
                 } else {
+                    deployOperation.addReportLine("No Policy: consider as SAME");
                     // the process, at this version, must not exist
                     deployOperation.detectionStatus = DetectionStatus.SAME;
                 }
@@ -177,25 +184,22 @@ public class DeployStrategyProcess extends DeployStrategy {
 
             } catch (ProcessDeployException e) {
                 deployOperation.deploymentStatus = DeploymentStatus.DEPLOYEDFAILED;
-                deployOperation.listEvents.add(new BEvent(EventErrorAtDeployment, getLoginformation(process)));
+                deployOperation.listEvents.add(new BEvent(EventErrorAtDeployment, getLabelProcess(process)));
             } catch (ProcessDefinitionNotFoundException e) {
                 deployOperation.deploymentStatus = DeploymentStatus.DEPLOYEDFAILED;
-                deployOperation.listEvents.add(new BEvent(EventErrorAtEnablement, e, getLoginformation(process)));
+                deployOperation.listEvents.add(new BEvent(EventErrorAtEnablement, e, getLabelProcess(process)));
             } catch (ProcessEnablementException e) {
                 deployOperation.deploymentStatus = DeploymentStatus.LOADED;
-                deployOperation.listEvents.add(new BEvent(EventErrorAtEnablement, getLoginformation(process)));
+                deployOperation.listEvents.add(new BEvent(EventErrorAtEnablement, getLabelProcess(process)));
             } catch (AlreadyExistsException e) {
                 deployOperation.deploymentStatus = DeploymentStatus.DEPLOYEDFAILED;
-                deployOperation.listEvents.add(new BEvent(EventErrorAtDeployment, "Already exist " + getLoginformation(process)));
+                deployOperation.listEvents.add(new BEvent(EventErrorAtDeployment, "Already exist " + getLabelProcess(process)));
             }
         }
         return deployOperation;
     }
 
-    private String getLoginformation(Artifact process) {
-        return "ProcessName[" + process.getName() + "] Version[" + process.getVersion() + "]";
-    }
-
+ 
     /**
      * @param processDefinition
      * @param bonitaAccessor
@@ -297,7 +301,7 @@ public class DeployStrategyProcess extends DeployStrategy {
     }
 
     private String getLabelProcess(Artifact process) {
-        return "Process Name[" + process.getName() + "] Version[" + process.getVersion() + "]";
+        return "Process Name[" + process.getBonitaName() + "] Version[" + process.getVersion() + "]";
     }
 
     /**
@@ -308,7 +312,7 @@ public class DeployStrategyProcess extends DeployStrategy {
 
         SearchResult<ProcessDeploymentInfo> searchResult;
         ProcessDeploymentInfo bestProposition = null;
-        List<String> analysis = new ArrayList();
+        List<String> analysis = new ArrayList<>();
     }
 
     private ProcessResult searchProcess(Artifact process, BonitaStoreParameters deployParameters, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {

@@ -15,6 +15,7 @@ import org.bonitasoft.log.event.BEventFactory;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
 import org.bonitasoft.store.artifact.FactoryArtifact;
+import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
 import org.bonitasoft.store.source.git.GithubAccessor.ResultGithub;
 import org.bonitasoft.store.toolbox.LoggerStore;
 import org.bonitasoft.store.toolbox.LoggerStore.LOGLEVEL;
@@ -157,14 +158,14 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                         continue;
                     }
                     // this is what we search
-
-                    final Artifact artefactItem = factoryArtefact.getFromType(typeArtefact, (String) oneRepository.get("name"), null,
+                    ArtifactResult artifactResult = new ArtifactResult();
+                    artifactResult.artifact = factoryArtefact.getFromType(typeArtefact, (String) oneRepository.get("name"), null,
                             (String) oneRepository.get("description"),
                             null,
                             null,
                             this);
 
-                    if (artefactItem == null) {
+                    if (artifactResult.artifact == null) {
                         logBox.log(LoggerStore.LOGLEVEL.ERROR, "Artefact is null from type[" + typeArtefact + "]");
                         continue;
 
@@ -172,8 +173,8 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                     // set the name. If a page.properties exist, then we will get the
                     // information inside
                     StringBuilder traceOneApps = new StringBuilder();
-                    traceOneApps.append("name[" + artefactItem.getBonitaName() + "]");
-                    String shortName = artefactItem.getName();
+                    traceOneApps.append("name[" + artifactResult.artifact.getBonitaName() + "]");
+                    String shortName = artifactResult.artifact.getName();
                     if (shortName.toUpperCase().startsWith(typeArtefact.toString().toUpperCase() + "_")) {
                         // remove the typeApps
                         shortName = shortName.substring(typeArtefact.toString().length() + 1);
@@ -185,9 +186,9 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
 
                     // --------------------- Content
                     // Logo and documentation
-                    artefactItem.urlContent = (String) oneRepository.get("url");
+                    artifactResult.artifact.urlContent = (String) oneRepository.get("url");
 
-                    final ResultGithub resultContent = mGithubAccessor.executeGetRestOrder(null, artefactItem.urlContent + "/contents", logBox);
+                    final ResultGithub resultContent = mGithubAccessor.executeGetRestOrder(null, artifactResult.artifact.urlContent + "/contents", logBox);
                     resultContent.checkResultFormat(null, true, "Contents of a repository must be a list");
                     storeResult.addEvents(resultContent.listEvents);
 
@@ -210,17 +211,17 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                                         properties.load(stringPage);
                                         final String pageName = properties.getProperty("name");
                                         if (pageName != null && !pageName.isEmpty()) {
-                                            artefactItem.setName(pageName);
+                                            artifactResult.artifact.setName(pageName);
                                         }
 
                                         final String pageDescription = properties.getProperty("description");
                                         if (pageDescription != null && !pageDescription.isEmpty()) {
-                                            artefactItem.setDescription(pageDescription);
+                                            artifactResult.artifact.setDescription(pageDescription);
                                         }
 
                                         final String pageDisplayName = properties.getProperty("displayName");
                                         if (pageDisplayName != null && !pageDisplayName.isEmpty()) {
-                                            artefactItem.setDisplayName(pageDisplayName);
+                                            artifactResult.artifact.setDisplayName(pageDisplayName);
                                         }
                                     } catch (final Exception e) {
                                         storeResult.addEvent(new BEvent(errorDecodePageProperties, "Error " + e.toString()));
@@ -236,15 +237,15 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                                     final ResultGithub resultContentLogo = mGithubAccessor.executeGetRestOrder(null, (String) oneContent.get("url"), logBox);
                                     final String logoSt = (String) resultContentLogo.getJsonObject().get("content");
                                     final Base64 base64 = new Base64();
-                                    artefactItem.logo = base64.decode(logoSt);
+                                    artifactResult.artifact.logo = base64.decode(logoSt);
                                     traceOneApps.append( "logo detected;");
                                 } catch (final Exception e) {
-                                    artefactItem.addEvent(new BEvent(errorDecodeLogo, "Get logo from  [" + oneContent.get("url") + "] : " + e.toString()));
+                                    artifactResult.artifact.addEvent(new BEvent(errorDecodeLogo, "Get logo from  [" + oneContent.get("url") + "] : " + e.toString()));
                                 }
                             }
                             if (assetName.endsWith(".pdf")) {
                                 // we get the documentation
-                                artefactItem.documentationFile = (String) oneContent.get("url");
+                                artifactResult.artifact.documentationFile = (String) oneContent.get("url");
                                 traceOneApps.append( "doc detected;");
                             }
                         } // end loop on content
@@ -265,7 +266,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                     if (!resultRelease.isError()) {
                         for (final Map<String, Object> oneRelease : (List<Map<String, Object>>) resultRelease.getJsonArray(null)) {
 
-                            final Artifact.ArtefactRelease appsRelease = artefactItem.newInstanceRelease();
+                            final Artifact.ArtefactRelease appsRelease = artifactResult.artifact.newInstanceRelease();
                             appsRelease.id = (Long) oneRelease.get("id");
                             appsRelease.version = oneRelease.get("name").toString();
                             traceOneApps.append( "release[" + appsRelease.version + "] detected;");
@@ -290,19 +291,19 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                                     }
                                 }
                             }
-                            artefactItem.listReleases.add(appsRelease);
+                            artifactResult.artifact.listReleases.add(appsRelease);
                         } // end loop on release
 
-                        if (artefactItem.listReleases.isEmpty() || artefactItem.getLastUrlDownload() == null) {
-                            artefactItem.setAvailable(false);
+                        if (artifactResult.artifact.listReleases.isEmpty() || artifactResult.artifact.getLastUrlDownload() == null) {
+                            artifactResult.artifact.setAvailable(false);
                         }
                     }
                     logBox.log(LoggerStore.LOGLEVEL.INFO, traceOneApps.toString());
-                    if (!artefactItem.isAvailable()) {
+                    if (!artifactResult.artifact.isAvailable()) {
                         if (detectionParameters.withNotAvailable)
-                            storeResult.addDetectedArtifact(detectionParameters, artefactItem);
+                            storeResult.addDetectedArtifact(detectionParameters, artifactResult);
                     } else
-                        storeResult.listArtifacts.add(artefactItem);
+                        storeResult.listArtifacts.add(artifactResult);
                 } // end loop repo
 
                 /*
