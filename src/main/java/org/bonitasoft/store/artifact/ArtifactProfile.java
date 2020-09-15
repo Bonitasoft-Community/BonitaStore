@@ -19,16 +19,16 @@ import org.bonitasoft.store.BonitaStoreAccessor;
 
 public class ArtifactProfile extends Artifact {
 
-    private static BEvent EventErrorAtload = new BEvent(ArtifactProfile.class.getName(), 1, Level.APPLICATIONERROR, "Can't load profile file", "The profile can't be read", "profile is not accessible", "Check the exception");
-    private static BEvent EventDetectionFailed = new BEvent(ArtifactProfile.class.getName(), 2, Level.ERROR, "Detection failed", "The list of profile can't be read", "profile will not be deployed", "Check the exception");
-    private static BEvent EventErrorAtDeployment = new BEvent(ArtifactProfile.class.getName(), 3, Level.APPLICATIONERROR, "Can't load profile file", "The profile can't be read", "profile is not accessible", "Check the exception");
+    //private final static BEvent EVENT_ERROR_ATLOAD = new BEvent(ArtifactProfile.class.getName(), 1, Level.APPLICATIONERROR, "Can't load profile file", "The profile can't be read", "profile is not accessible", "Check the exception");
+    //private final static BEvent EVENT_DETECTION_FAILED = new BEvent(ArtifactProfile.class.getName(), 2, Level.ERROR, "Detection failed", "The list of profile can't be read", "profile will not be deployed", "Check the exception");
+    //private final static BEvent EVENT_ERROR_AT_DEPLPOYMENT = new BEvent(ArtifactProfile.class.getName(), 3, Level.APPLICATIONERROR, "Can't load profile file", "The profile can't be read", "profile is not accessible", "Check the exception");
 
-    private static BEvent EVENT_PROFILE_ENTRY_CREATED = new BEvent(ArtifactProfile.class.getName(), 4, Level.SUCCESS, "Profile entry created with success", "The required entry is created with success");
-    private static BEvent EVENT_CANT_CREATE_PROFILE = new BEvent(ArtifactProfile.class.getName(), 5, Level.APPLICATIONERROR, "Can't create Profile entry", "You must use a Subscription to create a profile entry", "No entry in the profile", "Use the subscription");
+    private final static BEvent EVENT_PROFILE_ENTRY_CREATED = new BEvent(ArtifactProfile.class.getName(), 4, Level.SUCCESS, "Profile entry created with success", "The required entry is created with success");
+    private final static BEvent EVENT_CANT_CREATE_PROFILE = new BEvent(ArtifactProfile.class.getName(), 5, Level.APPLICATIONERROR, "Can't create Profile entry", "You must use a Subscription to create a profile entry", "No entry in the profile", "Use the subscription");
 
-    private static BEvent EVENT_FAIL_PROFILE_ENTRY_CREATION = new BEvent(ArtifactProfile.class.getName(), 6, Level.ERROR, "Can't create Profile entry", "An error arrived during the registration ", "No entry in the profile", "Check the exception");
+    private final static BEvent EVENT_FAIL_PROFILE_ENTRY_CREATION = new BEvent(ArtifactProfile.class.getName(), 6, Level.ERROR, "Can't create Profile entry", "An error arrived during the registration ", "No entry in the profile", "Check the exception");
 
-    private static BEvent EVENT_PROFILE_ENTRY_ALREADY = new BEvent(ArtifactProfile.class.getName(), 7, Level.INFO, "Already exists", "Entry already exists", "No need to register it twice", "");
+    private final static BEvent EVENT_PROFILE_ENTRY_ALREADY = new BEvent(ArtifactProfile.class.getName(), 7, Level.INFO, "Already exists", "Entry already exists", "No need to register it twice", "");
 
     public String name;
     public String version;
@@ -52,7 +52,7 @@ public class ArtifactProfile extends Artifact {
      * @return
      */
     public List<BEvent> loadFromString(String contentSt) {
-        List<BEvent> listEvents = new ArrayList<BEvent>();
+        List<BEvent> listEvents = new ArrayList<>();
 
         byte[] profileContent = contentSt.getBytes();
         content = new ByteArrayOutputStream();
@@ -86,7 +86,7 @@ public class ArtifactProfile extends Artifact {
      * @return
      */
     public List<BEvent> registerCustomPage(ArtifactCustomPage page, BonitaStoreAccessor bonitaAccessor) {
-        List<BEvent> listEvents = new ArrayList<BEvent>();
+        List<BEvent> listEvents = new ArrayList<>();
         try {
             // maybe already register ?
             ProfileAPI profileAPI = bonitaAccessor.getProfileAPI();

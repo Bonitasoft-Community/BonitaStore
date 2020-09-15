@@ -6,16 +6,11 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -33,7 +28,7 @@ public class ArtifactProcess extends Artifact {
 
     private BusinessArchive businessArchive;
 
-    private static BEvent EventInvalidBarFile = new BEvent(ArtifactProcess.class.getName(), 1, Level.APPLICATIONERROR, "Invalid Bar file", "The bar file can't be read", "The artefact is ignored", "Check the exception");
+    private final static BEvent EventInvalidBarFile = new BEvent(ArtifactProcess.class.getName(), 1, Level.APPLICATIONERROR, "Invalid Bar file", "The bar file can't be read", "The artefact is ignored", "Check the exception");
 
     public ArtifactProcess(String processName, String processVersion, String processDescription, Date dateProcess, Date dateVersion, BonitaStore sourceOrigin) {
         super(TypeArtifact.PROCESS, processName, processVersion, processDescription, dateProcess, dateVersion,sourceOrigin);
