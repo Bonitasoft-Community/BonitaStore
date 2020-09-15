@@ -293,7 +293,7 @@ public class BonitaStoreAccessorClient {
                 return null;
             }
         }
-        return artefactProfileBO;
+        return artefactProfileBO.bonitaBaseElement==null ? null : artefactProfileBO;
 
     }
 
