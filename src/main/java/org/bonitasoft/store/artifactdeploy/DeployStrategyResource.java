@@ -27,7 +27,7 @@ public class DeployStrategyResource extends DeployStrategy {
 
         ArtifactAbstractResource artifactResource = (ArtifactAbstractResource) artifact;
         try {
-            deployOperation.addReportLine("DeployStrategyResource.DetectDeployment: Detect for[" + artifactResource.getName()+"] Type["+artifactResource.getContentType() + "];");
+            deployOperation.addReportLine("DeployStrategyResource.DetectDeployment: Detect for[" + artifactResource.getBonitaName()+"] Type["+artifactResource.getContentType() + "];");
             Page page = searchPage(artifactResource, bonitaAccessor);
             if (page != null) {
                 artifactResource.bonitaBaseElement = page;

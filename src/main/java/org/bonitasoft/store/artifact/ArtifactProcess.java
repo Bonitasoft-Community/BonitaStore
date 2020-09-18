@@ -106,7 +106,7 @@ public class ArtifactProcess extends Artifact {
 
         Path path = BonitaStoreLocalServer.getTempDirectory();
         // generate a temporary file
-        File temporaryFile = new File(path.toString() + "/" + getName() + ".bar");
+        File temporaryFile = new File(path.toString() + "/" + getBonitaName() + ".bar");
 
 
         try (FileOutputStream fos = new FileOutputStream(temporaryFile);ZipOutputStream zipOut = new ZipOutputStream(fos)){
@@ -172,7 +172,7 @@ public class ArtifactProcess extends Artifact {
     private Set<String> exploreZipToExploreAndCompleteReplacement(File sourceFile,ZipOutputStream zipOut ) {
         Set<String> replacementFile = new HashSet<>();
         traceZip(sourceFile);
-        String filterEntry = (getName()+"/"+getVersion()).toLowerCase()+"/";
+        String filterEntry = (getBonitaName()+"/"+getVersion()).toLowerCase()+"/";
         try (FileInputStream fis = new FileInputStream(sourceFile); ZipInputStream zis = new ZipInputStream(fis)) {
             // list files in zip
             ZipEntry zipInEntry = zis.getNextEntry();

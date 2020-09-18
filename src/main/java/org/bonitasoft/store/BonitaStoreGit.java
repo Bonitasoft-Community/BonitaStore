@@ -177,7 +177,7 @@ public class BonitaStoreGit extends BonitaStore {
             // set the name. If a page.properties exist, then we will get the
             // information inside
             String traceOneApps = "name[" + artifactResult.artifact.getBonitaName() + "]";
-            String shortName = artifactResult.artifact.getName();
+            String shortName = artifactResult.artifact.getBonitaName();
             if (shortName.toUpperCase().startsWith(typeArtefact.toString().toUpperCase() + "_")) {
                 // remove the typeApps
                 shortName = shortName.substring(typeArtefact.toString().length() + 1);

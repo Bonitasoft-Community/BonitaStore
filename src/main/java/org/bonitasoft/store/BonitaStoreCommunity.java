@@ -174,7 +174,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                     // information inside
                     StringBuilder traceOneApps = new StringBuilder();
                     traceOneApps.append("name[" + artifactResult.artifact.getBonitaName() + "]");
-                    String shortName = artifactResult.artifact.getName();
+                    String shortName = artifactResult.artifact.getBonitaName();
                     if (shortName.toUpperCase().startsWith(typeArtefact.toString().toUpperCase() + "_")) {
                         // remove the typeApps
                         shortName = shortName.substring(typeArtefact.toString().length() + 1);

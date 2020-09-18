@@ -180,7 +180,7 @@ public abstract class Artifact {
     }
 
     public String getDisplayName() {
-        return displayName == null ? getName() : displayName;
+        return displayName == null ? getBonitaName() : displayName;
     }
 
     public void setDisplayName(String displayName) {
@@ -392,7 +392,7 @@ public abstract class Artifact {
         try {
             content = readFile(file);
         } catch (Exception e) {
-            listEventsLoad.add(new BEvent(EventReadFile, e, "Artifact[" + getName() + "] file[" + file.getAbsolutePath() + "]"));
+            listEventsLoad.add(new BEvent(EventReadFile, e, "Artifact[" + getBonitaName() + "] file[" + file.getAbsolutePath() + "]"));
         }
         return listEventsLoad;
     }
@@ -421,7 +421,7 @@ public abstract class Artifact {
             content = new ByteArrayOutputStream();
             IOUtils.copy(inputStream, content);
         } catch (Exception e) {
-            listEventsLoad.add(new BEvent(EventReadFile, e, "Artifact[" + getName() + "]"));
+            listEventsLoad.add(new BEvent(EventReadFile, e, "Artifact[" + getBonitaName() + "]"));
         }
         return listEventsLoad;
     }

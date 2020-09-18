@@ -137,7 +137,7 @@ public class DeployStrategyProcess extends DeployStrategy {
             try {
                 // Here, the procesds Name and the process Version is updated from the database.
                 SearchOptionsBuilder sob = new SearchOptionsBuilder(0, 100);
-                sob.filter(ProcessDeploymentInfoSearchDescriptor.NAME, process.getName());
+                sob.filter(ProcessDeploymentInfoSearchDescriptor.NAME, process.getBonitaName());
                 sob.filter(ProcessDeploymentInfoSearchDescriptor.VERSION, process.getVersion());
                 SearchResult<ProcessDeploymentInfo> searchResult = bonitaAccessor.processAPI.searchProcessDeploymentInfos(sob.done());
                 if (searchResult.getCount() > 0) {
@@ -319,8 +319,12 @@ public class DeployStrategyProcess extends DeployStrategy {
         ProcessResult processResult = new ProcessResult();
         try {
             SearchOptionsBuilder sob = new SearchOptionsBuilder(0, 100);
-            sob.filter(ProcessDeploymentInfoSearchDescriptor.NAME, process.getName());
+            sob.filter(ProcessDeploymentInfoSearchDescriptor.NAME, process.getBonitaName());
             processResult.searchResult = bonitaAccessor.processAPI.searchProcessDeploymentInfos(sob.done());
+            
+            processResult.analysis.add("SearchProcessAPI["+process.getBonitaName()+"] Found result["+processResult.searchResult.getCount()+"]");
+                    
+                    
             // search for the same version maybe
             for (ProcessDeploymentInfo processDeploymentInfo : processResult.searchResult.getResult()) {
                 String reportLine = " Found [" + processDeploymentInfo.getName() + "] Version[" + processDeploymentInfo.getVersion()
