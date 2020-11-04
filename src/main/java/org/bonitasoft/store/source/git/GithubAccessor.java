@@ -50,6 +50,8 @@ import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.log.event.BEventFactory;
 import org.bonitasoft.store.rest.Authorization;
 import org.bonitasoft.store.rest.BasicDigestAuthorization;
+import org.bonitasoft.store.rest.CollectOutput;
+import org.bonitasoft.store.rest.CollectOutput.POLICYOUTPUT;
 import org.bonitasoft.store.rest.Content;
 import org.bonitasoft.store.rest.HeaderAuthorization;
 import org.bonitasoft.store.rest.NtlmAuthorization;
@@ -250,19 +252,19 @@ public class GithubAccessor {
         try {
             final RESTResponse response = RESTCall.execute(restRequest, CONNECTION_TIMEOUT);
             if (logBox.isLog(LOGLEVEL.INFO)) {
+                String bodyAnswer = response.getCollectOutput().getBody();
                 logBox.log(LOGLEVEL.INFO, "GithubAccess.getRestOrder: Url["
                         + orderGithub
                         + "] Code:"
                         + response.getStatusCode()
                         + " body:"
-                        + (response.getBody() == null ? "null" : response.getBody().length() > 50 ? response.getBody().substring(0, 50) + "..." : response
-                                .getBody()));
+                        + (bodyAnswer == null ? "null" : bodyAnswer.length() > 50 ? bodyAnswer.substring(0, 50) + "..." : bodyAnswer));
             }
 
             if (response.getStatusCode() == 403) {
                 String message = null;
                 try {
-                    resultLastContrib.jsonResult = JSONValue.parse(response.getBody());
+                    resultLastContrib.jsonResult = response.getCollectOutput().getJson();
                     message = (String) ((Map<String, Object>) resultLastContrib.getJsonObject()).get("message");
                 } catch (final Exception e) {
                 }
@@ -282,7 +284,7 @@ public class GithubAccessor {
                 return resultLastContrib;
             }
 
-            resultLastContrib.jsonResult = JSONValue.parse(response.getBody());
+            resultLastContrib.jsonResult = response.getCollectOutput().getJson();
         } catch (final Exception e) {
             resultLastContrib.listEvents.add(new BEvent(eventRestRequest, e, "Url[" + mUrlRepository + "] with user[" + mUserName + "]"));
             logBox.logException("Url[" + mUrlRepository + "] with user[" + mUserName + "]", e);
@@ -345,7 +347,7 @@ public class GithubAccessor {
         try {
             final RESTResponse response = RESTCall.execute(restRequest, CONNECTION_TIMEOUT);
             // System.out.println(response2.getBody());
-            resultLastContrib.content = response.getBody();
+            resultLastContrib.content = response.getCollectOutput().getBody();
         } catch (final Exception e) {
             resultLastContrib.listEvents.add(new BEvent(eventRestRequest, e, "Url[" + mUrlRepository + "] with user[" + mUserName + "]"));
 
@@ -375,13 +377,13 @@ public class GithubAccessor {
                 new ArrayList<ArrayList<String>>(),
                 mUserName,
                 mPassword);
-        restRequest.setStringOutput(false);
+        restRequest.getCollectOutput().setPolicy(POLICYOUTPUT.BYTEARRAY);
         restRequest.setRedirect(true);
         try {
             final RESTResponse response = RESTCall.execute(restRequest,CONNECTION_TIMEOUT);
             // System.out.println(response.getBody());
-            resultLastContrib.contentByte = response.getContentByte();
-            resultLastContrib.content = response.getBody();
+            resultLastContrib.contentByte = response.getCollectOutput().getBaos().toByteArray();
+            resultLastContrib.content =null;
         } catch (final Exception e) {
             resultLastContrib.listEvents.add(new BEvent(eventRestRequest, e, "Url[" + mUrlRepository + "] with user[" + mUserName + "]"));
 
@@ -463,6 +465,7 @@ public class GithubAccessor {
         if (username != null) {
             request.setAuthorization(buildBasicAuthorization(username, password));
         }
+        request.setCollectOutput( CollectOutput.getInstanceString());
         return request;
     }
 

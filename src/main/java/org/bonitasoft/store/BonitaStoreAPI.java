@@ -27,8 +27,8 @@ public class BonitaStoreAPI {
     
     public static String CommunityGithubUrlRepository = "https://api.github.com/orgs/Bonitasoft-Community";
 
-    public BonitaStore getBonitaCommunityStore(boolean registerTheStore) {
-        return getBonitaStoreFactory().getBonitaCommunityStore(registerTheStore);
+    public BonitaStore getInstanceBonitaCommunityStore(boolean registerTheStore) {
+        return getBonitaStoreFactory().getInstanceBonitaCommunityStore(registerTheStore);
     }
 
     /**
@@ -37,24 +37,24 @@ public class BonitaStoreAPI {
      * @param specificRepository
      * @return
      */
-    public BonitaStore getBonitaCommunityStore(String specificRepository, boolean registerTheStore) {
-        return getBonitaStoreFactory().getBonitaCommunityStore(specificRepository, registerTheStore);
+    public BonitaStore getInstanceBonitaCommunityStore(String specificRepository, boolean registerTheStore) {
+        return getBonitaStoreFactory().getInstanceBonitaCommunityStore(specificRepository, registerTheStore);
     }
 
-    public BonitaStoreGit getGitStore(String gituserName, String gitPassword, String gitUrlRepository,boolean registerTheStore) {
-        return getBonitaStoreFactory().getGitStore(gituserName, gitPassword, gitUrlRepository, registerTheStore);
+    public BonitaStoreGit getInstanceGitStore(String gituserName, String gitPassword, String gitUrlRepository,boolean registerTheStore) {
+        return getBonitaStoreFactory().getInstanceGitStore(gituserName, gitPassword, gitUrlRepository, registerTheStore);
     }
 
     /*
      * get a store from a local disk
      */
-    public BonitaStoreDirectory getDirectoryStore(File pathDirectory,boolean registerTheStore) {
-        return getBonitaStoreFactory().getDirectoryStore(pathDirectory, registerTheStore);    }
+    public BonitaStoreDirectory getInstanceDirectoryStore(File pathDirectory,boolean registerTheStore) {
+        return getBonitaStoreFactory().getInstanceDirectoryStore(pathDirectory, registerTheStore);    }
 
     /*
      * get a store from a local disk
      */
-    public BonitaStoreLocalServer getLocalStore(APISession apiSession) {
+    public BonitaStoreLocalServer getInstanceLocalStore(APISession apiSession) {
         BonitaStoreLocalServer bonitaDirectory = new BonitaStoreLocalServer(apiSession);
         return bonitaDirectory;
     }

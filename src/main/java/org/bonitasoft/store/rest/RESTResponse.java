@@ -1,14 +1,12 @@
 package org.bonitasoft.store.rest;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.http.client.CookieStore;
 
 import org.apache.http.Header;
-import org.bonitasoft.store.source.git.RESTResultKeyValueMap;
 
 /**
  * This class reflects the information for a REST response.
@@ -16,11 +14,10 @@ import org.bonitasoft.store.source.git.RESTResultKeyValueMap;
 public class RESTResponse {
 
     /**
-     * The body.
+     * Reference the collectOutput given at the RestRequest
      */
-    private String body = "";
+    private CollectOutput collectOutput;
 
-    private byte[] contentByte;
     /**
      * The execution time.
      */
@@ -42,31 +39,19 @@ public class RESTResponse {
     // private List<RESTResultKeyValueMap> headers = new ArrayList<RESTResultKeyValueMap>();
     private List<Header> listHeaders = new ArrayList<>();
 
+    
+    private CookieStore cookieStore;
     /**
-     * Body value getter.
+     * collectOutput value getter.
      * 
-     * @return The body value.
-     */
-    public String getBody() {
-        return body;
-    }
-
-    /**
-     * Body value setter.
+     * @return The colectOuput given at the RestRequest. When no CollectOutput was given, a default 
      * 
-     * @param body The new body value.
      */
-    public void setBody(final String body) {
-        this.body = body;
+    public CollectOutput getCollectOutput() {
+        return collectOutput;
     }
 
-    public byte[] getContentByte() {
-        return contentByte;
-    }
-
-    public void setContentByte(final byte[] contentByte) {
-        this.contentByte = contentByte;
-    }
+    
 
     /**
      * Execution time value getter.
@@ -198,6 +183,30 @@ public class RESTResponse {
         }
            
         return null;
-}
+    }
+    
+    /**
+     * 
+     * @param cookieStore
+     */
+    public void setCookieStore(CookieStore cookieStore) {
+        this.cookieStore = cookieStore;
+    }
+    public CookieStore getCookieStore() {
+        return cookieStore;
+    }
 
+    /**
+     * A RestCall may have some redirection. Get the list of all URL called
+     */
+    private List<String> historyCall = new ArrayList<>();
+    public void setHistoryCall(List<String> historyCall) {
+        this.historyCall = historyCall;
+    }
+    public  List<String> getHistoryCall() {
+        return historyCall;
+    }
+    public void addHistoryCall(String call) {
+        this.historyCall.add( call );
+    }
 }

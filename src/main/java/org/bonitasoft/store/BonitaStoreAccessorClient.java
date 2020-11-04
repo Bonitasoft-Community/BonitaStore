@@ -208,7 +208,7 @@ public class BonitaStoreAccessorClient {
 
             File pathDirectory = new File(fileArtifact.getAbsolutePath());
             BonitaStoreAPI bonitaStoreAPI = BonitaStoreAPI.getInstance();
-            BonitaStore bonitaStore = bonitaStoreAPI.getDirectoryStore(pathDirectory,true);
+            BonitaStore bonitaStore = bonitaStoreAPI.getInstanceDirectoryStore(pathDirectory,true);
 
             FactoryArtifact factoryArtefact = FactoryArtifact.getInstance();
             LoggerStore loggerStore = new LoggerStore();
@@ -273,7 +273,7 @@ public class BonitaStoreAccessorClient {
     public ArtifactProfile getOrCreateProfile(String profileName) {
 
         BonitaStoreAPI bonitaStoreAPI = BonitaStoreAPI.getInstance();
-        BonitaStore bonitaStore = bonitaStoreAPI.getLocalStore(apiSession);
+        BonitaStore bonitaStore = bonitaStoreAPI.getInstanceLocalStore(apiSession);
 
         FactoryArtifact factoryArtefact = FactoryArtifact.getInstance();
         LoggerStore loggerStore = new LoggerStore();

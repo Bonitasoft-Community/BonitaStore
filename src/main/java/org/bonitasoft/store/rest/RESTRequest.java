@@ -4,16 +4,14 @@ import java.net.HttpCookie;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.http.Header;
 import org.apache.http.client.CookieStore;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.message.BasicHeader;
 import org.bonitasoft.log.event.BEvent;
-import org.bonitasoft.store.source.git.RESTResultKeyValueMap;
+import org.bonitasoft.store.rest.CollectOutput.POLICYOUTPUT;
 
 /**
  * This class reflects the information for a REST request.
@@ -21,8 +19,8 @@ import org.bonitasoft.store.source.git.RESTResultKeyValueMap;
 public class RESTRequest {
 
     /** the Header URL */
-    public String headerUrl;
-    public String uri;
+    private String headerUrl;
+    private String uri;
 
     private URL url;
     /**
@@ -37,6 +35,7 @@ public class RESTRequest {
 
     /**
      * The headers.
+     * the same header may be multiple in the list.
      */
     private List<Header> listHeaders = new ArrayList<>();
     /**
@@ -61,7 +60,7 @@ public class RESTRequest {
     /**
      * return the response as String
      */
-    private boolean isStringOutput = true;
+    private CollectOutput collectOutput;
 
     /**
      * The content information.
@@ -84,6 +83,9 @@ public class RESTRequest {
     
     public CookieStore getCookieStore() {
         return cookieStore;
+    }
+    public void setCookieStore( CookieStore cookieStore) {
+        this.cookieStore = cookieStore;
     }
     /**
      * URL value getter.
@@ -108,6 +110,18 @@ public class RESTRequest {
         this.url = url;
     }
 
+    public void setHeaderUrl( String headerUrl ) {
+        this.headerUrl = headerUrl;
+    }
+    public String getHeaderUrl() {
+        return headerUrl;
+    }
+    public void setUri(String uri ) {
+        this.uri = uri;
+    }
+    public String getUri() {
+        return uri;
+    }
     /**
      * RESTHTTPMethod value getter.
      * 
@@ -188,15 +202,6 @@ public class RESTRequest {
     public boolean isIgnore() {
         return ignore;
     }
-
-    public boolean isStringOutput() {
-        return isStringOutput;
-    }
-
-    public void setStringOutput(final boolean isStringOutput) {
-        this.isStringOutput = isStringOutput;
-    }
-
     /**
      * Ignore value setter.
      * 
@@ -206,6 +211,21 @@ public class RESTRequest {
         this.ignore = ignore;
     }
 
+    /**
+     * Result of the REST CALL is send to the CollectOutput
+     * @param collectOutput
+     */
+    public void setCollectOutput(CollectOutput collectOutput) {
+        this.collectOutput = collectOutput;
+    }
+    public CollectOutput getCollectOutput() {
+        if (collectOutput==null) {
+            collectOutput = new CollectOutput();
+            collectOutput.setPolicy(POLICYOUTPUT.STRING);
+        }
+        return this.collectOutput;
+    }
+  
     /**
      * Headers value getter.
      * 
@@ -234,24 +254,51 @@ public class RESTRequest {
     public void addHeader(final String key, final String value) {
        final Header header = new BasicHeader(key, value);
        listHeaders.add( header );
-       /*
-            final RESTResultKeyValueMap restResultKeyValueMap = new RESTResultKeyValueMap();
-            restResultKeyValueMap.setKey(key);
-            final List<String> values = new ArrayList<String>();
-            values.add(value);
-            restResultKeyValueMap.setValue(values);
-            headers.add(restResultKeyValueMap);
-            return true;
-        }
-        return false;
-        */
+      
     }
-
+    public void setHeader(final String key, final String value) {
+        // final Header header = new BasicHeader(key, value);
+        for (int i=0;i<listHeaders.size();i++)
+           if (listHeaders.get(i).getName().equals(key)) {
+               listHeaders.set(i, new BasicHeader(key, value));
+               return;
+           }
+        listHeaders.add( new BasicHeader(key, value) );
+     }
+    
     public void addHeader( Header header ) {
         listHeaders.add( header );
     }
-    public void addHeaders( List<Header> listHeader ) {
-        this.listHeaders.addAll( listHeader );
+    
+    public boolean existHeader( String name ) {
+        for (Header header : listHeaders)
+            if (header.getName().equals(name))
+                return true;
+       return false;
+    }
+    /**
+     * Remove a header
+     * @param name
+     */
+    public void removeHeader( String name ) {
+        // attention, a header may be multiple
+        List<Header> newList = new ArrayList<>();
+        for (Header header : listHeaders)
+            if (! header.getName().equals(name))
+                newList.add( header );
+       listHeaders = newList;
+    }
+
+    public void addHeaders( List<Header> listHeader, boolean doNotInsertIfAlreadyPresent ) {
+        if (doNotInsertIfAlreadyPresent) {
+            List<Header> accumulateHeader = new ArrayList<>();
+            for(Header header : listHeader) {
+                if (! existHeader( header.getName()))
+                    accumulateHeader.add( header );
+            }
+            this.listHeaders.addAll( accumulateHeader );
+        } else 
+            this.listHeaders.addAll( listHeader );
     }
     /**
      * Add a header couple in the headers.

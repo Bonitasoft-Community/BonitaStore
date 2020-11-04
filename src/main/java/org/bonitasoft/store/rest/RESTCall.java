@@ -1,17 +1,12 @@
 package org.bonitasoft.store.rest;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.logging.Logger;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
@@ -25,7 +20,6 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -38,14 +32,13 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
-import org.bonitasoft.store.BonitaStore.UrlToDownload;
-import org.bonitasoft.store.source.git.RESTResultKeyValueMap;
+
 
 public class RESTCall {
 
+    static Logger logger = Logger.getLogger(RESTCall.class.getName());
+    
     private static final String HTTP_PROTOCOL = "HTTP";
     private static final int HTTP_PROTOCOL_VERSION_MAJOR = 1;
     private static final int HTTP_PROTOCOL_VERSION_MINOR = 1;
@@ -56,27 +49,33 @@ public class RESTCall {
      * @return
      */
 
-    public static RESTResponse executeWithRedirect(final RESTRequest request, int connectionTimeout) throws Exception {
+    public static RESTResponse executeWithRedirect(final RESTRequest restRequest, int connectionTimeout) throws Exception {
         int redirectCount=0;
         RESTResponse response=null;
         String uriRedirect=null;
+        List<String> historyCall = new ArrayList<>();
         do
         {
-            response = execute(request, connectionTimeout);
+            response = execute(restRequest, connectionTimeout);
             uriRedirect =  response.getUrlRedirect();
+            historyCall.addAll(response.getHistoryCall());
+            
             if (uriRedirect!=null)
             {
                 if (uriRedirect.startsWith("http"))
-                    request.setUrl( new URL( uriRedirect));
+                    restRequest.setUrl( new URL( uriRedirect));
                 else 
                 {
-                    request.uri = uriRedirect;
-                    request.calculateUrlFromUri();
+                    restRequest.setUri( uriRedirect );
+                    restRequest.calculateUrlFromUri();
                 }
             }
             redirectCount++;
         
         } while( uriRedirect!=null || redirectCount>5);
+        
+        // override the history call
+        response.setHistoryCall( historyCall );
         return response;
     }
     
@@ -85,51 +84,67 @@ public class RESTCall {
      * @return
      */
 
-    public static RESTResponse execute(final RESTRequest request, int connectionTimeout) throws Exception {
+    public static RESTResponse execute(final RESTRequest restRequest, int connectionTimeout) throws Exception {
         CloseableHttpClient httpClient = null;
 
         try {
-            final URL url = request.getUrl();
-
-            final Builder requestConfigurationBuilder = RequestConfig.custom();
-            requestConfigurationBuilder.setConnectionRequestTimeout(connectionTimeout);
-            requestConfigurationBuilder.setRedirectsEnabled(request.isRedirect());
-            final RequestConfig requestConfig = requestConfigurationBuilder.build();
-
+            final URL url = restRequest.getUrl();
+            StringBuilder logRestHttp = new StringBuilder();
+            
+            
+            
+            final RequestBuilder requestBuilder = getRequestBuilderFromMethod(restRequest.getRestMethod());
+            logRestHttp.append("["+restRequest.getRestMethod()+"]");
+            final String urlStr = url.toString();
+            requestBuilder.setUri(urlStr);
+            
+            logRestHttp.append(urlStr);
+            logRestHttp.append("connectionTimeout["+connectionTimeout+"] isRedirect["+restRequest.isRedirect()+"]");
+            
             final HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
             httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(0, false));
 
-            final RequestBuilder requestBuilder = getRequestBuilderFromMethod(request.getRestMethod());
+            
             requestBuilder.setVersion(new ProtocolVersion(HTTP_PROTOCOL, HTTP_PROTOCOL_VERSION_MAJOR, HTTP_PROTOCOL_VERSION_MINOR));            
-            final String urlStr = url.toString();
-            requestBuilder.setUri(urlStr);
-            for (Header header : request.getHeaders()) {
+            
+            logRestHttp.append(" Headers: [");
+            for (Header header : restRequest.getHeaders()) {
                 requestBuilder.addHeader(header);
+                logRestHttp.append(header.getName()+":"+header.getValue()+"; ");
             }
+            logRestHttp.append("]");
+
             if (!RESTHTTPMethod.GET.equals(RESTHTTPMethod.valueOf(requestBuilder.getMethod()))) {
-                final String body = request.getBody();
+                final String body = restRequest.getBody();
                 if (body != null) {
                     requestBuilder.setEntity(
-                            new StringEntity(request.getBody(),
-                                    ContentType.create(request.getContent().getContentType(),
-                                            request.getContent().getCharset( RESTCharsets.UTF_8).getValue())));
+                            new StringEntity(restRequest.getBody(),
+                                    ContentType.create(restRequest.getContent().getContentType(),
+                                            restRequest.getContent().getCharset( RESTCharsets.UTF_8).getValue())));
                 }
+                logRestHttp.append("Body["+restRequest.getBody()+"] ContentType["+restRequest.getContent().getContentType()+"]");
             }
+            // request Config
+            final Builder requestConfigurationBuilder = RequestConfig.custom();
+            requestConfigurationBuilder.setConnectionRequestTimeout(connectionTimeout);
+            requestConfigurationBuilder.setRedirectsEnabled(restRequest.isRedirect());
+            final RequestConfig requestConfig = requestConfigurationBuilder.build();
 
             requestBuilder.setConfig(requestConfig);
 
             final HttpContext httpContext = getHttpContext(
                     requestConfigurationBuilder,
-                    request.getAuthorization(),
+                    restRequest.getAuthorization(),
                     httpClientBuilder,
                     requestBuilder,
-                    request);
+                    restRequest);
 
             final HttpUriRequest httpRequest = requestBuilder.build();
 
 
             httpClient = httpClientBuilder.build();
 
+            logger.info("Call "+logRestHttp);
             // ---------------------------------------------------- Execution now
             long cumulTime = 0;
             final long startTime = System.currentTimeMillis();
@@ -137,37 +152,34 @@ public class RESTCall {
             final long endTime = System.currentTimeMillis();
             cumulTime += endTime - startTime;
             // --------------------------------------------------- answer
-            final Header[] responseHeaders = httpResponse.getAllHeaders();
-
             final RESTResponse response = new RESTResponse();
-            response.setExecutionTime(cumulTime);
+            StringBuffer logRestResponse = new StringBuffer();
+
             response.setStatusCode(httpResponse.getStatusLine().getStatusCode());
+            logRestResponse.append("Status:"+httpResponse.getStatusLine().getStatusCode());
+
+            response.setExecutionTime(cumulTime);
             response.setMessage(httpResponse.getStatusLine().toString());
 
+            final Header[] responseHeaders = httpResponse.getAllHeaders();
+            logRestResponse.append(" Headers[");
             for (final Header header : responseHeaders) {
                 response.addHeader(header);
+                logRestResponse.append(header.getName()+":"+header.getValue()+";");
             }
-
-            final HttpEntity entity = httpResponse.getEntity();
-            if (entity != null) {
-                if (request.isIgnore()) {
-                    EntityUtils.consumeQuietly(entity);
-                } else if (request.isStringOutput()) {
-                    final InputStream inputStream = entity.getContent();
-
-                    final StringWriter stringWriter = new StringWriter();
-                    IOUtils.copy(inputStream, stringWriter);
-                    if (stringWriter.toString() != null) {
-                        response.setBody(stringWriter.toString());
-                    }
-
-                } else {
-                    final byte[] contentByte = IOUtils.toByteArray(entity.getContent());
-
-                    response.setContentByte(contentByte);
-                }
+            logRestResponse.append("]");
+            
+            // cookie store may be updated by the http call
+            response.setCookieStore( restRequest.getCookieStore() );
+            
+            CollectOutput collectOutput = restRequest.getCollectOutput();
+            if (httpResponse.getStatusLine().getStatusCode()!= 301 && httpResponse.getStatusLine().getStatusCode()!=302) {
+                collectOutput.collectHttpResponse( httpResponse );                
             }
-
+            
+            logger.info("Response "+logRestResponse + collectOutput.trace());
+            
+            response.addHistoryCall(httpResponse.getStatusLine().getStatusCode()+" "+logRestHttp.toString()+" Response "+logRestResponse.toString());
             return response;
         } catch (final Exception ex) {
             throw ex;
@@ -274,7 +286,7 @@ public class RESTCall {
 
                 final NtlmAuthorization castAuthorization = (NtlmAuthorization) authorization;
                 final String username = castAuthorization.getUsername();
-                final String password = new String(castAuthorization.getPassword());
+                final String password = castAuthorization.getPassword();
 
                 final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
                 credentialsProvider.setCredentials(

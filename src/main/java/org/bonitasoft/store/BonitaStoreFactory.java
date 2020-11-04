@@ -2,6 +2,7 @@ package org.bonitasoft.store;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -89,7 +90,7 @@ public class BonitaStoreFactory {
      * 
      * @return
      */
-    public BonitaStoreCommunity getBonitaCommunityStore(boolean registerTheStore) {
+    public BonitaStoreCommunity getInstanceBonitaCommunityStore(boolean registerTheStore) {
         BonitaStoreCommunity bonitaStore = new BonitaStoreCommunity(BonitaStoreAPI.CommunityGithubUserName, BonitaStoreAPI.CommunityGithubPassword, BonitaStoreAPI.CommunityGithubUrlRepository);
         if (registerTheStore)
             registerStore(bonitaStore);
@@ -103,7 +104,7 @@ public class BonitaStoreFactory {
      * @param specificRepository
      * @return
      */
-    public BonitaStoreCommunity getBonitaCommunityStore(String specificRepository, boolean registerTheStore) {
+    public BonitaStoreCommunity getInstanceBonitaCommunityStore(String specificRepository, boolean registerTheStore) {
         BonitaStoreCommunity bonitaStoreCommunity = new BonitaStoreCommunity(BonitaStoreAPI.CommunityGithubUserName, BonitaStoreAPI.CommunityGithubPassword, specificRepository);
         bonitaStoreCommunity.setSpecificRepository(specificRepository);
         if (registerTheStore)
@@ -119,14 +120,14 @@ public class BonitaStoreFactory {
      * @param gitUrlRepository
      * @return
      */
-    public BonitaStoreGit getGitStore(String gituserName, String gitPassword, String gitUrlRepository, boolean registerTheStore) {
+    public BonitaStoreGit getInstanceGitStore(String gituserName, String gitPassword, String gitUrlRepository, boolean registerTheStore) {
         BonitaStoreGit bonitaStoreGit = new BonitaStoreGit(gituserName, gitPassword, gitUrlRepository);
         if (registerTheStore)
             registerStore(bonitaStoreGit);
         return bonitaStoreGit;
     }
 
-    public BonitaStoreDirectory getDirectoryStore(File pathDirectory,boolean registerTheStore) {
+    public BonitaStoreDirectory getInstanceDirectoryStore(File pathDirectory,boolean registerTheStore) {
         BonitaStoreDirectory bonitaStoreDirectory = new BonitaStoreDirectory(pathDirectory);
         if (registerTheStore)
             registerStore(bonitaStoreDirectory);
@@ -140,19 +141,31 @@ public class BonitaStoreFactory {
      * 
      * @return
      */
-    public BonitaStoreLocalServer getLocalServer(APISession apiSession, boolean registerTheStore) {
+    public BonitaStoreLocalServer getInstanceLocalServer(APISession apiSession, boolean registerTheStore) {
         return new BonitaStoreLocalServer(apiSession);
     }
 
     /**
      * return an external BonitaServer as a store
+     * The Bonita server keep one connection per client (it save in the tomcat session the connection). 
+     * The bonitaStoreBonitaExternalServer keeps the login information (cookie). So, if a second thread contact the same server, and reconnect, it will disconnect the first connnection
+     * That's why, when a BonitaServer is contacted, to use every time the same object to speak with.
+     * Then, this object connect, saved cookies, and can be reused for all discussions.
+     * Problem: if two thread want to connect with different userName, we must reconnect, then lost the first connection. So, connected to a BonitaServer with two different userName is not possible 
+     * in a Multithread environement (and this is due to the Bonita Server, which saved on its part the connection information). 
      * 
      * @return
      */
-    public BonitaStoreBonitaExternalServer getBonitaExternalServer(String protocol, String server, int port, String applicationName, String userName, String password, boolean registerTheStore) {
+    Map<String,BonitaStoreBonitaExternalServer> mapBonitaExternalServer = new HashMap<>();
+    
+    public BonitaStoreBonitaExternalServer getInstanceBonitaExternalServer(String protocol, String server, int port, String applicationName, String userName, String password, boolean registerTheStore) {
+        String keyStore  = protocol+"#"+server+"#"+port+"#"+applicationName+"#"+userName;
+        if (mapBonitaExternalServer.containsKey(keyStore))
+            return mapBonitaExternalServer.get( keyStore );
         BonitaStoreBonitaExternalServer bonitaServer = new BonitaStoreBonitaExternalServer( protocol, server, port, applicationName, userName, password);
         if (registerTheStore)
             registerStore(bonitaServer);
+        mapBonitaExternalServer.put( keyStore, bonitaServer );
         return bonitaServer;
     }
 

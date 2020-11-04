@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.http.Header;
+import org.apache.http.client.CookieStore;
 import org.bonitasoft.engine.api.ApiAccessType;
 import org.bonitasoft.engine.api.LoginAPI;
 import org.bonitasoft.engine.api.TenantAPIAccessor;
@@ -19,6 +20,8 @@ import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
 import org.bonitasoft.store.artifact.FactoryArtifact;
 import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
+import org.bonitasoft.store.rest.CollectOutput;
+import org.bonitasoft.store.rest.CollectOutput.POLICYOUTPUT;
 import org.bonitasoft.store.rest.Content;
 import org.bonitasoft.store.rest.RESTCall;
 import org.bonitasoft.store.rest.RESTCharsets;
@@ -27,13 +30,19 @@ import org.bonitasoft.store.rest.RESTRequest;
 import org.bonitasoft.store.rest.RESTResponse;
 import org.bonitasoft.store.toolbox.LoggerStore;
 import org.bonitasoft.store.toolbox.TypesCast;
-import org.json.simple.JSONValue;
 
 /**
  * Access an external Bonita server
  * There is two type of access:
  * - via the JAVA API which is the main part to get all artifacts
  * - via the REST API, which is the only way to call an Custom Page
+ * 
+ *  ATTENTION: Theses method are thread safe, but keep in mind the bonitaServer keep in memory the connection information 
+ *    BUT a BonitaServer does not allow to have 2 clients connected at the same time.
+ *    So, if 2 BonitaStoreBonitaExternalServer is created, the second object is not connected, so it will connect. The Bonita Server will then erase the first connection.
+ *    The first object will have a "not connected". 
+ * ==> All threads should use the same BonitaStoreBonitaExternalServer
+
  */
 public class BonitaStoreBonitaExternalServer extends BonitaStore {
 
@@ -56,7 +65,7 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
 
     private int connectionTimeout = 60000; // 1 mn
 
-    RESTRequest restRequest;
+    // RESTRequest restRequest;
 
     private String protocol; // "http" 
     private String server; // "localhost" 
@@ -140,7 +149,8 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
             String userName = TypesCast.getString(source.get("login"), null);
             String password = TypesCast.getString(source.get("password"), null);
             int scopeInHour = TypesCast.getInteger(source.get("scopeinhour"), 24 * 7);
-            BonitaStoreBonitaExternalServer store = new BonitaStoreBonitaExternalServer(protocole, server, port, applicationName, userName, password);
+            BonitaStoreFactory storeFactory = BonitaStoreFactory.getInstance();
+            BonitaStoreBonitaExternalServer store = storeFactory.getInstanceBonitaExternalServer(protocole, server, port, applicationName, userName, password,true);
             store.setScopeInHour(scopeInHour);
             store.setDisplayName((String) source.get(CST_BONITA_STORE_DISPLAYNAME));
             return store;
@@ -160,7 +170,11 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
             // get list ressource
             // API/portal/page?p=0&c=1000&o=lastUpdateDate%20DESC&f=processDefinitionId%3d&f=isHidden%3dfalse&f=contentType%3dpage
             String uri = "API/portal/page?p=0&c=1000";
-            RestApiResult restApiResult = callRestJson(uri.toString(), "GET", "", "application/json;charset=UTF-8", RESTCharsets.UTF_8.getValue());
+            CollectOutput collectOutput = new CollectOutput();
+            collectOutput.setPolicy(POLICYOUTPUT.JSON);
+            
+            RestApiResult restApiResult = callRestJson(uri.toString(), "GET", "", "application/json;charset=UTF-8", RESTCharsets.UTF_8.getValue(), collectOutput);
+            restApiResult.jsonResult = collectOutput.getJson();
 
             if (restApiResult.httpStatus != 200) { // replace the event 
                 storeResult.addEvent(eventConnectionError);
@@ -246,7 +260,6 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
         return urlString + " User[" + userName + "]";
 
     }
-
     /* -------------------------------------------------------------------- */
     /*                                                                      */
     /* RestCall */
@@ -259,16 +272,36 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
         public long httpStatus;
         public long executionTime;
         public RESTResponse restResponse;
+        public List<String> historyCall = new ArrayList<>();
+
     }
 
-    public RestApiResult callRestJson(String uri, String method, String body, String contentType, String charset) {
+       /**
+     * Call A Bonita server.
+     * This method is thread safe, but keep in mind the bonitaServer keep in memory the connection information AND the Bonitaserver does not allow to have 2 clients connected at the same time.
+     * The second connection will clear the first connection 
+     * @param uri
+     * @param method
+     * @param body
+     * @param contentType
+     * @param charset
+     * @param isBinaryOutput
+     * @return
+     */
+    // bob private RESTRequest restRequestObject = null;
+    public RestApiResult callRestJson(String uri, String method, String body, String contentType, String charset, CollectOutput collectOutput) {
         RestApiResult restApiResult = new RestApiResult();
         long timeBegin = System.currentTimeMillis();
         // create a new REST REQUEST
-        restRequest = new RESTRequest();
-        restApiResult.listEvents.addAll(connectViaRestAPI());
-        if (BEventFactory.isError(restApiResult.listEvents))
-            return restApiResult;
+        // restRequestObject = new RESTRequest();
+        if (! isConnected) {
+            ConnectResponse connectedResponse = connectViaRestAPI();
+            restApiResult.listEvents.addAll(connectedResponse.listEvents);
+            if (connectedResponse.restResponse !=null)
+                restApiResult.historyCall.addAll( connectedResponse.restResponse.getHistoryCall());
+            if (BEventFactory.isError(restApiResult.listEvents))
+                return restApiResult;
+        }
 
         try {
             // test a simple call first
@@ -277,8 +310,10 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
 
             // do the call now
 
-            restApiResult.restResponse = callRest(uri, method, body, contentType, charset);
-            restApiResult.jsonResult = JSONValue.parse(restApiResult.restResponse.getBody());
+            restApiResult.restResponse = callRest(uri, method, body, contentType, charset, collectOutput);
+            restApiResult.historyCall.addAll(  restApiResult.restResponse.getHistoryCall());
+            
+            restApiResult.jsonResult = collectOutput.getJson();
             restApiResult.httpStatus = restApiResult.restResponse.getStatusCode();
             // include the Connection and the result
             long timeEnd = System.currentTimeMillis();
@@ -293,24 +328,42 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
         return restApiResult;
     }
 
+    /**
+     * get a file
+     * @param uri
+     * @param method
+     * @param body
+     * @param contentType
+     * @param charset
+     * @return
+     */
     public RestApiResult callRestFile(String uri, String method, String body, String contentType, String charset) {
         RestApiResult restApiResult = new RestApiResult();
         long timeBegin = System.currentTimeMillis();
         // create a new REST REQUEST
-        restRequest = new RESTRequest();
-        restApiResult.listEvents.addAll(connectViaRestAPI());
-        if (BEventFactory.isError(restApiResult.listEvents))
-            return restApiResult;
-
+        // restRequest = new RESTRequest();
+        if (! isConnected) {
+            ConnectResponse connectedResponse = connectViaRestAPI();
+            restApiResult.listEvents.addAll(connectedResponse.listEvents);
+            if (connectedResponse.restResponse !=null)
+                restApiResult.historyCall.addAll( connectedResponse.restResponse.getHistoryCall());
+            if (BEventFactory.isError(restApiResult.listEvents))
+                return restApiResult;
+    }
+    
         try {
             // test a simple call first
             // RESTResponse restResponseUnused = callRest("API/system/session/unusedId", "GET", "", "application/json;charset=UTF-8", charset);
             // restApiResult.jsonResult = JSONValue.parse(restResponseUnused.getBody());
 
             // do the call now
-
-            restApiResult.restResponse = callRest(uri, method, body, contentType, charset);
-
+            CollectOutput collectOutput = new CollectOutput();
+            collectOutput.setPolicy(POLICYOUTPUT.BYTEARRAY);
+            // what do we do for the result ? 
+            restApiResult.restResponse = callRest(uri, method, body, contentType, charset, collectOutput);
+            restApiResult.historyCall.addAll(  restApiResult.restResponse.getHistoryCall());
+            
+            
             restApiResult.httpStatus = restApiResult.restResponse.getStatusCode();
             // include the Connection and the result
             long timeEnd = System.currentTimeMillis();
@@ -356,25 +409,54 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
 
     }
 
+
+    private boolean isConnected=false;
     public List<Header> listHeaderRest = new ArrayList<>();;
-
-    /**
-     * @return
-     */
-    private List<BEvent> connectViaRestAPI() {
+    public CookieStore cookieStore = null; 
+    private class ConnectResponse {
         List<BEvent> listEvents = new ArrayList<>();
-
+        RESTResponse restResponse;
+    }
+    /**
+     * Connect to the server. Maybe already connected by a different thread.
+     */
+    private synchronized ConnectResponse connectViaRestAPI() {
+        
+        ConnectResponse connectResponse = new ConnectResponse();
+        // maybe already connected by a second thread?
+        if (isConnected)
+            return connectResponse;
         try {
-            RESTResponse restResponse = callRest("loginservice?", "POST", "username=" + userName + "&password=" + password + "&redirect=false", "application/x-www-form-urlencoded", RESTCharsets.UTF_8.getValue());
-            listHeaderRest = restResponse.getHeaders();
+            connectResponse.restResponse = callRest("loginservice?", "POST", "username=" + userName + "&password=" + password + "&redirect=false", "application/x-www-form-urlencoded", RESTCharsets.UTF_8.getValue(), CollectOutput.getInstanceString());
+            if (connectResponse.restResponse.getStatusCode() != 200) {
+                connectResponse.listEvents.add(new BEvent(eventConnectionError, "Call to [" + protocol + "://" + server + ":" + port + "] Application[" + applicationName + "] Username["+userName+"]"));
+            }
+            listHeaderRest = connectResponse.restResponse.getHeaders();
+            cookieStore = connectResponse.restResponse.getCookieStore();
+            isConnected=true;
         } catch (BadUrlException e) {
-            listEvents.add(new BEvent(eventBadUrl, e.url));
+            connectResponse.listEvents.add(new BEvent(eventBadUrl, e.url));
         } catch (Exception e) {
-            listEvents.add(new BEvent(eventConnectionError, e, "Call to [" + protocol + "://" + server + ":" + port + "] Application[" + applicationName + "]"));
+            connectResponse.listEvents.add(new BEvent(eventConnectionError, e, "Call to [" + protocol + "://" + server + ":" + port + "] Application[" + applicationName + "]"));
         }
 
-        return listEvents;
+        return connectResponse;
     }
+    /**
+     * remove the current connection flags 
+     */
+    public void resetConnection( ) {
+        isConnected=false;
+        listHeaderRest.clear();
+        cookieStore=null;
+    }
+
+    
+    /* -------------------------------------------------------------------- */
+    /*                                                                      */
+    /* CallRest */
+    /*                                                                      */
+    /* -------------------------------------------------------------------- */
 
     /**
      * @param uri
@@ -385,16 +467,17 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
      * @return
      * @throws Exception
      */
-    private RESTResponse callRest(String uri, String method, String body, String contentType, String charset) throws Exception {
+    private RESTResponse callRest(String uri, String method, String body, String contentType, String charset, CollectOutput collectOutput) throws Exception {
         // the RESTRequest restRequest must be created first. it contains all cookies
-
-        restRequest.headerUrl = protocol + "://" + server + ":" + port + "/";
-        // applicatione is based in the URI. In case of a redirect, we just need to call the same server, so end at the port number. The Redirect will contains the application name inside.
-        restRequest.uri = applicationName + "/" + uri;
+        RESTRequest restRequest = new RESTRequest();
+        restRequest.setCollectOutput(collectOutput);
+        restRequest.setHeaderUrl( protocol + "://" + server + ":" + port + "/");
+        // application is based in the URI. In case of a redirect, we just need to call the same server, so end at the port number. The Redirect will contains the application name inside.
+        restRequest.setUri( applicationName + "/" + uri);
         try {
             restRequest.calculateUrlFromUri();
         } catch (final MalformedURLException e) {
-            throw new BadUrlException(restRequest.headerUrl + restRequest.uri);
+            throw new BadUrlException(restRequest.getHeaderUrl() + restRequest.getUri());
         }
 
         final Content content = new Content();
@@ -403,14 +486,16 @@ public class BonitaStoreBonitaExternalServer extends BonitaStore {
             content.setCharset(RESTCharsets.getRESTCharsetsFromValue(charset));
         }
         restRequest.setContent(content);
-
+        restRequest.addHeader("Content-type", contentType);
+        
         restRequest.setBody(body);
         restRequest.setRestMethod(RESTHTTPMethod.getRESTHTTPMethodFromValue(method));
         //request.setRedirect(true);
         //request.setIgnore(false);
         if (!listHeaderRest.isEmpty())
-            restRequest.addHeaders(listHeaderRest);
-
+            restRequest.addHeaders(listHeaderRest, true);
+        if (cookieStore !=null)
+            restRequest.setCookieStore(cookieStore);
         return RESTCall.executeWithRedirect(restRequest, connectionTimeout);
 
     }
