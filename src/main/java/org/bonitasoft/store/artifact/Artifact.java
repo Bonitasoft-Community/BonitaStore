@@ -37,23 +37,23 @@ public abstract class Artifact {
      * name of the application. THis name is unique on the Store and locally. This name is set to LOWER CASE to be sure to manipulate the same iteù
      */
     private String name;
-    
+
     /**
      * Name manipulated by Bonita
      */
     private String bonitaName;
     private String version;
-    
+
     /**
      * Date Version : last time the artifact was updated
      */
     private Date dateVersion;
-    
+
     /**
      * Date Creation
      */
     private Date dateCreation;
-    
+
     protected String description;
 
     private TypeArtifact typeArtifact;
@@ -104,8 +104,8 @@ public abstract class Artifact {
     public Artifact(TypeArtifact typeArtefact, String name, String version, String description, Date dateCreation, Date dateVersion, BonitaStore store) {
         this.typeArtifact = typeArtefact;
         this.name = name.toLowerCase();
-        this.bonitaName=name;
-        this.version = version==null ? null : version.trim();
+        this.bonitaName = name;
+        this.version = version == null ? null : version.trim();
         this.description = description;
         this.dateCreation = dateCreation;
         this.dateVersion = dateVersion;
@@ -140,15 +140,19 @@ public abstract class Artifact {
     public String getName() {
         return name;
     }
+
     public String getBonitaName() {
         return bonitaName;
     }
+
     public String getVersion() {
         return version;
     }
+
     public void setVersion(String version) {
         this.version = version;
     }
+
     public String getDescription() {
         return description;
     }
@@ -203,19 +207,14 @@ public abstract class Artifact {
         this.isProvided = isProvided;
     }
 
-    
     public BaseElement getBonitaBaseElement() {
         return bonitaBaseElement;
     }
 
-    
     public void setBonitaBaseElement(BaseElement bonitaBaseElement) {
         this.bonitaBaseElement = bonitaBaseElement;
     }
 
-  
-    
-    
     public String getWhatsnews() {
         return whatsnews;
     }
@@ -250,11 +249,11 @@ public abstract class Artifact {
 
     public Object getSignature() {
         return signature;
-}
+    }
+
     public void setSignature(Object signature) {
         this.signature = signature;
-}
-
+    }
 
     /* ******************************************************************************** */
     /*                                                                                  */
@@ -274,20 +273,23 @@ public abstract class Artifact {
     }
 
     /**
-     * some store must override the policy. For example, with BCD, file change at any generation (so every day). This is not pertinent to base the policy on date
+     * some store must override the policy. For example, with BCD, file change at any generation (so every day). This is not pertinent to base the policy on
+     * date
      */
-    private POLICY_NEWVERSION policyNewVersion=null;
+    private POLICY_NEWVERSION policyNewVersion = null;
+
     /**
-     * 
      * @param defaultPolicy
      * @return
      */
-    public POLICY_NEWVERSION getPolicyNewVersion(POLICY_NEWVERSION defaultPolicy ) {
-        return policyNewVersion==null ? defaultPolicy : policyNewVersion;
+    public POLICY_NEWVERSION getPolicyNewVersion(POLICY_NEWVERSION defaultPolicy) {
+        return policyNewVersion == null ? defaultPolicy : policyNewVersion;
     }
-    public void setPolicyNewVersion( POLICY_NEWVERSION policyNewVersion ) {
+
+    public void setPolicyNewVersion(POLICY_NEWVERSION policyNewVersion) {
         this.policyNewVersion = policyNewVersion;
     }
+
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Contextual information */
@@ -329,7 +331,7 @@ public abstract class Artifact {
      * local information
      */
     public long getNumberOfDownload() {
-        if (! listReleases.isEmpty()) {
+        if (!listReleases.isEmpty()) {
             long total = 0;
             for (final ArtefactRelease appsRelease : listReleases) {
                 total += appsRelease.numberOfDownload == null ? 0 : appsRelease.numberOfDownload;
@@ -340,7 +342,7 @@ public abstract class Artifact {
     }
 
     public String getLastUrlDownload() {
-        if (! listReleases.isEmpty()) {
+        if (!listReleases.isEmpty()) {
             return listReleases.get(0).urlDownload;
         }
         return lastUrlDownload;
@@ -349,24 +351,25 @@ public abstract class Artifact {
     public void setLastUrlDownload(String lastUrlDownload) {
         this.lastUrlDownload = lastUrlDownload;
     }
-    
+
     /**
      * Artifact may be loaded, or not. When it's loaded, the content is here and can be deployed
      * Remark : to load the content, it must be done via the BonitaStore
+     * 
      * @return
      */
     public boolean isLoaded() {
-        return bonitaBaseElement!=null;
+        return bonitaBaseElement != null;
     }
-    
+
     /**
      * Content may be huge, and we don't need to keep in memory. So, a clean will remove all non necessary information
+     * 
      * @return
      */
     public void clean() {
-        bonitaBaseElement=null;
+        bonitaBaseElement = null;
     }
-    
 
     /* ******************************************************************************** */
     /*                                                                                  */
@@ -377,7 +380,6 @@ public abstract class Artifact {
 
     protected ByteArrayOutputStream content;
 
-    
     /**
      * all Bonita artefact want to be manage as... a file :-(
      * So, whatever is the source of the artefact, it has to be saved at one moment and be ready to be
@@ -417,7 +419,7 @@ public abstract class Artifact {
 
     public List<BEvent> loadFromInputStream(InputStream inputStream) {
         List<BEvent> listEventsLoad = new ArrayList<>();
-        try {            
+        try {
             content = new ByteArrayOutputStream();
             IOUtils.copy(inputStream, content);
         } catch (Exception e) {
@@ -425,7 +427,7 @@ public abstract class Artifact {
         }
         return listEventsLoad;
     }
-    
+
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Release information */
@@ -462,7 +464,7 @@ public abstract class Artifact {
     }
 
     public Date getLastReleaseDate() {
-        if (! listReleases.isEmpty()) {
+        if (!listReleases.isEmpty()) {
             return listReleases.get(0).dateRelease;
         }
         return lastReleaseDate;
@@ -474,16 +476,18 @@ public abstract class Artifact {
 
     /**
      * get the last date of the artifact, depends of the DateVersion, last release, then creation date
+     * 
      * @return
      */
     public Date getLastDateArtifact() {
-        if (dateVersion!=null)
+        if (dateVersion != null)
             return dateVersion;
-        Date release= getLastReleaseDate();
-        if (release!=null)
+        Date release = getLastReleaseDate();
+        if (release != null)
             return release;
         return dateCreation;
     }
+
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Strategy operation : deploy */

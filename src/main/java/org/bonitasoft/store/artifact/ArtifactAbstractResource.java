@@ -12,14 +12,15 @@ public abstract class ArtifactAbstractResource extends Artifact {
     public ArtifactAbstractResource(TypeArtifact typeArtefact, String name, String version, String description, Date dateCreation, Date dateVersion, BonitaStore sourceOrigin) {
         super(typeArtefact, name, version, description, dateCreation, dateVersion, sourceOrigin);
     }
+
     public ArtifactAbstractResource(TypeArtifact typeArtefact, Page page, BonitaStore sourceOrigin) {
-        super(typeArtefact, page.getName(), null, page.getDescription(), page.getLastModificationDate(),  page.getLastModificationDate(), sourceOrigin);
-        setProvided( page.isProvided());
+        super(typeArtefact, page.getName(), null, page.getDescription(), page.getLastModificationDate(), page.getLastModificationDate(), sourceOrigin);
+        setProvided(page.isProvided());
         setDisplayName(page.getDisplayName());
-        setBonitaBaseElement( page );
+        setBonitaBaseElement(page);
 
     }
+
     public abstract String getContentType();
 
-    
 }

@@ -25,14 +25,15 @@ public class BonitaStoreParameters {
 
     public boolean isByTopics = true;
 
-    public enum POLICY_NEWVERSION { BYDATE, NEWVERSION };
-    
+    public enum POLICY_NEWVERSION {
+        BYDATE, NEWVERSION
+    };
+
     public POLICY_NEWVERSION policyNewVersion = POLICY_NEWVERSION.BYDATE;
-    
-    
+
     /** on a deployment, set the process as ENABLE */
     public boolean processEnable = false;
-    
+
     /** if true, a actor "ProcessManager" is search. If one if found, then this actor definition is used to setup the process manager */
     public boolean processManagerActor = false;
 

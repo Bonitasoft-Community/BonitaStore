@@ -57,10 +57,10 @@ public class FactoryArtifact {
         public List<BEvent> listEvents = new ArrayList<>();
     }
 
-    public ArtifactResult getInstanceArtefact(String fileName, BonitaStoreInput fileContent, boolean loadArtifact, BonitaStore bonitaStore,  LoggerStore logStore) {
+    public ArtifactResult getInstanceArtefact(String fileName, BonitaStoreInput fileContent, boolean loadArtifact, BonitaStore bonitaStore, LoggerStore logStore) {
         ArtifactResult artefactResult = new ArtifactResult();
 
-        artefactResult.logAnalysis.append( "analysis File[" + fileName + "]");
+        artefactResult.logAnalysis.append("analysis File[" + fileName + "]");
         Date dateFile = null;
         try {
             // JDK 1.7
@@ -83,9 +83,9 @@ public class FactoryArtifact {
 
                 String processVersion = fileName.substring(separator + 2);
                 // remove .bar
-                processVersion = processVersion.substring(0, processVersion.length() - 4); 
+                processVersion = processVersion.substring(0, processVersion.length() - 4);
                 processVersion = processVersion.trim();
-                artefactResult.logAnalysis.append( "Process[" + processName + "] version[" + processVersion + "] detected from filename;");
+                artefactResult.logAnalysis.append("Process[" + processName + "] version[" + processVersion + "] detected from filename;");
                 // Note: this name / version may be completely wrong actually, there is no way to detect it (no way to load the business Archive and ask the name....)
                 artefactResult.artifact = new ArtifactProcess(processName, processVersion, "", dateFile, dateFile, bonitaStore);
             }
@@ -96,13 +96,13 @@ public class FactoryArtifact {
             // direct approach reading the file
             try {
                 String content = fileContent.getContentText();
-                if (content==null)
+                if (content == null)
                     return artefactResult;
                 // remove the first <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
                 if (content.startsWith("<?xml")) {
-                    int pos=content.indexOf("?>");
-                    if (pos!=-1)
-                        content=content.substring(pos+2+1);
+                    int pos = content.indexOf("?>");
+                    if (pos != -1)
+                        content = content.substring(pos + 2 + 1);
                 }
                 if (content.startsWith("<profile ")) {
                     // this is a profile
@@ -112,7 +112,7 @@ public class FactoryArtifact {
                         profileNamePos += "name=\"".length();
                         int endProfileName = content.indexOf('\"', profileNamePos);
                         String name = content.substring(profileNamePos, endProfileName);
-                        artefactResult.logAnalysis.append( "Profile[" + name + "] detected from XML["+fileName+"];");
+                        artefactResult.logAnalysis.append("Profile[" + name + "] detected from XML[" + fileName + "];");
 
                         artefactResult.artifact = new ArtifactProfile(name, null, "", dateFile, dateFile, bonitaStore);
                     }
@@ -120,98 +120,96 @@ public class FactoryArtifact {
                 if (content.startsWith("<customUserInfoDefinitions")) {
                     // this is an organization
                     String name = fileName.substring(0, fileName.length() - ".xml".length());
-                    artefactResult.logAnalysis.append( "Organisation[" + name + "] detected from XML["+fileName+"];");
+                    artefactResult.logAnalysis.append("Organisation[" + name + "] detected from XML[" + fileName + "];");
                     artefactResult.artifact = new ArtifactOrganization(name, null, "", dateFile, dateFile, bonitaStore);
                 }
                 if (content.startsWith("<application")) {
                     // we may have MULTIPLE application, so the first one is important
                     String name = searchInXmlContent(content, "displayName");
                     String description = searchInXmlContent(content, "description");
-                    artefactResult.logAnalysis.append( "Application[" + name + "] detected from XML["+fileName+"];");
+                    artefactResult.logAnalysis.append("Application[" + name + "] detected from XML[" + fileName + "];");
 
                     artefactResult.artifact = new ArtifactLivingApplication(name, null, description, dateFile, dateFile, bonitaStore);
                 }
-                if (content.startsWith("<organization"))
-                {
+                if (content.startsWith("<organization")) {
                     String name = fileName;
                     if (name.endsWith(".xml"))
-                        name=name.substring(0,name.length()-".xml".length());
+                        name = name.substring(0, name.length() - ".xml".length());
                     String description = "organization";
-                    artefactResult.logAnalysis.append( "Organisation[" + name + "] detected from XML["+fileName+"];");
+                    artefactResult.logAnalysis.append("Organisation[" + name + "] detected from XML[" + fileName + "];");
 
                     artefactResult.artifact = new ArtifactOrganization(name, null, description, dateFile, dateFile, bonitaStore);
                 }
-               
+
             } catch (Exception e) {
                 // ignore error here, just we can't manage the detection                
             }
 
-        } else if (fileName.endsWith(".zip") && ! fileName.equals("bdm.zip")) {
+        } else if (fileName.endsWith(".zip") && !fileName.equals("bdm.zip")) {
             try {
-            InputStream contentStream = fileContent.getContentInputStream();
+                InputStream contentStream = fileContent.getContentInputStream();
 
-            // ZIP file : may be a lot of thing !
-            PropertiesAttribut propertiesAttribute = null;
-            try {
-                propertiesAttribute = searchInPagePropertie(contentStream);
-                if (propertiesAttribute == null) {
-                    artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, "propertiesAttribute is null fileName[" + fileName + "]"));
+                // ZIP file : may be a lot of thing !
+                PropertiesAttribut propertiesAttribute = null;
+                try {
+                    propertiesAttribute = searchInPagePropertie(contentStream);
+                    if (propertiesAttribute == null) {
+                        artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, "propertiesAttribute is null fileName[" + fileName + "]"));
+                        return artefactResult;
+                    }
+                } catch (Exception e) {
+                    artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, e, "fileName[" + fileName + "]"));
                     return artefactResult;
                 }
+
+                if (propertiesAttribute.contentType == null || "page".equals(propertiesAttribute.contentType)) {
+                    artefactResult.logAnalysis.append("CustomPage[" + propertiesAttribute.name + "] detected from Properties[" + fileName + "];");
+                    artefactResult.artifact = new ArtifactCustomPage(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile, bonitaStore);
+
+                } else if ("apiExtension".equalsIgnoreCase(propertiesAttribute.contentType)) {
+                    artefactResult.logAnalysis.append("RestAPIExtention[" + propertiesAttribute.name + "] detected from Properties[" + fileName + "];");
+                    artefactResult.artifact = new ArtifactRestApi(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile, bonitaStore);
+
+                } else if ("layout".equalsIgnoreCase(propertiesAttribute.contentType)) {
+                    artefactResult.logAnalysis.append("Layout[" + propertiesAttribute.name + "] detected from Properties[" + fileName + "];");
+                    artefactResult.artifact = new ArtifactLayout(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile, bonitaStore);
+
+                } else if ("form".equalsIgnoreCase(propertiesAttribute.contentType)) {
+                    // a form : only possible to deploy it in a process,
+                    // so... we need the process
+                } else if ("theme".equalsIgnoreCase(propertiesAttribute.contentType)) {
+                    artefactResult.logAnalysis.append("Theme[" + propertiesAttribute.name + "] detected from Properties[" + fileName + "];");
+                    artefactResult.artifact = new ArtifactTheme(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile, bonitaStore);
+
+                } else {
+                    artefactResult.logAnalysis.append("Unkown Artifact ContentType[" + propertiesAttribute.contentType + "] detected from Properties[" + fileName + "];");
+                    logStore.severe("Unknow artifact contentType=[" + propertiesAttribute.contentType + "]");
+                }
             } catch (Exception e) {
-                artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, e, "fileName[" + fileName + "]"));
-                return artefactResult;
-            }
-
-            if (propertiesAttribute.contentType == null || "page".equals(propertiesAttribute.contentType)) {
-                artefactResult.logAnalysis.append( "CustomPage[" + propertiesAttribute.name + "] detected from Properties["+fileName+"];");
-                artefactResult.artifact = new ArtifactCustomPage(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile, bonitaStore);
-
-            } else if ("apiExtension".equalsIgnoreCase(propertiesAttribute.contentType)) {
-                artefactResult.logAnalysis.append( "RestAPIExtention[" + propertiesAttribute.name + "] detected from Properties["+fileName+"];");
-                artefactResult.artifact = new ArtifactRestApi(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile, bonitaStore);
-
-            } else if ("layout".equalsIgnoreCase(propertiesAttribute.contentType)) {
-                artefactResult.logAnalysis.append( "Layout[" + propertiesAttribute.name + "] detected from Properties["+fileName+"];");
-                artefactResult.artifact = new ArtifactLayout(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile, bonitaStore);
-
-            } else if ("form".equalsIgnoreCase(propertiesAttribute.contentType)) {
-                // a form : only possible to deploy it in a process,
-                // so... we need the process
-            } else if ("theme".equalsIgnoreCase(propertiesAttribute.contentType)) {
-                artefactResult.logAnalysis.append( "Theme[" + propertiesAttribute.name + "] detected from Properties["+fileName+"];");
-                artefactResult.artifact = new ArtifactTheme(propertiesAttribute.name, propertiesAttribute.version, propertiesAttribute.description, dateFile, dateFile,bonitaStore);
-
-            } else {
-                artefactResult.logAnalysis.append( "Unkown Artifact ContentType[" +   propertiesAttribute.contentType + "] detected from Properties["+fileName+"];");
-                logStore.severe("Unknow artifact contentType=[" + propertiesAttribute.contentType + "]");
-            }
-            }catch(Exception e) {
-                artefactResult.listEvents.add( new BEvent(EVENT_FAILED_DETECTION, e, ""));
+                artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, e, ""));
             }
         } else if (fileName.endsWith(".groovy")) {
             String name = fileName.substring(0, fileName.length() - ".groovy".length());
-            artefactResult.logAnalysis.append( "Groovy detected[" +   name + "] detected from Properties["+fileName+"];");
+            artefactResult.logAnalysis.append("Groovy detected[" + name + "] detected from Properties[" + fileName + "];");
             artefactResult.artifact = new ArtifactGroovy(name, null, "", dateFile, dateFile, bonitaStore);
 
             // ----------------------- Nothing
         } else {
-            artefactResult.logAnalysis.append( "No detection avaiable for fileName["  + fileName + "]");
+            artefactResult.logAnalysis.append("No detection avaiable for fileName[" + fileName + "]");
             artefactResult.listEvents.add(new BEvent(EVENT_NO_DETECTION, "fileName[" + fileName + "]"));
         }
         if (artefactResult.artifact != null && loadArtifact) {
             try {
                 InputStream contentStream = fileContent.getContentInputStream();
                 artefactResult.listEvents.addAll(artefactResult.artifact.loadFromInputStream(contentStream));
-            }
-            catch(Exception e) {
-                artefactResult.listEvents.add( new BEvent(EVENT_FAILED_DETECTION, e, ""));
+            } catch (Exception e) {
+                artefactResult.listEvents.add(new BEvent(EVENT_FAILED_DETECTION, e, ""));
             }
         }
         applyStrategy(artefactResult.artifact);
-        if (artefactResult.artifact !=null)
-            artefactResult.artifact.signature= fileContent.getSignature();
-        
+        if (artefactResult.artifact != null)
+            artefactResult.artifact.signature = fileContent.getSignature();
+
         return artefactResult;
     }
 
@@ -231,15 +229,15 @@ public class FactoryArtifact {
 
         Artifact artefact = null;
         if (type == TypeArtifact.BDM)
-            artefact = new ArtifactBDM(name, version, description, dateCreation,  dateVersion,bonitaStore);
+            artefact = new ArtifactBDM(name, version, description, dateCreation, dateVersion, bonitaStore);
         if (type == TypeArtifact.PROCESS)
-            artefact = new ArtifactProcess(name, version, description, dateCreation,  dateVersion,bonitaStore);
+            artefact = new ArtifactProcess(name, version, description, dateCreation, dateVersion, bonitaStore);
         if (type == TypeArtifact.CUSTOMPAGE)
-            artefact = new ArtifactCustomPage(name, version, description, dateCreation,  dateVersion,bonitaStore);
+            artefact = new ArtifactCustomPage(name, version, description, dateCreation, dateVersion, bonitaStore);
         if (type == TypeArtifact.CUSTOMWIDGET)
             artefact = null;
         if (type == TypeArtifact.LAYOUT)
-            artefact = new ArtifactLayout(name, version, description, dateCreation, dateVersion,bonitaStore);
+            artefact = new ArtifactLayout(name, version, description, dateCreation, dateVersion, bonitaStore);
         if (type == TypeArtifact.LIVINGAPP)
             artefact = new ArtifactLivingApplication(name, version, description, dateCreation, dateVersion, bonitaStore);
         if (type == TypeArtifact.LOOKANDFEEL)
@@ -247,13 +245,13 @@ public class FactoryArtifact {
         if (type == TypeArtifact.ORGANIZATION)
             artefact = new ArtifactLookAndFeel(name, version, description, dateCreation, dateVersion, bonitaStore);
         if (type == TypeArtifact.PROFILE)
-            artefact = new ArtifactProfile(name, version, description, dateCreation,  dateVersion,bonitaStore);
+            artefact = new ArtifactProfile(name, version, description, dateCreation, dateVersion, bonitaStore);
         if (type == TypeArtifact.RESTAPI)
             artefact = new ArtifactRestApi(name, version, description, dateCreation, dateVersion, bonitaStore);
         if (type == TypeArtifact.THEME)
-            artefact = new ArtifactTheme(name, version, description, dateCreation, dateVersion,bonitaStore);
+            artefact = new ArtifactTheme(name, version, description, dateCreation, dateVersion, bonitaStore);
         if (type == TypeArtifact.GROOVY)
-            artefact = new ArtifactGroovy(name, version, description, dateCreation,  dateVersion,bonitaStore);
+            artefact = new ArtifactGroovy(name, version, description, dateCreation, dateVersion, bonitaStore);
 
         if (artefact != null)
             applyStrategy(artefact);
@@ -263,23 +261,24 @@ public class FactoryArtifact {
 
     /**
      * get the artifact for an existing page
+     * 
      * @param page
      * @param bonitaStore
      * @return
      */
-    public Artifact getFromPage( Page page, BonitaStore bonitaStore) {
+    public Artifact getFromPage(Page page, BonitaStore bonitaStore) {
         Artifact artefact = null;
-        if (ContentType.API_EXTENSION.equals( page.getContentType()))
-            artefact = new ArtifactRestApi( page, bonitaStore);
-        else if (ContentType.FORM.equals( page.getContentType()))
+        if (ContentType.API_EXTENSION.equals(page.getContentType()))
+            artefact = new ArtifactRestApi(page, bonitaStore);
+        else if (ContentType.FORM.equals(page.getContentType()))
             artefact = new ArtifactCustomPage(page, bonitaStore);
-        else if (ContentType.LAYOUT.equals( page.getContentType()))
+        else if (ContentType.LAYOUT.equals(page.getContentType()))
             artefact = new ArtifactLayout(page, bonitaStore);
-        else if (ContentType.PAGE.equals( page.getContentType()))
+        else if (ContentType.PAGE.equals(page.getContentType()))
             artefact = new ArtifactCustomPage(page, bonitaStore);
-        else if (ContentType.THEME.equals( page.getContentType()))
+        else if (ContentType.THEME.equals(page.getContentType()))
             artefact = new ArtifactTheme(page, bonitaStore);
-                
+
         if (artefact != null)
             applyStrategy(artefact);
 
@@ -331,6 +330,7 @@ public class FactoryArtifact {
             }
         }
     }
+
     /* -------------------------------------------------------------------- */
     /*                                                                      */
     /* Private */
@@ -408,9 +408,9 @@ public class FactoryArtifact {
      * @throws Exception
      */
     private PropertiesAttribut searchInPagePropertie(InputStream inputStream) throws Exception {
-        
-        try (ZipInputStream zis = new ZipInputStream(inputStream)){
-            
+
+        try (ZipInputStream zis = new ZipInputStream(inputStream)) {
+
             // get the zipped file list entry
             ZipEntry ze = zis.getNextEntry();
 
@@ -448,7 +448,7 @@ public class FactoryArtifact {
             propertiesAttribut.contentType = p.getProperty("contentType");
             return propertiesAttribut;
 
-        } catch (Exception e) {          
+        } catch (Exception e) {
             throw e;
         }
     }
@@ -457,33 +457,29 @@ public class FactoryArtifact {
      * @param file
      * @return
      * @throws Exception
-     *
-    private String readFileContent(File file) throws Exception {
-        BufferedReader br = null;
-        FileReader fr = null;
-        StringBuffer content = new StringBuffer();
-        try {
-            fr = new FileReader(file);
-            br = new BufferedReader(fr);
-
-            String sCurrentLine;
-
-            while ((sCurrentLine = br.readLine()) != null) {
-                content.append(sCurrentLine + "\n");
-            }
-        } catch (Exception e) {
-            throw e;
-        } finally {
-            try {
-                if (br != null)
-                    br.close();
-
-                if (fr != null)
-                    fr.close();
-            } catch (Exception e) {
-            }
-        }
-        return content.toString();
-    }
-*/
+     *         private String readFileContent(File file) throws Exception {
+     *         BufferedReader br = null;
+     *         FileReader fr = null;
+     *         StringBuffer content = new StringBuffer();
+     *         try {
+     *         fr = new FileReader(file);
+     *         br = new BufferedReader(fr);
+     *         String sCurrentLine;
+     *         while ((sCurrentLine = br.readLine()) != null) {
+     *         content.append(sCurrentLine + "\n");
+     *         }
+     *         } catch (Exception e) {
+     *         throw e;
+     *         } finally {
+     *         try {
+     *         if (br != null)
+     *         br.close();
+     *         if (fr != null)
+     *         fr.close();
+     *         } catch (Exception e) {
+     *         }
+     *         }
+     *         return content.toString();
+     *         }
+     */
 }

@@ -24,27 +24,27 @@ public class DeployStrategyProfile extends DeployStrategy {
             for (Profile profile : searchProfile.getResult()) {
                 // in Bonita, profileis case unsensitive
                 if (profile.getName().equalsIgnoreCase(artefactProfile.getName())) {
-                    artefactProfile.setName( profile.getName() ); // override the real name
+                    artefactProfile.setName(profile.getName()); // override the real name
                     artefactProfile.bonitaBaseElement = profile;
 
                     deployOperation.presentDateArtifact = profile.getLastUpdateDate();
 
                     if (profile.getLastUpdateDate().equals(artefactProfile.getDate())) {
                         deployOperation.detectionStatus = DetectionStatus.SAME;
-                        deployOperation.addAnalysisLine( "the profile exist with the same date (" + sdf.format(artefactProfile.getDate()) + ")");
+                        deployOperation.addAnalysisLine("the profile exist with the same date (" + sdf.format(artefactProfile.getDate()) + ")");
 
                     } else if (profile.getLastUpdateDate().before(artefactProfile.getDate())) {
                         deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
-                        deployOperation.addAnalysisLine( "The profile has a newest date" );
+                        deployOperation.addAnalysisLine("The profile has a newest date");
 
                     } else {
                         deployOperation.detectionStatus = DetectionStatus.OLDVERSION;
-                        deployOperation.addAnalysisLine( "The profile on the server is newest" );
+                        deployOperation.addAnalysisLine("The profile on the server is newest");
                     }
                     return deployOperation;
                 }
             }
-            deployOperation.addReportLine( "This profile is new" );
+            deployOperation.addReportLine("This profile is new");
             deployOperation.detectionStatus = DetectionStatus.NEWARTEFAC;
         } catch (Exception e) {
             deployOperation.listEvents.add(new BEvent(EventErrorAtDetection, e, "Profile name[" + artefactProfile.getName() + "]"));

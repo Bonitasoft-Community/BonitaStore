@@ -70,26 +70,26 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
     public String getName() {
         return "Community";
     }
+
     @Override
     public String getExplanation() {
         return "The Bonita Community is study, to check which artifact can be deployed from the community";
     }
 
-    
     @Override
     public void setSpecificRepository(String specificRepository) {
         this.specificRepository = specificRepository;
     }
 
-    private final static String CST_BONITA_STORE_COMMUNITY="Community";
-    
-    @Override 
+    private final static String CST_BONITA_STORE_COMMUNITY = "Community";
+
+    @Override
     public String getType() {
         return CST_BONITA_STORE_COMMUNITY;
     }
 
     @Override
-    public void fullfillMap( Map<String,Object> map) {
+    public void fullfillMap(Map<String, Object> map) {
     }
 
     /**
@@ -238,7 +238,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                                     final String logoSt = (String) resultContentLogo.getJsonObject().get("content");
                                     final Base64 base64 = new Base64();
                                     artifactResult.artifact.logo = base64.decode(logoSt);
-                                    traceOneApps.append( "logo detected;");
+                                    traceOneApps.append("logo detected;");
                                 } catch (final Exception e) {
                                     artifactResult.artifact.addEvent(new BEvent(errorDecodeLogo, "Get logo from  [" + oneContent.get("url") + "] : " + e.toString()));
                                 }
@@ -246,7 +246,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                             if (assetName.endsWith(".pdf")) {
                                 // we get the documentation
                                 artifactResult.artifact.documentationFile = (String) oneContent.get("url");
-                                traceOneApps.append( "doc detected;");
+                                traceOneApps.append("doc detected;");
                             }
                         } // end loop on content
                     } // end get Contents
@@ -269,7 +269,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                             final Artifact.ArtefactRelease appsRelease = artifactResult.artifact.newInstanceRelease();
                             appsRelease.id = (Long) oneRelease.get("id");
                             appsRelease.version = oneRelease.get("name").toString();
-                            traceOneApps.append( "release[" + appsRelease.version + "] detected;");
+                            traceOneApps.append("release[" + appsRelease.version + "] detected;");
 
                             try {
                                 appsRelease.dateRelease = sdfParseRelease.parse(oneRelease.get("published_at").toString());
@@ -287,7 +287,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                                             appsRelease.urlDownload = null;
                                         }
                                         appsRelease.numberOfDownload = (Long) oneAsset.get("download_count");
-                                        traceOneApps.append( "release with content;");
+                                        traceOneApps.append("release with content;");
                                     }
                                 }
                             }

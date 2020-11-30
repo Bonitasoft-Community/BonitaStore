@@ -27,11 +27,11 @@ import org.bonitasoft.engine.util.APITypeManager;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.log.event.BEventFactory;
+import org.bonitasoft.store.InputArtifact.BonitaStoreInputFile;
+import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
 import org.bonitasoft.store.artifact.ArtifactCustomPage;
 import org.bonitasoft.store.artifact.ArtifactProfile;
 import org.bonitasoft.store.artifact.FactoryArtifact;
-import org.bonitasoft.store.InputArtifact.BonitaStoreInputFile;
-import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
 import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
 import org.bonitasoft.store.artifactdeploy.DeployStrategy;
 import org.bonitasoft.store.artifactdeploy.DeployStrategy.DeployOperation;
@@ -208,7 +208,7 @@ public class BonitaStoreAccessorClient {
 
             File pathDirectory = new File(fileArtifact.getAbsolutePath());
             BonitaStoreAPI bonitaStoreAPI = BonitaStoreAPI.getInstance();
-            BonitaStore bonitaStore = bonitaStoreAPI.getInstanceDirectoryStore(pathDirectory,true);
+            BonitaStore bonitaStore = bonitaStoreAPI.getInstanceDirectoryStore(pathDirectory, true);
 
             FactoryArtifact factoryArtefact = FactoryArtifact.getInstance();
             LoggerStore loggerStore = new LoggerStore();
@@ -216,7 +216,7 @@ public class BonitaStoreAccessorClient {
             BonitaStoreAccessor BonitaAccessor = new BonitaStoreAccessor(apiSession);
 
             System.out.println("  Load Artefact");
-            ArtifactResult artefactResult = factoryArtefact.getInstanceArtefact(fileArtifact.getName(), new BonitaStoreInputFile( fileArtifact), true, bonitaStore, loggerStore);
+            ArtifactResult artefactResult = factoryArtefact.getInstanceArtefact(fileArtifact.getName(), new BonitaStoreInputFile(fileArtifact), true, bonitaStore, loggerStore);
             if (BEventFactory.isError(artefactResult.listEvents)) {
                 System.out.println("Load error " + artefactResult.listEvents.toString());
                 DeployOperation deployOperation = new DeployOperation();
@@ -281,7 +281,7 @@ public class BonitaStoreAccessorClient {
         BonitaStoreAccessor bonitaAccessor = new BonitaStoreAccessor(apiSession);
 
         System.out.println("  Load Artefact Profile[" + profileName + "]");
-        ArtifactProfile artefactProfileBO = (ArtifactProfile) factoryArtefact.getFromType(TypeArtifact.PROFILE, "BOTools", "1.0", "Profile to access Custom page", new Date(),new Date(), bonitaStore);
+        ArtifactProfile artefactProfileBO = (ArtifactProfile) factoryArtefact.getFromType(TypeArtifact.PROFILE, "BOTools", "1.0", "Profile to access Custom page", new Date(), new Date(), bonitaStore);
         String profileContent = profileTemplate.replace("@@PROFILENAME@@", profileName);
 
         artefactProfileBO.loadFromString(profileContent);
@@ -293,7 +293,7 @@ public class BonitaStoreAccessorClient {
                 return null;
             }
         }
-        return artefactProfileBO.bonitaBaseElement==null ? null : artefactProfileBO;
+        return artefactProfileBO.bonitaBaseElement == null ? null : artefactProfileBO;
 
     }
 
@@ -318,7 +318,7 @@ public class BonitaStoreAccessorClient {
         OutputStream outStream = null;
 
         try {
-            System.out.print("Backup file["+sourceFile.getName()+"] to ["+sourceFile.getAbsoluteFile() + "_bak.zip]");
+            System.out.print("Backup file[" + sourceFile.getName() + "] to [" + sourceFile.getAbsoluteFile() + "_bak.zip]");
             File bfile = new File(sourceFile.getAbsoluteFile() + "_bak.zip");
 
             inStream = new FileInputStream(sourceFile);

@@ -17,8 +17,9 @@ public class ArtifactRestApi extends ArtifactAbstractResource {
     public Date dateCreation;
 
     /**
-     * Create an artifact. Attention, the strategy to deploy is not referenced in the artifact via this constructor, use the FactoryArtifact for that operation 
+     * Create an artifact. Attention, the strategy to deploy is not referenced in the artifact via this constructor, use the FactoryArtifact for that operation
      * Default Constructor.
+     * 
      * @param name
      * @param version
      * @param description
@@ -28,11 +29,13 @@ public class ArtifactRestApi extends ArtifactAbstractResource {
     public ArtifactRestApi(String name, String version, String description, Date dateCreation, Date dateVersion, BonitaStore sourceOrigin) {
         super(TypeArtifact.RESTAPI, name, version, description, dateCreation, dateVersion, sourceOrigin);
     }
+
     public ArtifactRestApi(Page page, BonitaStore sourceOrigin) {
         super(TypeArtifact.RESTAPI, page, sourceOrigin);
     }
+
     public ArtifactRestApi(File file, BonitaStore sourceOrigin) {
-        super(TypeArtifact.RESTAPI, file.getName(), null, "Description", new Date( file.lastModified()), new Date( file.lastModified()), sourceOrigin);
+        super(TypeArtifact.RESTAPI, file.getName(), null, "Description", new Date(file.lastModified()), new Date(file.lastModified()), sourceOrigin);
     }
 
     @Override

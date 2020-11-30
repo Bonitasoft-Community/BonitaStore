@@ -14,7 +14,6 @@ import org.bonitasoft.store.BonitaStoreAccessor;
 import org.bonitasoft.store.BonitaStoreParameters;
 import org.bonitasoft.store.BonitaStoreParameters.POLICY_NEWVERSION;
 import org.bonitasoft.store.artifact.Artifact;
-import org.bonitasoft.store.artifactdeploy.DeployStrategy.DetectionStatus;
 import org.bonitasoft.store.toolbox.LoggerStore;
 
 public class DeployStrategyLivingApplication extends DeployStrategy {
@@ -32,10 +31,10 @@ public class DeployStrategyLivingApplication extends DeployStrategy {
                 if (POLICY_NEWVERSION.BYDATE.equals(artifact.getPolicyNewVersion(deployParameters.policyNewVersion))) {
                     if (artifact.getLastReleaseDate().before(application.getLastUpdateDate())) {
                         deployOperation.detectionStatus = DetectionStatus.SAME; // or OLD...
-                        deployOperation.addAnalysisLine( "A version exists with the date more recent(" + DeployStrategy.sdf.format(application.getLastUpdateDate()) + ")");
+                        deployOperation.addAnalysisLine("A version exists with the date more recent(" + DeployStrategy.sdf.format(application.getLastUpdateDate()) + ")");
                     } else {
                         deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
-                        deployOperation.addAnalysisLine( "The version is new");
+                        deployOperation.addAnalysisLine("The version is new");
                     }
                 } else {
                     // well, no way to know

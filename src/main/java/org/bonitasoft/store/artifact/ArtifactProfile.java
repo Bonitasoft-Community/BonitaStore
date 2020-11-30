@@ -35,14 +35,14 @@ public class ArtifactProfile extends Artifact {
     public Date dateCreation;
 
     public ArtifactProfile(String profileName, String profileVersion, String description, Date dateCreation, Date dateVersion, BonitaStore sourceOrigin) {
-        super(TypeArtifact.PROFILE, profileName, profileVersion, description, dateCreation, dateVersion,sourceOrigin);
+        super(TypeArtifact.PROFILE, profileName, profileVersion, description, dateCreation, dateVersion, sourceOrigin);
         this.name = profileName;
         this.version = profileVersion;
     }
 
     public ArtifactProfile(Profile profile, BonitaStore sourceOrigin) {
-        super(TypeArtifact.PROFILE, profile.getName(), "", profile.getDescription(), profile.getCreationDate(),profile.getLastUpdateDate(), sourceOrigin);
-        setBonitaBaseElement( profile );
+        super(TypeArtifact.PROFILE, profile.getName(), "", profile.getDescription(), profile.getCreationDate(), profile.getLastUpdateDate(), sourceOrigin);
+        setBonitaBaseElement(profile);
     }
 
     /**

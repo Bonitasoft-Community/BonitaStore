@@ -34,11 +34,10 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
 
-
 public class RESTCall {
 
     static Logger logger = Logger.getLogger(RESTCall.class.getName());
-    
+
     private static final String HTTP_PROTOCOL = "HTTP";
     private static final int HTTP_PROTOCOL_VERSION_MAJOR = 1;
     private static final int HTTP_PROTOCOL_VERSION_MINOR = 1;
@@ -50,35 +49,32 @@ public class RESTCall {
      */
 
     public static RESTResponse executeWithRedirect(final RESTRequest restRequest, int connectionTimeout) throws Exception {
-        int redirectCount=0;
-        RESTResponse response=null;
-        String uriRedirect=null;
+        int redirectCount = 0;
+        RESTResponse response = null;
+        String uriRedirect = null;
         List<String> historyCall = new ArrayList<>();
-        do
-        {
+        do {
             response = execute(restRequest, connectionTimeout);
-            uriRedirect =  response.getUrlRedirect();
+            uriRedirect = response.getUrlRedirect();
             historyCall.addAll(response.getHistoryCall());
-            
-            if (uriRedirect!=null)
-            {
+
+            if (uriRedirect != null) {
                 if (uriRedirect.startsWith("http"))
-                    restRequest.setUrl( new URL( uriRedirect));
-                else 
-                {
-                    restRequest.setUri( uriRedirect );
+                    restRequest.setUrl(new URL(uriRedirect));
+                else {
+                    restRequest.setUri(uriRedirect);
                     restRequest.calculateUrlFromUri();
                 }
             }
             redirectCount++;
-        
-        } while( uriRedirect!=null || redirectCount>5);
-        
+
+        } while (uriRedirect != null || redirectCount > 5);
+
         // override the history call
-        response.setHistoryCall( historyCall );
+        response.setHistoryCall(historyCall);
         return response;
     }
-    
+
     /**
      * @param request
      * @return
@@ -90,27 +86,24 @@ public class RESTCall {
         try {
             final URL url = restRequest.getUrl();
             StringBuilder logRestHttp = new StringBuilder();
-            
-            
-            
+
             final RequestBuilder requestBuilder = getRequestBuilderFromMethod(restRequest.getRestMethod());
-            logRestHttp.append("["+restRequest.getRestMethod()+"]");
+            logRestHttp.append("[" + restRequest.getRestMethod() + "]");
             final String urlStr = url.toString();
             requestBuilder.setUri(urlStr);
-            
+
             logRestHttp.append(urlStr);
-            logRestHttp.append("connectionTimeout["+connectionTimeout+"] isRedirect["+restRequest.isRedirect()+"]");
-            
+            logRestHttp.append("connectionTimeout[" + connectionTimeout + "] isRedirect[" + restRequest.isRedirect() + "]");
+
             final HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
             httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(0, false));
 
-            
-            requestBuilder.setVersion(new ProtocolVersion(HTTP_PROTOCOL, HTTP_PROTOCOL_VERSION_MAJOR, HTTP_PROTOCOL_VERSION_MINOR));            
-            
+            requestBuilder.setVersion(new ProtocolVersion(HTTP_PROTOCOL, HTTP_PROTOCOL_VERSION_MAJOR, HTTP_PROTOCOL_VERSION_MINOR));
+
             logRestHttp.append(" Headers: [");
             for (Header header : restRequest.getHeaders()) {
                 requestBuilder.addHeader(header);
-                logRestHttp.append(header.getName()+":"+header.getValue()+"; ");
+                logRestHttp.append(header.getName() + ":" + header.getValue() + "; ");
             }
             logRestHttp.append("]");
 
@@ -120,9 +113,9 @@ public class RESTCall {
                     requestBuilder.setEntity(
                             new StringEntity(restRequest.getBody(),
                                     ContentType.create(restRequest.getContent().getContentType(),
-                                            restRequest.getContent().getCharset( RESTCharsets.UTF_8).getValue())));
+                                            restRequest.getContent().getCharset(RESTCharsets.UTF_8).getValue())));
                 }
-                logRestHttp.append("Body["+restRequest.getBody()+"] ContentType["+restRequest.getContent().getContentType()+"]");
+                logRestHttp.append("Body[" + restRequest.getBody() + "] ContentType[" + restRequest.getContent().getContentType() + "]");
             }
             // request Config
             final Builder requestConfigurationBuilder = RequestConfig.custom();
@@ -141,10 +134,9 @@ public class RESTCall {
 
             final HttpUriRequest httpRequest = requestBuilder.build();
 
-
             httpClient = httpClientBuilder.build();
 
-            logger.info("Call "+logRestHttp);
+            logger.info("Call " + logRestHttp);
             // ---------------------------------------------------- Execution now
             long cumulTime = 0;
             final long startTime = System.currentTimeMillis();
@@ -156,7 +148,7 @@ public class RESTCall {
             StringBuffer logRestResponse = new StringBuffer();
 
             response.setStatusCode(httpResponse.getStatusLine().getStatusCode());
-            logRestResponse.append("Status:"+httpResponse.getStatusLine().getStatusCode());
+            logRestResponse.append("Status:" + httpResponse.getStatusLine().getStatusCode());
 
             response.setExecutionTime(cumulTime);
             response.setMessage(httpResponse.getStatusLine().toString());
@@ -165,21 +157,21 @@ public class RESTCall {
             logRestResponse.append(" Headers[");
             for (final Header header : responseHeaders) {
                 response.addHeader(header);
-                logRestResponse.append(header.getName()+":"+header.getValue()+";");
+                logRestResponse.append(header.getName() + ":" + header.getValue() + ";");
             }
             logRestResponse.append("]");
-            
+
             // cookie store may be updated by the http call
-            response.setCookieStore( restRequest.getCookieStore() );
-            
+            response.setCookieStore(restRequest.getCookieStore());
+
             CollectOutput collectOutput = restRequest.getCollectOutput();
-            if (httpResponse.getStatusLine().getStatusCode()!= 301 && httpResponse.getStatusLine().getStatusCode()!=302) {
-                collectOutput.collectHttpResponse( httpResponse );                
+            if (httpResponse.getStatusLine().getStatusCode() != 301 && httpResponse.getStatusLine().getStatusCode() != 302) {
+                collectOutput.collectHttpResponse(httpResponse);
             }
-            
-            logger.info("Response "+logRestResponse + collectOutput.trace());
-            
-            response.addHistoryCall(httpResponse.getStatusLine().getStatusCode()+" "+logRestHttp.toString()+" Response "+logRestResponse.toString());
+
+            logger.info("Response " + logRestResponse + collectOutput.trace());
+
+            response.addHistoryCall(httpResponse.getStatusLine().getStatusCode() + " " + logRestHttp.toString() + " Response " + logRestResponse.toString());
             return response;
         } catch (final Exception ex) {
             throw ex;
@@ -212,6 +204,7 @@ public class RESTCall {
 
     /**
      * get the HTTP Context
+     * 
      * @param requestConfigurationBuilder
      * @param authorization
      * @param urlHost
@@ -228,7 +221,7 @@ public class RESTCall {
             final HttpClientBuilder httpClientBuilder,
             final RequestBuilder requestBuilder,
             RESTRequest request) {
-        
+
         final URL url = request.getUrl();
         final String urlHost = url.getHost();
         int urlPort = url.getPort();
@@ -237,9 +230,8 @@ public class RESTCall {
         }
         final String urlProtocol = url.getProtocol();
 
-        
         HttpClientContext httpContext = null;
-        
+
         if (authorization != null) {
             if (authorization instanceof BasicDigestAuthorization) {
                 final List<String> authPrefs = new ArrayList<>();
@@ -310,8 +302,4 @@ public class RESTCall {
         return httpContext;
     }
 
-   
-    
-   
-    
 }

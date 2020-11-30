@@ -24,12 +24,12 @@ import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
-import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
 import org.bonitasoft.store.artifact.ArtifactCustomPage;
 import org.bonitasoft.store.artifact.ArtifactLayout;
 import org.bonitasoft.store.artifact.ArtifactProfile;
 import org.bonitasoft.store.artifact.ArtifactRestApi;
 import org.bonitasoft.store.artifact.ArtifactTheme;
+import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
 import org.bonitasoft.store.toolbox.LoggerStore;
 import org.bonitasoft.store.toolbox.LoggerStore.LOGLEVEL;
 
@@ -59,6 +59,7 @@ public class BonitaStoreLocalServer extends BonitaStore {
     public String getName() {
         return "BonitaStoreLocal";
     }
+
     @Override
     public String getExplanation() {
         return "The local server is used to manage artifacts.";
@@ -73,17 +74,17 @@ public class BonitaStoreLocalServer extends BonitaStore {
         return false;
     }
 
-    private final static String CST_TYPE_LOCALSERVER="LocalServer";
-    
-    @Override 
+    private final static String CST_TYPE_LOCALSERVER = "LocalServer";
+
+    @Override
     public String getType() {
         return CST_TYPE_LOCALSERVER;
     }
 
     @Override
-    public void fullfillMap( Map<String,Object> map) {
+    public void fullfillMap(Map<String, Object> map) {
     }
-    
+
     @Override
     public BonitaStoreResult getListArtifacts(BonitaStoreParameters detectionParameters, LoggerStore logBox) {
         BonitaStoreResult storeResult = new BonitaStoreResult("getListContent");
@@ -107,7 +108,6 @@ public class BonitaStoreLocalServer extends BonitaStore {
                 for (final Page page : searchResultPage.getResult()) {
                     ArtifactResult artifactResult = new ArtifactResult();
 
-
                     if ("page".equals(page.getContentType()) && detectionParameters.listTypeArtifacts.contains(TypeArtifact.CUSTOMPAGE)) {
                         artifactResult.artifact = new ArtifactCustomPage(page, this);
                     }
@@ -118,9 +118,9 @@ public class BonitaStoreLocalServer extends BonitaStore {
                         artifactResult.artifact = new ArtifactTheme(page, this);
                     }
                     if ("apiExtension".equals(page.getContentType()) && detectionParameters.listTypeArtifacts.contains(TypeArtifact.RESTAPI)) {
-                        artifactResult.artifact = new ArtifactRestApi( page, this);
+                        artifactResult.artifact = new ArtifactRestApi(page, this);
                     }
-                    if (artifactResult.artifact!=null)
+                    if (artifactResult.artifact != null)
                         storeResult.addDetectedArtifact(detectionParameters, artifactResult);
 
                 } // end page
@@ -174,11 +174,12 @@ public class BonitaStoreLocalServer extends BonitaStore {
 
     /**
      * return a Temp Directory on the local server
+     * 
      * @return
      */
     public static Path getTempDirectory() {
         String strTemp = System.getProperty("java.io.tmpdir");
-        Path pathTemp= Paths.get(strTemp+"/bonitastore/");
+        Path pathTemp = Paths.get(strTemp + "/bonitastore/");
         pathTemp.toFile().mkdir();
         return pathTemp;
     }

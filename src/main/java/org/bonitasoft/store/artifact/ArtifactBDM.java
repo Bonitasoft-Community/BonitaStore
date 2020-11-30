@@ -10,7 +10,7 @@ import org.bonitasoft.store.BonitaStore;
 
 public class ArtifactBDM extends Artifact {
 
-    public ArtifactBDM(String name, String version, String description, Date dateCreation,Date dateVersion, BonitaStore sourceOrigin) {
+    public ArtifactBDM(String name, String version, String description, Date dateCreation, Date dateVersion, BonitaStore sourceOrigin) {
         super(TypeArtifact.BDM, name, version, description, dateCreation, dateVersion, sourceOrigin);
     }
 
@@ -22,7 +22,5 @@ public class ArtifactBDM extends Artifact {
     public boolean isBinaryContent() {
         return false;
     }
-
-   
 
 }

@@ -41,8 +41,9 @@ public class Content {
     public RESTCharsets getCharset() {
         return charset;
     }
+
     public RESTCharsets getCharset(RESTCharsets defaultCharset) {
-        if (charset==null)
+        if (charset == null)
             return defaultCharset;
         return charset;
     }

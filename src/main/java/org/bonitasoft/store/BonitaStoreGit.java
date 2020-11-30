@@ -9,7 +9,6 @@ import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.log.event.BEventFactory;
 import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
-import org.bonitasoft.store.artifact.ArtifactRestApi;
 import org.bonitasoft.store.artifact.FactoryArtifact;
 import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
 import org.bonitasoft.store.source.git.GithubAccessor;
@@ -51,7 +50,7 @@ public class BonitaStoreGit extends BonitaStore {
     public BonitaStoreGit(final String userName, final String password, final String urlRepository) {
         mGithubAccessor = new GithubAccessor(userName, password, urlRepository);
     }
-   
+
     /**
      * return the name
      *
@@ -61,10 +60,12 @@ public class BonitaStoreGit extends BonitaStore {
     public String getName() {
         return "Github";
     }
+
     @Override
     public String getExplanation() {
         return "Give information to connect Git Repository. All artifacts saved in this directory, as RELEASE, will be study to be deployed on this server.";
     }
+
     public String getId() {
         return "Git-" + mGithubAccessor.getUrlRepository() + "-" + mGithubAccessor.getUserName();
     }
@@ -75,22 +76,22 @@ public class BonitaStoreGit extends BonitaStore {
     }
 
     public final static String CST_TYPE_GIT = "git";
-    
-    @Override 
+
+    @Override
     public String getType() {
         return CST_TYPE_GIT;
     }
 
     @Override
-    public void fullfillMap( Map<String,Object> map) {
+    public void fullfillMap(Map<String, Object> map) {
         map.put("gitaccessor", mGithubAccessor.getMap());
     }
 
     private BonitaStoreGit() {
         mGithubAccessor = null;
     }
+
     /**
-     * 
      * @param source
      * @return
      */
@@ -101,15 +102,14 @@ public class BonitaStoreGit extends BonitaStore {
             if (!CST_TYPE_GIT.equals(type))
                 return null;
             BonitaStoreGit store = new BonitaStoreGit();
-            store.mGithubAccessor = GithubAccessor.getInstanceFromMap((Map<String,Object>)source.get("gitaccessor")); 
+            store.mGithubAccessor = GithubAccessor.getInstanceFromMap((Map<String, Object>) source.get("gitaccessor"));
             return store;
         } catch (Exception e) {
             return null;
         }
 
     }
-    
-    
+
     public String specificRepository = null;
 
     public void setSpecificRepository(String specificRepository) {

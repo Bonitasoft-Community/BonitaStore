@@ -27,26 +27,26 @@ public class DeployStrategyResource extends DeployStrategy {
 
         ArtifactAbstractResource artifactResource = (ArtifactAbstractResource) artifact;
         try {
-            deployOperation.addReportLine("DeployStrategyResource.DetectDeployment: Detect for[" + artifactResource.getBonitaName()+"] Type["+artifactResource.getContentType() + "];");
+            deployOperation.addReportLine("DeployStrategyResource.DetectDeployment: Detect for[" + artifactResource.getBonitaName() + "] Type[" + artifactResource.getContentType() + "];");
             Page page = searchPage(artifactResource, bonitaAccessor);
             if (page != null) {
                 artifactResource.bonitaBaseElement = page;
                 deployOperation.presentDateArtifact = page.getLastModificationDate();
                 deployOperation.presentVersionArtifact = null;
-                deployOperation.addReportLine( "Found existing page deployed at " +  DeployStrategy.sdf.format(page.getLastModificationDate())+";");
-                deployOperation.addReportLine( "POLICY="+artifact.getPolicyNewVersion(deployParameters.policyNewVersion).toString() + ";" );
+                deployOperation.addReportLine("Found existing page deployed at " + DeployStrategy.sdf.format(page.getLastModificationDate()) + ";");
+                deployOperation.addReportLine("POLICY=" + artifact.getPolicyNewVersion(deployParameters.policyNewVersion).toString() + ";");
 
                 if (POLICY_NEWVERSION.BYDATE.equals(artifact.getPolicyNewVersion(deployParameters.policyNewVersion))) {
-                    Date lastDateArtifact=artifactResource.getLastDateArtifact(); 
-                    deployOperation.addReportLine("Local resource Date: "+ (lastDateArtifact==null ? "null": DeployStrategy.sdf.format(lastDateArtifact))+";");
-                    if (lastDateArtifact!=null && lastDateArtifact.before(page.getLastModificationDate())) {
+                    Date lastDateArtifact = artifactResource.getLastDateArtifact();
+                    deployOperation.addReportLine("Local resource Date: " + (lastDateArtifact == null ? "null" : DeployStrategy.sdf.format(lastDateArtifact)) + ";");
+                    if (lastDateArtifact != null && lastDateArtifact.before(page.getLastModificationDate())) {
                         deployOperation.addReportLine("BEFORE, consider as SAME");
                         deployOperation.detectionStatus = DetectionStatus.SAME; // or OLD...
-                        deployOperation.addAnalysisLine( "A version exists with the date more recent(" + DeployStrategy.sdf.format(page.getLastModificationDate()) + ")");
+                        deployOperation.addAnalysisLine("A version exists with the date more recent(" + DeployStrategy.sdf.format(page.getLastModificationDate()) + ")");
                     } else {
                         deployOperation.addReportLine("AFTER, consider as NEW");
                         deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
-                        deployOperation.addAnalysisLine( "The version is new" );
+                        deployOperation.addAnalysisLine("The version is new");
                     }
                 } else {
                     // well, no way to know
@@ -55,12 +55,12 @@ public class DeployStrategyResource extends DeployStrategy {
                 }
             }
             if (deployOperation.presentDateArtifact == null)
-                deployOperation.addReportLine( "Not exist;");
+                deployOperation.addReportLine("Not exist;");
             logBox.info(deployOperation.analysis.toString());
         } catch (Exception e) {
             deployOperation.detectionStatus = DetectionStatus.DETECTIONFAILED;
             deployOperation.listEvents.add(new BEvent(EventErrorAtDetection, e, "Page [" + artifactResource.getName() + "]"));
-            deployOperation.addReportLine("Exception "+e.getMessage());
+            deployOperation.addReportLine("Exception " + e.getMessage());
             logBox.severe("DeployStrategyResource: DetectionFailed " + e.getMessage());
         }
         // do not update the deployStatus: the synchronize will do it

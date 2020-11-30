@@ -54,13 +54,13 @@ public class BonitaStoreBCD extends BonitaStore {
         this.directoryFilePath = pathDirectory;
     }
 
-    @Override 
+    @Override
     public String getType() {
         return CST_TYPE_BCD;
     }
 
     @Override
-    public void fullfillMap( Map<String,Object> map) {
+    public void fullfillMap(Map<String, Object> map) {
         map.put("directory", directoryFilePath.getAbsolutePath());
     }
 
@@ -75,7 +75,7 @@ public class BonitaStoreBCD extends BonitaStore {
                 return null;
             File file = new File((String) source.get("directory"));
             BonitaStore store = new BonitaStoreBCD(file);
-            store.setDisplayName((String) source.get( CST_BONITA_STORE_DISPLAYNAME));
+            store.setDisplayName((String) source.get(CST_BONITA_STORE_DISPLAYNAME));
             return store;
         } catch (Exception e) {
             return null;
@@ -85,15 +85,16 @@ public class BonitaStoreBCD extends BonitaStore {
 
     /* ******************************************************************************** */
     /*                                                                                  */
-    /* begin and end. Some store need to do some operation before using it              */
-    /* (open a connection...)                                                           */
+    /* begin and end. Some store need to do some operation before using it */
+    /* (open a connection...) */
     /*                                                                                  */
     /*                                                                                  */
     /* ******************************************************************************** */
     /**
      * Save the location where the file was unzipped
-     */    
+     */
     List<Path> listZipBCDPackage = null;
+
     @Override
     public List<BEvent> begin(BonitaStoreParameters detectionParameters, LoggerStore logBox) {
         List<BEvent> listEvents = new ArrayList<>();
@@ -104,44 +105,44 @@ public class BonitaStoreBCD extends BonitaStore {
             return listEvents;
         }
 
-        StringBuilder logAnalysis= new StringBuilder();
+        StringBuilder logAnalysis = new StringBuilder();
         for (File fileContent : directoryFilePath.listFiles()) {
             if (fileContent.isDirectory())
                 continue;
 
             String fileName = fileContent.getName();
 
-
             // it must be a ZIP file
             if (fileName.endsWith(".zip")) {
-                logAnalysis.append( "Unzip BCD[" + fileName + "]");
+                logAnalysis.append("Unzip BCD[" + fileName + "]");
                 try {
-                Path zipRootPath = unzipFile(Paths.get(fileName), logBox);
-                listZipBCDPackage.add( zipRootPath );
+                    Path zipRootPath = unzipFile(Paths.get(fileName), logBox);
+                    listZipBCDPackage.add(zipRootPath);
+                } catch (Exception e) {
+                    listEvents.add(new BEvent(EVENT_READ_BCDZIP, "BCD Zip Filename[" + fileName + "] - " + e.getMessage()));
                 }
-                catch(Exception e) {
-                    listEvents.add(new BEvent(EVENT_READ_BCDZIP, "BCD Zip Filename[" + fileName + "] - "+e.getMessage()));
-                }
-                
+
             }
         }
         logBox.info("BonitaStore.BCD " + logAnalysis.toString());
 
-           return listEvents;
+        return listEvents;
     }
+
     /**
      * purge all ZIP unzipped
+     * 
      * @return
      */
     @Override
     public List<BEvent> end(BonitaStoreParameters detectionParameters, LoggerStore logBox) {
-        
+
         for (Path path : listZipBCDPackage) {
             purgeZip(path);
         }
         return new ArrayList<>();
     }
-   
+
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Attribut */
@@ -158,7 +159,6 @@ public class BonitaStoreBCD extends BonitaStore {
         return "Set the BCD Target as a parameters. Then, all Build will be explode to detect artifacts to deploy";
     }
 
-    
     public String getId() {
         return "BCD";
 
@@ -182,30 +182,29 @@ public class BonitaStoreBCD extends BonitaStore {
         FactoryArtifact factoryArtifact = FactoryArtifact.getInstance();
 
         try {
-            
+
             for (Path bcdPackage : listZipBCDPackage) {
-                
-                
+
                 File[] listArtifactsDirectory = bcdPackage.toFile().listFiles();
                 for (File artifactDirectory : listArtifactsDirectory) {
-                        File[] listArtifactFiles = artifactDirectory.listFiles();
-                        for (File artifactFiles: listArtifactFiles) {
-                            ArtifactResult artifactResult = factoryArtifact.getInstanceArtefact(artifactFiles.getName(), new BonitaStoreInputFile(artifactFiles), false, this, logBox);
-                            storeResult.addEvents(artifactResult.listEvents);
-                            if (artifactResult.artifact != null && detectionParameters.listTypeArtifacts.contains( artifactResult.artifact.getType())) {
-                                artifactResult.artifact.setPolicyNewVersion( POLICY_NEWVERSION.NEWVERSION);
-                                artifactResult.artifact.setFileName(artifactFiles.getAbsolutePath());
-                                // if this is a PROCESS, then we have to deal with Parameters
-                                File fileBConf = new File( directoryFilePath.toString()+"/"+bcdPackage.getFileName()+".bconf");
-                                if (fileBConf.exists() && artifactResult.artifact instanceof ArtifactProcess)
-                                    ((ArtifactProcess)artifactResult.artifact).setFileToCompleteTheBar( fileBConf );
-                                
-                                storeResult.addDetectedArtifact(detectionParameters, artifactResult);
-                            }
+                    File[] listArtifactFiles = artifactDirectory.listFiles();
+                    for (File artifactFiles : listArtifactFiles) {
+                        ArtifactResult artifactResult = factoryArtifact.getInstanceArtefact(artifactFiles.getName(), new BonitaStoreInputFile(artifactFiles), false, this, logBox);
+                        storeResult.addEvents(artifactResult.listEvents);
+                        if (artifactResult.artifact != null && detectionParameters.listTypeArtifacts.contains(artifactResult.artifact.getType())) {
+                            artifactResult.artifact.setPolicyNewVersion(POLICY_NEWVERSION.NEWVERSION);
+                            artifactResult.artifact.setFileName(artifactFiles.getAbsolutePath());
+                            // if this is a PROCESS, then we have to deal with Parameters
+                            File fileBConf = new File(directoryFilePath.toString() + "/" + bcdPackage.getFileName() + ".bconf");
+                            if (fileBConf.exists() && artifactResult.artifact instanceof ArtifactProcess)
+                                ((ArtifactProcess) artifactResult.artifact).setFileToCompleteTheBar(fileBConf);
+
+                            storeResult.addDetectedArtifact(detectionParameters, artifactResult);
                         }
                     }
+                }
             }
-               
+
         } catch (Exception e) {
             logBox.info("SourceDirectory.getListArtefactDetected Exception [" + e.toString() + "]");
             storeResult.addEvent(new BEvent(EVENT_READ_DIRECTORY_ERROR, "Directory[" + (directoryFilePath == null ? "null" : directoryFilePath.getAbsolutePath()) + "]"));
@@ -238,8 +237,6 @@ public class BonitaStoreBCD extends BonitaStore {
         return new BonitaStoreResult("ping");
     }
 
-   
-
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Zip operation */
@@ -248,8 +245,9 @@ public class BonitaStoreBCD extends BonitaStore {
     /* ******************************************************************************** */
 
     /**
-     * Unzip 
+     * Unzip
      * thanks https://mkyong.com/java/how-to-decompress-files-from-a-zip-file/
+     * 
      * @param fileZip
      * @param logBox
      * @return
@@ -259,13 +257,13 @@ public class BonitaStoreBCD extends BonitaStore {
         Path targetDir = BonitaStoreLocalServer.getTempDirectory();
         String fileZipString = fileZip.getFileName().toString();
         if (fileZipString.endsWith(".zip"))
-            fileZipString = fileZipString.substring(0, fileZipString.length()-4);
-                
-        targetDir = Paths.get(targetDir.toAbsolutePath() + "/"+fileZipString);
+            fileZipString = fileZipString.substring(0, fileZipString.length() - 4);
+
+        targetDir = Paths.get(targetDir.toAbsolutePath() + "/" + fileZipString);
         targetDir.toFile().mkdir();
 
-        File completeZipFile = new File(directoryFilePath+"/"+fileZip.toString() );
-        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(  completeZipFile ))) {
+        File completeZipFile = new File(directoryFilePath + "/" + fileZip.toString());
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(completeZipFile))) {
             // list files in zip
             ZipEntry zipEntry = zis.getNextEntry();
 
@@ -339,8 +337,6 @@ public class BonitaStoreBCD extends BonitaStore {
         return normalizePath;
     }
 
-   
-    
     private void purgeZip(Path zipPath) {
         deleteDirectory(zipPath.toFile());
     }

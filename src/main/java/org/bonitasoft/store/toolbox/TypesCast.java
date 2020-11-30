@@ -75,6 +75,7 @@ public class TypesCast {
             return defaultValue;
         }
     }
+
     public static Date getDateBonitaRest(final Object parameter, final Date defaultValue) {
         if (parameter == null) {
             return defaultValue;

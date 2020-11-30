@@ -39,8 +39,6 @@ public class ArtifactCustomPage extends ArtifactAbstractResource {
         return true;
     }
 
-  
-    
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Page are register in profile / and application */
@@ -66,7 +64,7 @@ public class ArtifactCustomPage extends ArtifactAbstractResource {
         }
         listProfiles.add(profile);
     }
-    
+
     public void addOneProfile(final Profile profile) {
 
         for (final ArtifactProfile profileExist : listProfiles) {
@@ -77,7 +75,5 @@ public class ArtifactCustomPage extends ArtifactAbstractResource {
         ArtifactProfile artifactProfile = new ArtifactProfile(profile, this.getStore());
         listProfiles.add(artifactProfile);
     }
-
-    
 
 }

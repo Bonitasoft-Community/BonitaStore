@@ -2,10 +2,8 @@ package org.bonitasoft.store.source.git;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -15,46 +13,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.NTCredentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.AuthCache;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.AuthSchemes;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.config.RequestConfig.Builder;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.auth.AuthSchemeBase;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.auth.DigestScheme;
-import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
 import org.bonitasoft.log.event.BEvent;
 import org.bonitasoft.log.event.BEvent.Level;
 import org.bonitasoft.log.event.BEventFactory;
-import org.bonitasoft.store.rest.Authorization;
 import org.bonitasoft.store.rest.BasicDigestAuthorization;
 import org.bonitasoft.store.rest.CollectOutput;
 import org.bonitasoft.store.rest.CollectOutput.POLICYOUTPUT;
 import org.bonitasoft.store.rest.Content;
-import org.bonitasoft.store.rest.HeaderAuthorization;
-import org.bonitasoft.store.rest.NtlmAuthorization;
 import org.bonitasoft.store.rest.RESTCall;
 import org.bonitasoft.store.rest.RESTCharsets;
 import org.bonitasoft.store.rest.RESTHTTPMethod;
@@ -64,7 +30,6 @@ import org.bonitasoft.store.toolbox.LoggerStore;
 import org.bonitasoft.store.toolbox.LoggerStore.LOGLEVEL;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 public class GithubAccessor {
 
@@ -77,11 +42,10 @@ public class GithubAccessor {
 
     private final static BEvent eventNoResult = new BEvent(GithubAccessor.class.getName(), 2, Level.INFO, "No result", "The github repository is empty");
 
-    private static BEvent eventBadUrl = new BEvent(GithubAccessor.class.getName(), 3, 
+    private static BEvent eventBadUrl = new BEvent(GithubAccessor.class.getName(), 3,
             BEvent.Level.APPLICATIONERROR, "Bad URL",
             "The URL given is not correct, it's malformed", "Url can't be call", "Check the URL");
 
- 
     private static BEvent eventRestRequest = new BEvent(GithubAccessor.class.getName(), 4, BEvent.Level.APPLICATIONERROR, "Can't connect to the GITHUB Server",
             "An error occures when the GITHUB Server is connected", "Check the error");
 
@@ -117,7 +81,7 @@ public class GithubAccessor {
         mPassword = password;
         mUrlRepository = urlRepository;
     }
-        
+
     public static class ResultGithub {
 
         public String content;
@@ -183,38 +147,40 @@ public class GithubAccessor {
 
     /**
      * serialization
+     * 
      * @return
      */
-    public Map<String,Object> getMap() {
-        Map<String,Object> result = new HashMap<>();
-        
-        result.put("username", mUserName );
+    public Map<String, Object> getMap() {
+        Map<String, Object> result = new HashMap<>();
+
+        result.put("username", mUserName);
         result.put("password", mPassword);
         result.put("urlrepo", mUrlRepository);
 
         return result;
-        
+
     }
-    
+
     /**
      * only for the getInstanceFromMap
      * Default Constructor.
      */
-    private GithubAccessor()
-    {};
+    private GithubAccessor() {
+    };
+
     /**
      * serialization
+     * 
      * @return
      */
-    public static GithubAccessor getInstanceFromMap(Map<String,Object> source) {
+    public static GithubAccessor getInstanceFromMap(Map<String, Object> source) {
         GithubAccessor githubAccessor = new GithubAccessor();
         githubAccessor.mUserName = (String) source.get("username");
-        githubAccessor.mPassword = (String) source.get("password" );
-        githubAccessor.mUrlRepository = (String) source.get("urlrepo" );
+        githubAccessor.mPassword = (String) source.get("password");
+        githubAccessor.mUrlRepository = (String) source.get("urlrepo");
         return githubAccessor;
     }
-    
-    
+
     /**
      * check if the information give for this Github repository are correct
      *
@@ -380,10 +346,10 @@ public class GithubAccessor {
         restRequest.getCollectOutput().setPolicy(POLICYOUTPUT.BYTEARRAY);
         restRequest.setRedirect(true);
         try {
-            final RESTResponse response = RESTCall.execute(restRequest,CONNECTION_TIMEOUT);
+            final RESTResponse response = RESTCall.execute(restRequest, CONNECTION_TIMEOUT);
             // System.out.println(response.getBody());
             resultLastContrib.contentByte = response.getCollectOutput().getBaos().toByteArray();
-            resultLastContrib.content =null;
+            resultLastContrib.content = null;
         } catch (final Exception e) {
             resultLastContrib.listEvents.add(new BEvent(eventRestRequest, e, "Url[" + mUrlRepository + "] with user[" + mUserName + "]"));
 
@@ -427,11 +393,6 @@ public class GithubAccessor {
         return resultLastContrib;
     }
 
-   
-
-
-   
-
     private RESTRequest buildRestRequest(final String url, final String method, final String body, final String contentType, final String charset,
             final ArrayList<ArrayList<String>> headerList, final ArrayList<ArrayList<String>> cookieList, final String username, final String password) {
         final RESTRequest request = new RESTRequest();
@@ -465,7 +426,7 @@ public class GithubAccessor {
         if (username != null) {
             request.setAuthorization(buildBasicAuthorization(username, password));
         }
-        request.setCollectOutput( CollectOutput.getInstanceString());
+        request.setCollectOutput(CollectOutput.getInstanceString());
         return request;
     }
 

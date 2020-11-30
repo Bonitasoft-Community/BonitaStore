@@ -7,12 +7,14 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.InputStream;
 
-public class BonitaStoreInputFile extends BonitaStoreInput{
+public class BonitaStoreInputFile extends BonitaStoreInput {
 
     File file;
-    public BonitaStoreInputFile( File file) {
+
+    public BonitaStoreInputFile(File file) {
         this.file = file;
     }
+
     @Override
     public long lastModified() {
         return file.lastModified();
@@ -50,9 +52,9 @@ public class BonitaStoreInputFile extends BonitaStoreInput{
 
     @Override
     public InputStream getContentInputStream() throws FileNotFoundException {
-       return new FileInputStream( file);
+        return new FileInputStream(file);
     }
-    
+
     public Object getSignature() {
         return file;
     }

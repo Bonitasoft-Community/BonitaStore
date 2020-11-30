@@ -41,9 +41,9 @@ public abstract class DeployStrategy {
     };
 
     /**
-     * LOADED : artifact is on the server, but not 100% deployed (example, process can't be enabled). This stats does not exist for all artifact (only for Process) 
-    *  DEPLOYED : artifact are 100% operational 
-     *
+     * LOADED : artifact is on the server, but not 100% deployed (example, process can't be enabled). This stats does not exist for all artifact (only for
+     * Process)
+     * DEPLOYED : artifact are 100% operational
      */
     public enum DeploymentStatus {
         NOTHINGDONE, NEWALREADYINPLACE, REMOVEFAIL, LOADFAILED, DEPLOYEDFAILED, LOADED, DEPLOYED, DELETED, BADBONITAVERSION
@@ -52,8 +52,8 @@ public abstract class DeployStrategy {
     public static class DeployOperation {
 
         public Artifact artifact;
-        
-          /**
+
+        /**
          * in case of detection, the deployStatus is updated
          */
         public DetectionStatus detectionStatus;
@@ -67,27 +67,27 @@ public abstract class DeployStrategy {
         public String presentVersionArtifact;
 
         public List<BEvent> listEvents = new ArrayList<>();
-        
+
         /**
          * Analysis is a sentence,a synthesis
          */
         public StringBuilder analysis = new StringBuilder();
-        
-        
+
         /**
-         *  Log analysis on the detection
+         * Log analysis on the detection
          */
         public StringBuilder logAnalysis = new StringBuilder();
-   
+
         public void addAnalysisLine(String line) {
-            analysis.append(line+"\n");
-            addReportLine( line );
+            analysis.append(line + "\n");
+            addReportLine(line);
         };
-        
+
         public StringBuilder report = new StringBuilder();
+
         public void addReportLine(String line) {
-            report.append(line+"\n");
-            logAnalysis.append(line+";");
+            report.append(line + "\n");
+            logAnalysis.append(line + ";");
         }
     }
 

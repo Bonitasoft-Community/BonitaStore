@@ -31,7 +31,7 @@ public class ArtifactProcess extends Artifact {
     private final static BEvent EventInvalidBarFile = new BEvent(ArtifactProcess.class.getName(), 1, Level.APPLICATIONERROR, "Invalid Bar file", "The bar file can't be read", "The artefact is ignored", "Check the exception");
 
     public ArtifactProcess(String processName, String processVersion, String processDescription, Date dateProcess, Date dateVersion, BonitaStore sourceOrigin) {
-        super(TypeArtifact.PROCESS, processName, processVersion, processDescription, dateProcess, dateVersion,sourceOrigin);
+        super(TypeArtifact.PROCESS, processName, processVersion, processDescription, dateProcess, dateVersion, sourceOrigin);
     }
 
     @Override
@@ -108,15 +108,12 @@ public class ArtifactProcess extends Artifact {
         // generate a temporary file
         File temporaryFile = new File(path.toString() + "/" + getBonitaName() + ".bar");
 
-
-        try (FileOutputStream fos = new FileOutputStream(temporaryFile);ZipOutputStream zipOut = new ZipOutputStream(fos)){
+        try (FileOutputStream fos = new FileOutputStream(temporaryFile); ZipOutputStream zipOut = new ZipOutputStream(fos)) {
             // open a Zip file here
-            
-            
 
             // we explore the source file to collect all the replacement file
-            Set<String> replacementFile = exploreZipToExploreAndCompleteReplacement(configurationFileToReplace,null);
-            
+            Set<String> replacementFile = exploreZipToExploreAndCompleteReplacement(configurationFileToReplace, null);
+
             // we read the current source File
             try (ZipInputStream zis = new ZipInputStream(new FileInputStream(sourceFile))) {
                 // list files in zip
@@ -145,11 +142,10 @@ public class ArtifactProcess extends Artifact {
                     }
                     zipInEntry = zis.getNextEntry();
                 }
-                
-                // now, complete the zipOut
-                exploreZipToExploreAndCompleteReplacement(configurationFileToReplace,zipOut);
 
-                
+                // now, complete the zipOut
+                exploreZipToExploreAndCompleteReplacement(configurationFileToReplace, zipOut);
+
                 zis.closeEntry();
                 fos.flush();
 
@@ -164,15 +160,14 @@ public class ArtifactProcess extends Artifact {
     }
 
     /**
-     * 
      * @param sourceFile
      * @param zipOut id not null, then the zip is populated with this information
      * @return
      */
-    private Set<String> exploreZipToExploreAndCompleteReplacement(File sourceFile,ZipOutputStream zipOut ) {
+    private Set<String> exploreZipToExploreAndCompleteReplacement(File sourceFile, ZipOutputStream zipOut) {
         Set<String> replacementFile = new HashSet<>();
         traceZip(sourceFile);
-        String filterEntry = (getBonitaName()+"/"+getVersion()).toLowerCase()+"/";
+        String filterEntry = (getBonitaName() + "/" + getVersion()).toLowerCase() + "/";
         try (FileInputStream fis = new FileInputStream(sourceFile); ZipInputStream zis = new ZipInputStream(fis)) {
             // list files in zip
             ZipEntry zipInEntry = zis.getNextEntry();
@@ -180,15 +175,15 @@ public class ArtifactProcess extends Artifact {
             while (zipInEntry != null) {
                 if (zipInEntry.getName().endsWith(File.separator)) {
                 } else {
-                    if (zipInEntry.getName().toLowerCase().startsWith( filterEntry)) {
-                        String fileNameReplacement =zipInEntry.getName().substring(filterEntry.length()); 
-                        replacementFile.add( fileNameReplacement );
-                        
+                    if (zipInEntry.getName().toLowerCase().startsWith(filterEntry)) {
+                        String fileNameReplacement = zipInEntry.getName().substring(filterEntry.length());
+                        replacementFile.add(fileNameReplacement);
+
                         // copy
                         if (zipOut != null) {
-                            ZipEntry zipOutEntry = new ZipEntry( fileNameReplacement );
+                            ZipEntry zipOutEntry = new ZipEntry(fileNameReplacement);
                             zipOut.putNextEntry(zipOutEntry);
-    
+
                             byte[] buffer = new byte[1024];
                             int len;
                             while ((len = zis.read(buffer)) > 0) {
@@ -206,6 +201,7 @@ public class ArtifactProcess extends Artifact {
         }
         return replacementFile;
     }
+
     private String traceZip(File sourceFile) {
         StringBuffer traceResult = new StringBuffer();
 
@@ -233,7 +229,6 @@ public class ArtifactProcess extends Artifact {
             }
             zis.closeEntry();
 
-            
         } catch (Exception e) {
             traceResult.append("Exception " + e.toString());
         }

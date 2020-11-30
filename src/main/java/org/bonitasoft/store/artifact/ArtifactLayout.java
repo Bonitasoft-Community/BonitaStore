@@ -7,13 +7,14 @@ import org.bonitasoft.store.BonitaStore;
 
 public class ArtifactLayout extends ArtifactAbstractResource {
 
-    public ArtifactLayout(String name, String version, String description, Date dateCreation, Date dateVersion,BonitaStore sourceOrigin) {
-        super(TypeArtifact.LAYOUT, name, version, description, dateCreation,  dateVersion,sourceOrigin);
+    public ArtifactLayout(String name, String version, String description, Date dateCreation, Date dateVersion, BonitaStore sourceOrigin) {
+        super(TypeArtifact.LAYOUT, name, version, description, dateCreation, dateVersion, sourceOrigin);
     }
 
     public ArtifactLayout(Page page, BonitaStore sourceOrigin) {
         super(TypeArtifact.LAYOUT, page, sourceOrigin);
     }
+
     @Override
     public String getContentType() {
         return "layout";

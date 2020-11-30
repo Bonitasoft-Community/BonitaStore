@@ -66,7 +66,7 @@ public class DeployStrategyProcess extends DeployStrategy {
         DeployOperation deployOperation = new DeployOperation();
         deployOperation.detectionStatus = DetectionStatus.NEWVERSION;
         try {
-            deployOperation.addReportLine("Search "+getLabelProcess(process));
+            deployOperation.addReportLine("Search " + getLabelProcess(process));
 
             ProcessResult processResult = searchProcess(process, deployParameters, bonitaAccessor, logBox);
 
@@ -81,9 +81,9 @@ public class DeployStrategyProcess extends DeployStrategy {
                 process.setVersion(processResult.bestProposition.getVersion());
                 process.bonitaBaseElement = bonitaAccessor.processAPI.getProcessDefinition(processResult.bestProposition.getProcessId());
 
-                deployOperation.addReportLine("Process Name is overrided with "+getLabelProcess(process));
-                deployOperation.addReportLine("PresentDate Artifact is "+  DeployStrategy.sdf.format( processResult.bestProposition.getDeploymentDate()));
-                
+                deployOperation.addReportLine("Process Name is overrided with " + getLabelProcess(process));
+                deployOperation.addReportLine("PresentDate Artifact is " + DeployStrategy.sdf.format(processResult.bestProposition.getDeploymentDate()));
+
                 deployOperation.presentDateArtifact = processResult.bestProposition.getDeploymentDate();
                 deployOperation.presentVersionArtifact = process.getVersion();
                 // we base the deployment status on what ? 
@@ -199,7 +199,6 @@ public class DeployStrategyProcess extends DeployStrategy {
         return deployOperation;
     }
 
- 
     /**
      * @param processDefinition
      * @param bonitaAccessor
@@ -321,10 +320,9 @@ public class DeployStrategyProcess extends DeployStrategy {
             SearchOptionsBuilder sob = new SearchOptionsBuilder(0, 100);
             sob.filter(ProcessDeploymentInfoSearchDescriptor.NAME, process.getBonitaName());
             processResult.searchResult = bonitaAccessor.processAPI.searchProcessDeploymentInfos(sob.done());
-            
-            processResult.analysis.add("SearchProcessAPI["+process.getBonitaName()+"] Found result["+processResult.searchResult.getCount()+"]");
-                    
-                    
+
+            processResult.analysis.add("SearchProcessAPI[" + process.getBonitaName() + "] Found result[" + processResult.searchResult.getCount() + "]");
+
             // search for the same version maybe
             for (ProcessDeploymentInfo processDeploymentInfo : processResult.searchResult.getResult()) {
                 String reportLine = " Found [" + processDeploymentInfo.getName() + "] Version[" + processDeploymentInfo.getVersion()

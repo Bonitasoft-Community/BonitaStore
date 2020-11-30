@@ -127,12 +127,13 @@ public class BonitaStoreResult {
 
     /**
      * Add the detected artifact, if it is in the detection list
+     * 
      * @param detectionParameters
      * @param artifact
      */
     public void addDetectedArtifact(BonitaStoreParameters detectionParameters, ArtifactResult artifactResult) {
-        if (detectionParameters.listTypeArtifacts.contains( artifactResult.artifact.getType()))
-            listArtifacts.add( artifactResult );
-        
+        if (detectionParameters.listTypeArtifacts.contains(artifactResult.artifact.getType()))
+            listArtifacts.add(artifactResult);
+
     }
 }

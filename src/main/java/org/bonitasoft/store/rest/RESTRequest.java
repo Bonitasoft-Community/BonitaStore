@@ -75,32 +75,35 @@ public class RESTRequest {
     public List<BEvent> listEvents = new ArrayList<>();
 
     private CookieStore cookieStore;
-    
+
     public RESTRequest() {
         cookieStore = new BasicCookieStore();
-        
+
     }
-    
+
     public CookieStore getCookieStore() {
         return cookieStore;
     }
-    public void setCookieStore( CookieStore cookieStore) {
+
+    public void setCookieStore(CookieStore cookieStore) {
         this.cookieStore = cookieStore;
     }
+
     /**
      * URL value getter.
      * 
      * @return The URL value.
-     * @throws MalformedURLException 
+     * @throws MalformedURLException
      */
-    public URL getUrl()  {
-        
+    public URL getUrl() {
+
         return url;
     }
 
     public void calculateUrlFromUri() throws MalformedURLException {
-        url = new URL(headerUrl+uri);
+        url = new URL(headerUrl + uri);
     }
+
     /**
      * The URL value setter.
      * 
@@ -110,18 +113,22 @@ public class RESTRequest {
         this.url = url;
     }
 
-    public void setHeaderUrl( String headerUrl ) {
+    public void setHeaderUrl(String headerUrl) {
         this.headerUrl = headerUrl;
     }
+
     public String getHeaderUrl() {
         return headerUrl;
     }
-    public void setUri(String uri ) {
+
+    public void setUri(String uri) {
         this.uri = uri;
     }
+
     public String getUri() {
         return uri;
     }
+
     /**
      * RESTHTTPMethod value getter.
      * 
@@ -202,6 +209,7 @@ public class RESTRequest {
     public boolean isIgnore() {
         return ignore;
     }
+
     /**
      * Ignore value setter.
      * 
@@ -213,19 +221,21 @@ public class RESTRequest {
 
     /**
      * Result of the REST CALL is send to the CollectOutput
+     * 
      * @param collectOutput
      */
     public void setCollectOutput(CollectOutput collectOutput) {
         this.collectOutput = collectOutput;
     }
+
     public CollectOutput getCollectOutput() {
-        if (collectOutput==null) {
+        if (collectOutput == null) {
             collectOutput = new CollectOutput();
             collectOutput.setPolicy(POLICYOUTPUT.STRING);
         }
         return this.collectOutput;
     }
-  
+
     /**
      * Headers value getter.
      * 
@@ -252,54 +262,58 @@ public class RESTRequest {
      * @return True if the header has been added or false otherwise.
      */
     public void addHeader(final String key, final String value) {
-       final Header header = new BasicHeader(key, value);
-       listHeaders.add( header );
-      
+        final Header header = new BasicHeader(key, value);
+        listHeaders.add(header);
+
     }
+
     public void setHeader(final String key, final String value) {
         // final Header header = new BasicHeader(key, value);
-        for (int i=0;i<listHeaders.size();i++)
-           if (listHeaders.get(i).getName().equals(key)) {
-               listHeaders.set(i, new BasicHeader(key, value));
-               return;
-           }
-        listHeaders.add( new BasicHeader(key, value) );
-     }
-    
-    public void addHeader( Header header ) {
-        listHeaders.add( header );
+        for (int i = 0; i < listHeaders.size(); i++)
+            if (listHeaders.get(i).getName().equals(key)) {
+                listHeaders.set(i, new BasicHeader(key, value));
+                return;
+            }
+        listHeaders.add(new BasicHeader(key, value));
     }
-    
-    public boolean existHeader( String name ) {
+
+    public void addHeader(Header header) {
+        listHeaders.add(header);
+    }
+
+    public boolean existHeader(String name) {
         for (Header header : listHeaders)
             if (header.getName().equals(name))
                 return true;
-       return false;
+        return false;
     }
+
     /**
      * Remove a header
+     * 
      * @param name
      */
-    public void removeHeader( String name ) {
+    public void removeHeader(String name) {
         // attention, a header may be multiple
         List<Header> newList = new ArrayList<>();
         for (Header header : listHeaders)
-            if (! header.getName().equals(name))
-                newList.add( header );
-       listHeaders = newList;
+            if (!header.getName().equals(name))
+                newList.add(header);
+        listHeaders = newList;
     }
 
-    public void addHeaders( List<Header> listHeader, boolean doNotInsertIfAlreadyPresent ) {
+    public void addHeaders(List<Header> listHeader, boolean doNotInsertIfAlreadyPresent) {
         if (doNotInsertIfAlreadyPresent) {
             List<Header> accumulateHeader = new ArrayList<>();
-            for(Header header : listHeader) {
-                if (! existHeader( header.getName()))
-                    accumulateHeader.add( header );
+            for (Header header : listHeader) {
+                if (!existHeader(header.getName()))
+                    accumulateHeader.add(header);
             }
-            this.listHeaders.addAll( accumulateHeader );
-        } else 
-            this.listHeaders.addAll( listHeader );
+            this.listHeaders.addAll(accumulateHeader);
+        } else
+            this.listHeaders.addAll(listHeader);
     }
+
     /**
      * Add a header couple in the headers.
      * 
@@ -308,11 +322,11 @@ public class RESTRequest {
      * @return True if the header has been added or false otherwise.
      */
     public void addHeader(final String key, final List<String> values) {
-        for (String aValue : values ) {
+        for (String aValue : values) {
             final Header header = new BasicHeader(key, aValue);
-            listHeaders.add( header );
+            listHeaders.add(header);
         }
-   
+
     }
 
     /**
@@ -323,9 +337,9 @@ public class RESTRequest {
      * @return True if the cookie has been added or false otherwise.
      */
     public boolean addCookie(final String key, final String value) {
-        if (cookies == null) 
+        if (cookies == null)
             cookies = new ArrayList<>();
-            
+
         final HttpCookie cookie = new HttpCookie(key, value);
         cookies.add(cookie);
         return true;

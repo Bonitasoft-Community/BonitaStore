@@ -21,14 +21,17 @@ public abstract class BonitaStore {
     public abstract String getName();
 
     public abstract String getExplanation();
-    
+
     private String displayName;
+
     public String getDisplayName() {
         return displayName;
     }
-    public void setDisplayName( String displayName ) {
+
+    public void setDisplayName(String displayName) {
         this.displayName = displayName;
     }
+
     /**
      * return a unique ID to indentify the store. In a respository, it maybe the String + User Name to connect for example.
      * 
@@ -50,32 +53,34 @@ public abstract class BonitaStore {
      * @return
      */
     public final static String CST_BONITA_STORE_TYPE = "type";
-    public final static String CST_BONITA_STORE_DISPLAYNAME="displayname";
+    public final static String CST_BONITA_STORE_DISPLAYNAME = "displayname";
     public final static String CST_BONITA_STORE_NAME = "name";
-    public final static String CST_BONITA_STORE_EXPLANATION="explanation";
+    public final static String CST_BONITA_STORE_EXPLANATION = "explanation";
 
     /**
      * Serialization. Note, the unserailisation is part of each Store
+     * 
      * @return
      */
     public Map<String, Object> toMap() {
-            Map<String, Object> map = new HashMap<>();
-            map.put(CST_BONITA_STORE_TYPE, getType() );
-            map.put(CST_BONITA_STORE_DISPLAYNAME, getDisplayName());
-            map.put(CST_BONITA_STORE_NAME, getName());
-            map.put(CST_BONITA_STORE_EXPLANATION, getExplanation());
-            fullfillMap(map);
-            return map;
-        
-    }
-    protected abstract String getType();
-    protected abstract void fullfillMap(Map<String, Object> map );
+        Map<String, Object> map = new HashMap<>();
+        map.put(CST_BONITA_STORE_TYPE, getType());
+        map.put(CST_BONITA_STORE_DISPLAYNAME, getDisplayName());
+        map.put(CST_BONITA_STORE_NAME, getName());
+        map.put(CST_BONITA_STORE_EXPLANATION, getExplanation());
+        fullfillMap(map);
+        return map;
 
-  
+    }
+
+    protected abstract String getType();
+
+    protected abstract void fullfillMap(Map<String, Object> map);
+
     /* ******************************************************************************** */
     /*                                                                                  */
-    /* begin and end. Some store need to do some operation before using it              */
-    /* (open a connection...)                                                           */
+    /* begin and end. Some store need to do some operation before using it */
+    /* (open a connection...) */
     /*                                                                                  */
     /*                                                                                  */
     /* ******************************************************************************** */
@@ -83,11 +88,11 @@ public abstract class BonitaStore {
     public List<BEvent> begin(BonitaStoreParameters detectionParameters, LoggerStore logBox) {
         return new ArrayList<>();
     }
-    
+
     public List<BEvent> end(BonitaStoreParameters detectionParameters, LoggerStore logBox) {
         return new ArrayList<>();
     }
-    
+
     /* ******************************************************************************** */
     /*                                                                                  */
     /* Operation expected from a store */
@@ -111,8 +116,6 @@ public abstract class BonitaStore {
      */
     public abstract BonitaStoreResult loadArtifact(final Artifact artifact, UrlToDownload urlToDownload, final LoggerStore logBox);
 
-    
-    
     /**
      * check if the sore it available, and can be reach
      * 

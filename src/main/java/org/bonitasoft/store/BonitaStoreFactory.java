@@ -14,11 +14,11 @@ public class BonitaStoreFactory {
         return new BonitaStoreFactory();
     }
 
-    
     /**
      * get a store from a serialization information
      * Each BonitaStore has a GetMap() function, to serialize the source. This method is the oposite, to recreate the source form the serialization
      * Each store setted a type
+     * 
      * @param sourceOb
      * @return
      */
@@ -26,28 +26,24 @@ public class BonitaStoreFactory {
         // we have to parse all the different know store
 
         BonitaStore store;
-        if ((store = BonitaStoreDirectory.getInstancefromMap(source))!=null)
+        if ((store = BonitaStoreDirectory.getInstancefromMap(source)) != null)
             return store;
-        if ((store = BonitaStoreGit.getInstancefromMap(source))!=null)
+        if ((store = BonitaStoreGit.getInstancefromMap(source)) != null)
             return store;
-        if ((store = BonitaStoreBCD.getInstancefromMap(source))!=null)
+        if ((store = BonitaStoreBCD.getInstancefromMap(source)) != null)
             return store;
-     
+
         // Community
-        
+
         // LocalServer
-        
+
         // BonitaExternalServer
-        if ((store = BonitaStoreBonitaExternalServer.getInstancefromMap(source))!=null)
+        if ((store = BonitaStoreBonitaExternalServer.getInstancefromMap(source)) != null)
             return store;
-     
-        
+
         return null;
     }
-    
-    
-    
-    
+
     private List<BonitaStore> listBonitaStore = new ArrayList<>();
 
     public List<BonitaStore> getBonitaStores() {
@@ -67,19 +63,17 @@ public class BonitaStoreFactory {
         this.listBonitaStore.add(bonitaStore);
     }
 
-    
-   
-
     /**
      * getStoreByName
+     * 
      * @param storeName
      * @return
      */
     public BonitaStore getStoreByName(String storeName) {
-        if (storeName==null)
+        if (storeName == null)
             return null;
         for (BonitaStore bonitaStore : listBonitaStore)
-            if (storeName.equals( bonitaStore.getName()))
+            if (storeName.equals(bonitaStore.getName()))
                 return bonitaStore;
         return null;
     }
@@ -127,15 +121,14 @@ public class BonitaStoreFactory {
         return bonitaStoreGit;
     }
 
-    public BonitaStoreDirectory getInstanceDirectoryStore(File pathDirectory,boolean registerTheStore) {
+    public BonitaStoreDirectory getInstanceDirectoryStore(File pathDirectory, boolean registerTheStore) {
         BonitaStoreDirectory bonitaStoreDirectory = new BonitaStoreDirectory(pathDirectory);
         if (registerTheStore)
             registerStore(bonitaStoreDirectory);
         return bonitaStoreDirectory;
-        
+
     }
 
-        
     /**
      * return the local server as a local store
      * 
@@ -147,25 +140,27 @@ public class BonitaStoreFactory {
 
     /**
      * return an external BonitaServer as a store
-     * The Bonita server keep one connection per client (it save in the tomcat session the connection). 
-     * The bonitaStoreBonitaExternalServer keeps the login information (cookie). So, if a second thread contact the same server, and reconnect, it will disconnect the first connnection
+     * The Bonita server keep one connection per client (it save in the tomcat session the connection).
+     * The bonitaStoreBonitaExternalServer keeps the login information (cookie). So, if a second thread contact the same server, and reconnect, it will
+     * disconnect the first connnection
      * That's why, when a BonitaServer is contacted, to use every time the same object to speak with.
      * Then, this object connect, saved cookies, and can be reused for all discussions.
-     * Problem: if two thread want to connect with different userName, we must reconnect, then lost the first connection. So, connected to a BonitaServer with two different userName is not possible 
-     * in a Multithread environement (and this is due to the Bonita Server, which saved on its part the connection information). 
+     * Problem: if two thread want to connect with different userName, we must reconnect, then lost the first connection. So, connected to a BonitaServer with
+     * two different userName is not possible
+     * in a Multithread environement (and this is due to the Bonita Server, which saved on its part the connection information).
      * 
      * @return
      */
-    Map<String,BonitaStoreBonitaExternalServer> mapBonitaExternalServer = new HashMap<>();
-    
+    Map<String, BonitaStoreBonitaExternalServer> mapBonitaExternalServer = new HashMap<>();
+
     public BonitaStoreBonitaExternalServer getInstanceBonitaExternalServer(String protocol, String server, int port, String applicationName, String userName, String password, boolean registerTheStore) {
-        String keyStore  = protocol+"#"+server+"#"+port+"#"+applicationName+"#"+userName;
+        String keyStore = protocol + "#" + server + "#" + port + "#" + applicationName + "#" + userName;
         if (mapBonitaExternalServer.containsKey(keyStore))
-            return mapBonitaExternalServer.get( keyStore );
-        BonitaStoreBonitaExternalServer bonitaServer = new BonitaStoreBonitaExternalServer( protocol, server, port, applicationName, userName, password);
+            return mapBonitaExternalServer.get(keyStore);
+        BonitaStoreBonitaExternalServer bonitaServer = new BonitaStoreBonitaExternalServer(protocol, server, port, applicationName, userName, password);
         if (registerTheStore)
             registerStore(bonitaServer);
-        mapBonitaExternalServer.put( keyStore, bonitaServer );
+        mapBonitaExternalServer.put(keyStore, bonitaServer);
         return bonitaServer;
     }
 

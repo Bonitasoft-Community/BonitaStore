@@ -11,7 +11,7 @@ public class ArtifactOrganization extends Artifact {
     public Date dateCreation;
 
     public ArtifactOrganization(String name, String version, String description, Date dateCreation, Date dateVersion, BonitaStore sourceOrigin) {
-        super(TypeArtifact.ORGANIZATION, name, version, description, dateCreation, dateVersion,sourceOrigin);
+        super(TypeArtifact.ORGANIZATION, name, version, description, dateCreation, dateVersion, sourceOrigin);
     }
 
     @Override

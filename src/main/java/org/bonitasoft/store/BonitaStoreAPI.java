@@ -21,10 +21,10 @@ public class BonitaStoreAPI {
      */
     public static final String CommunityGithubUserName = "bonitafoodtruck";
     public static final String CommunityGithubPassword = "!&Bonita2020!!";
-    
+
     // https://developer.github.com/changes/2020-02-14-deprecating-password-auth/
     public static final String COMMUNITY_GITHUB_TOKEN = "38cf002243d47eade2912e5652ee739855bde97c";
-    
+
     public static String CommunityGithubUrlRepository = "https://api.github.com/orgs/Bonitasoft-Community";
 
     public BonitaStore getInstanceBonitaCommunityStore(boolean registerTheStore) {
@@ -41,15 +41,16 @@ public class BonitaStoreAPI {
         return getBonitaStoreFactory().getInstanceBonitaCommunityStore(specificRepository, registerTheStore);
     }
 
-    public BonitaStoreGit getInstanceGitStore(String gituserName, String gitPassword, String gitUrlRepository,boolean registerTheStore) {
+    public BonitaStoreGit getInstanceGitStore(String gituserName, String gitPassword, String gitUrlRepository, boolean registerTheStore) {
         return getBonitaStoreFactory().getInstanceGitStore(gituserName, gitPassword, gitUrlRepository, registerTheStore);
     }
 
     /*
      * get a store from a local disk
      */
-    public BonitaStoreDirectory getInstanceDirectoryStore(File pathDirectory,boolean registerTheStore) {
-        return getBonitaStoreFactory().getInstanceDirectoryStore(pathDirectory, registerTheStore);    }
+    public BonitaStoreDirectory getInstanceDirectoryStore(File pathDirectory, boolean registerTheStore) {
+        return getBonitaStoreFactory().getInstanceDirectoryStore(pathDirectory, registerTheStore);
+    }
 
     /*
      * get a store from a local disk

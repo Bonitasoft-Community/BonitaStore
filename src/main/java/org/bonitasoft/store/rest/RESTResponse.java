@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.http.client.CookieStore;
 
 import org.apache.http.Header;
+import org.apache.http.client.CookieStore;
 
 /**
  * This class reflects the information for a REST response.
@@ -39,19 +39,16 @@ public class RESTResponse {
     // private List<RESTResultKeyValueMap> headers = new ArrayList<RESTResultKeyValueMap>();
     private List<Header> listHeaders = new ArrayList<>();
 
-    
     private CookieStore cookieStore;
+
     /**
      * collectOutput value getter.
      * 
-     * @return The colectOuput given at the RestRequest. When no CollectOutput was given, a default 
-     * 
+     * @return The colectOuput given at the RestRequest. When no CollectOutput was given, a default
      */
     public CollectOutput getCollectOutput() {
         return collectOutput;
     }
-
-    
 
     /**
      * Execution time value getter.
@@ -147,7 +144,7 @@ public class RESTResponse {
      */
     public void addHeader(Header header) {
         listHeaders.add(header);
-       
+
         /*
          * if (headers != null) {
          * final RESTResultKeyValueMap restResultKeyValueMap = new RESTResultKeyValueMap();
@@ -161,9 +158,11 @@ public class RESTResponse {
          * return false;
          */
     }
+
     public void addHeaders(List<Header> header) {
         listHeaders.addAll(header);
     }
+
     public String getUrlRedirect() {
         String status = null;
         String location = null;
@@ -175,23 +174,23 @@ public class RESTResponse {
                 location = hv.getValue();
             }
         }
-        
-        if (statusCode == 301 
-                || statusCode ==302  
+
+        if (statusCode == 301
+                || statusCode == 302
                 || (status != null && (status.startsWith("301") || status.startsWith("302")))) {
             return location;
         }
-           
+
         return null;
     }
-    
+
     /**
-     * 
      * @param cookieStore
      */
     public void setCookieStore(CookieStore cookieStore) {
         this.cookieStore = cookieStore;
     }
+
     public CookieStore getCookieStore() {
         return cookieStore;
     }
@@ -200,13 +199,16 @@ public class RESTResponse {
      * A RestCall may have some redirection. Get the list of all URL called
      */
     private List<String> historyCall = new ArrayList<>();
+
     public void setHistoryCall(List<String> historyCall) {
         this.historyCall = historyCall;
     }
-    public  List<String> getHistoryCall() {
+
+    public List<String> getHistoryCall() {
         return historyCall;
     }
+
     public void addHistoryCall(String call) {
-        this.historyCall.add( call );
+        this.historyCall.add(call);
     }
 }
