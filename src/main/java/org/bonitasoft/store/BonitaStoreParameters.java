@@ -41,5 +41,10 @@ public class BonitaStoreParameters {
      * if true, the process description is analyze for a string "Category:<name>,<name>" and if found, process is registered in theses category
      */
     public boolean processCategory;
+    
+    /**
+     * We way want to not load the complete directory, but filter by a name
+     */
+    public String filterByName=null;
 
 }

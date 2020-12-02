@@ -48,7 +48,7 @@ public class BonitaStoreGit extends BonitaStore {
             "No description on the item in the repository, and then a local application and the repository one can be considered different when in fact this is the same", "Contact the owner of the page to fix it");
 
     public BonitaStoreGit(final String userName, final String password, final String urlRepository) {
-        mGithubAccessor = new GithubAccessor(userName, password, urlRepository);
+        mGithubAccessor = new GithubAccessor(userName, password,  urlRepository);
     }
 
     /**
@@ -110,10 +110,14 @@ public class BonitaStoreGit extends BonitaStore {
 
     }
 
-    public String specificRepository = null;
+    public String specificFolder = null;
 
-    public void setSpecificRepository(String specificRepository) {
-        this.specificRepository = specificRepository;
+    /**
+     * Set a folder in the repository
+     * @param specificFolder
+     */
+    public void setSpecificFolder(String specificFolder) {
+        this.specificFolder = specificFolder;
     }
 
     /**
@@ -121,7 +125,7 @@ public class BonitaStoreGit extends BonitaStore {
      */
     @Override
     public BonitaStoreResult getListArtifacts(BonitaStoreParameters detectionParameters, LoggerStore logBox) {
-        final SimpleDateFormat sdfParseRelease = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        // final SimpleDateFormat sdfParseRelease = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
         final BonitaStoreResult storeResult = new BonitaStoreResult("getListAvailableItems");
 
@@ -135,7 +139,7 @@ public class BonitaStoreGit extends BonitaStore {
             return storeResult;
         }
         // call the github to get the contents
-        String urlCall = this.specificRepository == null ? "/repos?page=1&per_page=10000" : this.specificRepository;
+        String urlCall = this.specificFolder == null ? "/repos?page=1&per_page=10000" : this.specificFolder;
 
         final ResultGithub resultListRepository = mGithubAccessor.executeGetRestOrder(urlCall, null, logBox);
         storeResult.addEvents(resultListRepository.listEvents);

@@ -16,9 +16,11 @@ import org.bonitasoft.store.artifact.Artifact;
 import org.bonitasoft.store.artifact.Artifact.TypeArtifact;
 import org.bonitasoft.store.artifact.FactoryArtifact;
 import org.bonitasoft.store.artifact.FactoryArtifact.ArtifactResult;
+import org.bonitasoft.store.source.git.GithubAccessor.ItemHeader;
 import org.bonitasoft.store.source.git.GithubAccessor.ResultGithub;
 import org.bonitasoft.store.toolbox.LoggerStore;
 import org.bonitasoft.store.toolbox.LoggerStore.LOGLEVEL;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 /* ******************************************************************************** */
@@ -32,6 +34,15 @@ import org.json.simple.JSONObject;
 /*                                                                                  */
 /* ******************************************************************************** */
 public class BonitaStoreCommunity extends BonitaStoreGit {
+
+    public static final String COMMUNITY_GITHUBUSERNAME = "bonitafoodtruck";
+    public static final String COMMUNITY_GITHUBPASSWORD = "!&Bonita2020!!";
+    // https://developer.github.com/changes/2020-02-14-deprecating-password-auth/
+
+    public static final String COMMUNITY_GITHUBTOKEN = "d622a9efb4bdef1ee4efb3a887ce1f8b4037cdf4";
+
+
+    public static String COMMUNITY_GITHUBURLREPOSITORY = "https://api.github.com/orgs/Bonitasoft-Community";
 
     private final static BEvent NoListingFound = new BEvent(BonitaStoreCommunity.class.getName(), 2, Level.APPLICATIONERROR, "No Listing Found", "The Githbub repository is supposed to have a file 'listing.xml' which describe all objects available. THis file is not found.",
             "result is not consistent",
@@ -57,8 +68,10 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
     private final static BEvent EVENT_BAD_ARTEFACT = new BEvent(BonitaStoreCommunity.class.getName(), 10, Level.APPLICATIONERROR, "Bad Artefact", "Artefact is not the one expected according the topic",
             "A topic is given in the repository. The artefact is not the correct one according the topic", "Topic in the repository has to be fixed");
 
-    public BonitaStoreCommunity(final String userName, final String password, final String urlRepository) {
-        super(userName, password, urlRepository);
+    
+    public BonitaStoreCommunity(final String urlRepository) {
+        super(BonitaStoreCommunity.COMMUNITY_GITHUBUSERNAME, BonitaStoreCommunity.COMMUNITY_GITHUBPASSWORD, urlRepository);
+        mGithubAccessor.addDefaultHeader( ItemHeader.getItemHeader("Authorization", "token "+BonitaStoreCommunity.COMMUNITY_GITHUBTOKEN));
     }
 
     /**
@@ -77,8 +90,8 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
     }
 
     @Override
-    public void setSpecificRepository(String specificRepository) {
-        this.specificRepository = specificRepository;
+    public void setSpecificFolder(String specificRepository) {
+        this.specificFolder = specificRepository;
     }
 
     private final static String CST_BONITA_STORE_COMMUNITY = "Community";
@@ -122,7 +135,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
 
             for (TypeArtifact typeArtefact : detectionParameters.listTypeArtifacts) {
                 TopicTypeArtefact topicTypeArtefact = new TopicTypeArtefact(typeArtefact);
-                if (this.specificRepository == null) {
+                if (this.specificFolder == null) {
                     // community is organized by topics // if (detectionParameters.isByTopics)
                     //   https://api.github.com/search/repositories?page=1&per_page=100&q=org:Bonitasoft-Community+topic:page
                     //   https://api.github.com/orgs/Bonitasoft-Community/repos?page=1&per_page=10000
@@ -132,7 +145,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                     needMatchByName = false;
                     //  urlCall = "/repos?page=1&per_page=10000";
                 } else
-                    urlCall = this.specificRepository;
+                    urlCall = this.specificFolder;
 
                 final ResultGithub resultListRepository = mGithubAccessor.executeGetRestOrder(urlCall, urlCompleteCall, logBox);
                 storeResult.addEvents(resultListRepository.listEvents);
@@ -150,6 +163,12 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                     final JSONObject oneRepository = (JSONObject) oneRepositoryOb;
 
                     final String repositoryName = (String) oneRepository.get("name");
+                    if ("readme.md".equalsIgnoreCase(repositoryName))
+                        continue;
+                    // this is what we search
+                    if (detectionParameters.filterByName != null && ! detectionParameters.filterByName.equals(repositoryName))
+                        continue;
+
                     TypeArtifact checkTypeArtefact = needMatchByName ? match(detectionParameters.listTypeArtifacts, repositoryName) : typeArtefact;
                     if (checkTypeArtefact == null || checkTypeArtefact != typeArtefact) {
                         BEvent event = new BEvent(EVENT_BAD_ARTEFACT, "Repository [" + repositoryName + "] expect type[" + typeArtefact + "] detect [" + checkTypeArtefact + "]");
@@ -157,9 +176,9 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                         storeResult.addEvent(event);
                         continue;
                     }
-                    // this is what we search
+                        
                     ArtifactResult artifactResult = new ArtifactResult();
-                    artifactResult.artifact = factoryArtefact.getFromType(typeArtefact, (String) oneRepository.get("name"), null,
+                    artifactResult.artifact = factoryArtefact.getFromType(typeArtefact, repositoryName, null,
                             (String) oneRepository.get("description"),
                             null,
                             null,
@@ -187,71 +206,77 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                     // --------------------- Content
                     // Logo and documentation
                     artifactResult.artifact.urlContent = (String) oneRepository.get("url");
-
-                    final ResultGithub resultContent = mGithubAccessor.executeGetRestOrder(null, artifactResult.artifact.urlContent + "/contents", logBox);
-                    resultContent.checkResultFormat(null, true, "Contents of a repository must be a list");
+                    artifactResult.artifact.urlDownload = (String) oneRepository.get("download_url");
+                    // 30 nov : remove artifactResult.artifact.urlContent + "/contents" => only the URL
+                    final ResultGithub resultContent = mGithubAccessor.executeGetRestOrder(null, artifactResult.artifact.urlContent, logBox);
+                    // resultContent.checkResultFormat(null, true, "Contents of a repository must be a list");
                     storeResult.addEvents(resultContent.listEvents);
 
                     if (!resultContent.isError()) {
-                        for (final Map<String, Object> oneContent : (List<Map<String, Object>>) resultContent.getJsonArray(null)) {
-                            final String assetName = (String) oneContent.get("name");
-                            if (assetName == null) {
-                                continue;
-                            }
-                            if (assetName.equalsIgnoreCase("page.properties")) {
-                                final String urlPageProperties = (String) oneContent.get("download_url");
-                                final ResultGithub resultContentpage = mGithubAccessor.getContent(urlPageProperties, "GET", "", "UTF-8");
-                                storeResult.addEvents(resultContentpage.listEvents);
-                                if (!BEventFactory.isError(resultContentpage.listEvents)) {
-                                    final String pageSt = resultContentpage.content;
-                                    final StringReader stringPage = new StringReader(pageSt);
+                        // artifact maybe a resource (then the content is an JSONARRAY) or a binary (like a Groovy Code)
+                        Object jsonResult =resultContent.getJsonObject(); 
+                        if ( jsonResult instanceof List) {
+                            for (final Map<String, Object> oneContent : (List<Map<String, Object>>) resultContent.getJsonArray(null)) {
+                                final String assetName = (String) oneContent.get("name");
+                                if (assetName == null) {
+                                    continue;
+                                }
+                                if (assetName.equalsIgnoreCase("page.properties")) {
+                                    final String urlPageProperties = (String) oneContent.get("download_url");
+                                    final ResultGithub resultContentpage = mGithubAccessor.getContent(urlPageProperties, "GET", "", "UTF-8");
+                                    storeResult.addEvents(resultContentpage.listEvents);
+                                    if (!BEventFactory.isError(resultContentpage.listEvents)) {
+                                        final String pageSt = resultContentpage.content;
+                                        final StringReader stringPage = new StringReader(pageSt);
+                                        try {
+                                            final Properties properties = new Properties();
+    
+                                            properties.load(stringPage);
+                                            final String pageName = properties.getProperty("name");
+                                            if (pageName != null && !pageName.isEmpty()) {
+                                                artifactResult.artifact.setName(pageName);
+                                            }
+    
+                                            final String pageDescription = properties.getProperty("description");
+                                            if (pageDescription != null && !pageDescription.isEmpty()) {
+                                                artifactResult.artifact.setDescription(pageDescription);
+                                            }
+    
+                                            final String pageDisplayName = properties.getProperty("displayName");
+                                            if (pageDisplayName != null && !pageDisplayName.isEmpty()) {
+                                                artifactResult.artifact.setDisplayName(pageDisplayName);
+                                            }
+                                        } catch (final Exception e) {
+                                            storeResult.addEvent(new BEvent(errorDecodePageProperties, "Error " + e.toString()));
+                                        }
+                                    }
+    
+                                }
+    
+                                if (assetName.equalsIgnoreCase("logo.jpg") || assetName.equalsIgnoreCase(shortName + ".jpg")) {
+    
+                                    // we get it !
                                     try {
-                                        final Properties properties = new Properties();
-
-                                        properties.load(stringPage);
-                                        final String pageName = properties.getProperty("name");
-                                        if (pageName != null && !pageName.isEmpty()) {
-                                            artifactResult.artifact.setName(pageName);
-                                        }
-
-                                        final String pageDescription = properties.getProperty("description");
-                                        if (pageDescription != null && !pageDescription.isEmpty()) {
-                                            artifactResult.artifact.setDescription(pageDescription);
-                                        }
-
-                                        final String pageDisplayName = properties.getProperty("displayName");
-                                        if (pageDisplayName != null && !pageDisplayName.isEmpty()) {
-                                            artifactResult.artifact.setDisplayName(pageDisplayName);
-                                        }
+                                        final ResultGithub resultContentLogo = mGithubAccessor.executeGetRestOrder(null, (String) oneContent.get("url"), logBox);
+                                        final String logoSt = (String) resultContentLogo.getJsonObject().get("content");
+                                        final Base64 base64 = new Base64();
+                                        artifactResult.artifact.logo = base64.decode(logoSt);
+                                        traceOneApps.append("logo detected;");
                                     } catch (final Exception e) {
-                                        storeResult.addEvent(new BEvent(errorDecodePageProperties, "Error " + e.toString()));
+                                        artifactResult.artifact.addEvent(new BEvent(errorDecodeLogo, "Get logo from  [" + oneContent.get("url") + "] : " + e.toString()));
                                     }
                                 }
-
-                            }
-
-                            if (assetName.equalsIgnoreCase("logo.jpg") || assetName.equalsIgnoreCase(shortName + ".jpg")) {
-
-                                // we get it !
-                                try {
-                                    final ResultGithub resultContentLogo = mGithubAccessor.executeGetRestOrder(null, (String) oneContent.get("url"), logBox);
-                                    final String logoSt = (String) resultContentLogo.getJsonObject().get("content");
-                                    final Base64 base64 = new Base64();
-                                    artifactResult.artifact.logo = base64.decode(logoSt);
-                                    traceOneApps.append("logo detected;");
-                                } catch (final Exception e) {
-                                    artifactResult.artifact.addEvent(new BEvent(errorDecodeLogo, "Get logo from  [" + oneContent.get("url") + "] : " + e.toString()));
+                                if (assetName.endsWith(".pdf")) {
+                                    // we get the documentation
+                                    artifactResult.artifact.documentationFile = (String) oneContent.get("url");
+                                    traceOneApps.append("doc detected;");
                                 }
-                            }
-                            if (assetName.endsWith(".pdf")) {
-                                // we get the documentation
-                                artifactResult.artifact.documentationFile = (String) oneContent.get("url");
-                                traceOneApps.append("doc detected;");
-                            }
-                        } // end loop on content
+                            } // end loop on content
+                        } // end of content is an array
                     } // end get Contents
+                    
 
-                    // --------------------- release
+                    // --------------------- release ?
                     String releaseUrl = (String) oneRepository.get("releases_url");
                     // release is : :
                     // "https://api.github.com/repos/Bonitasoft-Community/page_awacs/releases{/id}",
@@ -260,42 +285,44 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                     }
 
                     // get the releases now
-                    final ResultGithub resultRelease = mGithubAccessor.executeGetRestOrder(null, releaseUrl, logBox);
-                    resultRelease.checkResultFormat(null, true, "Contents of a release must be a list");
-                    storeResult.addEvents(resultRelease.listEvents);
-                    if (!resultRelease.isError()) {
-                        for (final Map<String, Object> oneRelease : (List<Map<String, Object>>) resultRelease.getJsonArray(null)) {
-
-                            final Artifact.ArtefactRelease appsRelease = artifactResult.artifact.newInstanceRelease();
-                            appsRelease.id = (Long) oneRelease.get("id");
-                            appsRelease.version = oneRelease.get("name").toString();
-                            traceOneApps.append("release[" + appsRelease.version + "] detected;");
-
-                            try {
-                                appsRelease.dateRelease = sdfParseRelease.parse(oneRelease.get("published_at").toString());
-                            } catch (final Exception e) {
-                                logBox.log(LOGLEVEL.ERROR, "FoodTruckStoreGithub : date [" + oneRelease.get("published_at") + "] can't be parse.");
-                            }
-                            appsRelease.releaseNote = oneRelease.get("body").toString();
-                            // search a ZIP access
-                            if (oneRelease.get("assets") != null) {
-                                for (final Map<String, Object> oneAsset : (List<Map<String, Object>>) oneRelease.get("assets")) {
-                                    final String assetName = (String) oneAsset.get("name");
-                                    if (assetName != null && assetName.endsWith(".zip")) {
-                                        appsRelease.urlDownload = (String) oneAsset.get("browser_download_url");
-                                        if (appsRelease.urlDownload != null && appsRelease.urlDownload.length() == 0) {
-                                            appsRelease.urlDownload = null;
+                    if (releaseUrl!=null) {
+                        final ResultGithub resultRelease = mGithubAccessor.executeGetRestOrder(null, releaseUrl, logBox);
+                        resultRelease.checkResultFormat(null, true, "Contents of a release must be a list");
+                        storeResult.addEvents(resultRelease.listEvents);
+                        if (!resultRelease.isError()) {
+                            for (final Map<String, Object> oneRelease : (List<Map<String, Object>>) resultRelease.getJsonArray(null)) {
+    
+                                final Artifact.ArtefactRelease appsRelease = artifactResult.artifact.newInstanceRelease();
+                                appsRelease.id = (Long) oneRelease.get("id");
+                                appsRelease.version = oneRelease.get("name").toString();
+                                traceOneApps.append("release[" + appsRelease.version + "] detected;");
+    
+                                try {
+                                    appsRelease.dateRelease = sdfParseRelease.parse(oneRelease.get("published_at").toString());
+                                } catch (final Exception e) {
+                                    logBox.log(LOGLEVEL.ERROR, "FoodTruckStoreGithub : date [" + oneRelease.get("published_at") + "] can't be parse.");
+                                }
+                                appsRelease.releaseNote = oneRelease.get("body").toString();
+                                // search a ZIP access
+                                if (oneRelease.get("assets") != null) {
+                                    for (final Map<String, Object> oneAsset : (List<Map<String, Object>>) oneRelease.get("assets")) {
+                                        final String assetName = (String) oneAsset.get("name");
+                                        if (assetName != null && assetName.endsWith(".zip")) {
+                                            appsRelease.urlDownload = (String) oneAsset.get("browser_download_url");
+                                            if (appsRelease.urlDownload != null && appsRelease.urlDownload.length() == 0) {
+                                                appsRelease.urlDownload = null;
+                                            }
+                                            appsRelease.numberOfDownload = (Long) oneAsset.get("download_count");
+                                            traceOneApps.append("release with content;");
                                         }
-                                        appsRelease.numberOfDownload = (Long) oneAsset.get("download_count");
-                                        traceOneApps.append("release with content;");
                                     }
                                 }
+                                artifactResult.artifact.listReleases.add(appsRelease);
+                            } // end loop on release
+    
+                            if (artifactResult.artifact.listReleases.isEmpty() || artifactResult.artifact.getLastUrlDownload() == null) {
+                                artifactResult.artifact.setAvailable(false);
                             }
-                            artifactResult.artifact.listReleases.add(appsRelease);
-                        } // end loop on release
-
-                        if (artifactResult.artifact.listReleases.isEmpty() || artifactResult.artifact.getLastUrlDownload() == null) {
-                            artifactResult.artifact.setAvailable(false);
                         }
                     }
                     logBox.log(LoggerStore.LOGLEVEL.INFO, traceOneApps.toString());

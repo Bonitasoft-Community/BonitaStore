@@ -49,6 +49,9 @@ public class RESTResponse {
     public CollectOutput getCollectOutput() {
         return collectOutput;
     }
+    public void setCollectOutput( CollectOutput collectOutput) {
+        this.collectOutput = collectOutput;
+    }
 
     /**
      * Execution time value getter.

@@ -85,7 +85,7 @@ public class BonitaStoreFactory {
      * @return
      */
     public BonitaStoreCommunity getInstanceBonitaCommunityStore(boolean registerTheStore) {
-        BonitaStoreCommunity bonitaStore = new BonitaStoreCommunity(BonitaStoreAPI.CommunityGithubUserName, BonitaStoreAPI.CommunityGithubPassword, BonitaStoreAPI.CommunityGithubUrlRepository);
+        BonitaStoreCommunity bonitaStore = new BonitaStoreCommunity( BonitaStoreCommunity.COMMUNITY_GITHUBURLREPOSITORY);
         if (registerTheStore)
             registerStore(bonitaStore);
         return bonitaStore;
@@ -95,12 +95,13 @@ public class BonitaStoreFactory {
      * get one specific repository in the Community repository
      * A registerStore is possible after if the registerTheStore is false
      * 
-     * @param specificRepository
+     * @param specificRepository : for example  "https://api.github.com/repos/Bonitasoft-Community/page_towtruck"
      * @return
      */
     public BonitaStoreCommunity getInstanceBonitaCommunityStore(String specificRepository, boolean registerTheStore) {
-        BonitaStoreCommunity bonitaStoreCommunity = new BonitaStoreCommunity(BonitaStoreAPI.CommunityGithubUserName, BonitaStoreAPI.CommunityGithubPassword, specificRepository);
-        bonitaStoreCommunity.setSpecificRepository(specificRepository);
+        BonitaStoreCommunity bonitaStoreCommunity = new BonitaStoreCommunity( specificRepository);
+
+        bonitaStoreCommunity.setSpecificFolder(specificRepository);
         if (registerTheStore)
             registerStore(bonitaStoreCommunity);
         return bonitaStoreCommunity;
@@ -116,6 +117,7 @@ public class BonitaStoreFactory {
      */
     public BonitaStoreGit getInstanceGitStore(String gituserName, String gitPassword, String gitUrlRepository, boolean registerTheStore) {
         BonitaStoreGit bonitaStoreGit = new BonitaStoreGit(gituserName, gitPassword, gitUrlRepository);
+        
         if (registerTheStore)
             registerStore(bonitaStoreGit);
         return bonitaStoreGit;

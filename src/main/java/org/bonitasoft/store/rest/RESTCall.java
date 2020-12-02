@@ -93,14 +93,14 @@ public class RESTCall {
             requestBuilder.setUri(urlStr);
 
             logRestHttp.append(urlStr);
-            logRestHttp.append("connectionTimeout[" + connectionTimeout + "] isRedirect[" + restRequest.isRedirect() + "]");
+            logRestHttp.append(" connectionTimeout[" + connectionTimeout + "] isRedirect[" + restRequest.isRedirect() + "]");
 
             final HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
             httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(0, false));
 
             requestBuilder.setVersion(new ProtocolVersion(HTTP_PROTOCOL, HTTP_PROTOCOL_VERSION_MAJOR, HTTP_PROTOCOL_VERSION_MINOR));
 
-            logRestHttp.append(" Headers: [");
+            logRestHttp.append(" Headers:[");
             for (Header header : restRequest.getHeaders()) {
                 requestBuilder.addHeader(header);
                 logRestHttp.append(header.getName() + ":" + header.getValue() + "; ");
@@ -168,6 +168,7 @@ public class RESTCall {
             if (httpResponse.getStatusLine().getStatusCode() != 301 && httpResponse.getStatusLine().getStatusCode() != 302) {
                 collectOutput.collectHttpResponse(httpResponse);
             }
+            response.setCollectOutput(collectOutput);
 
             logger.info("Response " + logRestResponse + collectOutput.trace());
 

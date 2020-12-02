@@ -38,7 +38,7 @@ public class GithubAccessor {
     private static final int CONNECTION_TIMEOUT = 60000;
 
     private final static BEvent eventResultNotExpected = new BEvent(GithubAccessor.class.getName(), 1, Level.APPLICATIONERROR, "Error Github code",
-            "The URL call to the github repository does not return a code 200", "Check the URL to github, the login/password");
+            "The URL call to the github repository does not return a code 200", "No connection to Github", "Check the URL to github, the login/password");
 
     private final static BEvent eventNoResult = new BEvent(GithubAccessor.class.getName(), 2, Level.INFO, "No result", "The github repository is empty");
 
@@ -47,7 +47,7 @@ public class GithubAccessor {
             "The URL given is not correct, it's malformed", "Url can't be call", "Check the URL");
 
     private static BEvent eventRestRequest = new BEvent(GithubAccessor.class.getName(), 4, BEvent.Level.APPLICATIONERROR, "Can't connect to the GITHUB Server",
-            "An error occures when the GITHUB Server is connected", "Check the error");
+            "An error occures when the GITHUB Server is connected", "No result from Git", "Check the error");
 
     private final static BEvent eventBadFormat = new BEvent(GithubAccessor.class.getName(), 5, Level.APPLICATIONERROR, "Bad Format",
             "The Githbub repository is supposed to get back in the content a 'asset' list, which is not found.",
@@ -81,7 +81,18 @@ public class GithubAccessor {
         mPassword = password;
         mUrlRepository = urlRepository;
     }
-
+    
+    /**
+     * Default Header
+     */
+    private ArrayList<ItemHeader> mDefaultHeaderList = new ArrayList();
+    public void addDefaultHeader( ItemHeader itemHeader) {
+        mDefaultHeaderList.add( itemHeader);
+    }
+    public void clearDefaultHeader() {
+        mDefaultHeaderList.clear();;
+    }
+    
     public static class ResultGithub {
 
         public String content;
@@ -200,15 +211,14 @@ public class GithubAccessor {
         //get the latest release
         final ResultGithub resultLastContrib = new ResultGithub();
         final String orderGithub = order == null ? completeOrder : mUrlRepository + order;
-
-        final RESTRequest restRequest = buildRestRequest(
+          final RESTRequest restRequest = buildRestRequest(
                 orderGithub,
                 "GET",
                 "",
                 "application/json",
                 null, // "UTF-8",
-                new ArrayList<ArrayList<String>>(),
-                new ArrayList<ArrayList<String>>(),
+                mDefaultHeaderList,
+                null,
                 mUserName,
                 mPassword);
         resultLastContrib.listEvents.addAll(restRequest.listEvents);
@@ -218,13 +228,15 @@ public class GithubAccessor {
         try {
             final RESTResponse response = RESTCall.execute(restRequest, CONNECTION_TIMEOUT);
             if (logBox.isLog(LOGLEVEL.INFO)) {
-                String bodyAnswer = response.getCollectOutput().getBody();
-                logBox.log(LOGLEVEL.INFO, "GithubAccess.getRestOrder: Url["
-                        + orderGithub
-                        + "] Code:"
-                        + response.getStatusCode()
-                        + " body:"
-                        + (bodyAnswer == null ? "null" : bodyAnswer.length() > 50 ? bodyAnswer.substring(0, 50) + "..." : bodyAnswer));
+                String bodyAnswer = response.getCollectOutput()!=null ? response.getCollectOutput().getBody() : null;
+                // squid:S3358
+                String logBody;
+                if (bodyAnswer==null)
+                    logBody="null";
+                else 
+                    logBody=bodyAnswer.length() > 50 ? bodyAnswer.substring(0, 50) + "..." : bodyAnswer;
+                logBody = "Url["+orderGithub + "] Code:"+ response.getStatusCode() + " body:" + logBody;
+                logBox.log(LOGLEVEL.INFO, "GithubAccess.getRestOrder: "+logBody);
             }
 
             if (response.getStatusCode() == 403) {
@@ -306,8 +318,8 @@ public class GithubAccessor {
                 "",
                 contentType,
                 charSet,
-                new ArrayList<ArrayList<String>>(),
-                new ArrayList<ArrayList<String>>(),
+                mDefaultHeaderList,
+                null,
                 mUserName,
                 mPassword);
         try {
@@ -339,8 +351,8 @@ public class GithubAccessor {
                 "",
                 contentType,
                 charSet,
-                new ArrayList<ArrayList<String>>(),
-                new ArrayList<ArrayList<String>>(),
+                mDefaultHeaderList,
+                null,
                 mUserName,
                 mPassword);
         restRequest.getCollectOutput().setPolicy(POLICYOUTPUT.BYTEARRAY);
@@ -393,8 +405,35 @@ public class GithubAccessor {
         return resultLastContrib;
     }
 
+    public static class ItemHeader {
+
+        public String name;
+        public String value;
+
+        public static ItemHeader getItemHeader(String name, String value) {
+            ItemHeader item = new ItemHeader();
+            item.name = name;
+            item.value = value;
+            return item;
+        }
+    }
+
+    /**
+     * @param url
+     * @param method
+     * @param body
+     * @param contentType
+     * @param charset
+     * @param headerList : each item contains 2 rows : headerName, HeaderValue
+     * @param cookieList
+     * @param username
+     * @param password
+     * @return
+     */
     private RESTRequest buildRestRequest(final String url, final String method, final String body, final String contentType, final String charset,
-            final ArrayList<ArrayList<String>> headerList, final ArrayList<ArrayList<String>> cookieList, final String username, final String password) {
+            final ArrayList<ItemHeader> headerList,
+            final ArrayList<ItemHeader> cookieList,
+            final String username, final String password) {
         final RESTRequest request = new RESTRequest();
         try {
             request.setUrl(new URL(url));
@@ -415,13 +454,15 @@ public class GithubAccessor {
         request.setRestMethod(RESTHTTPMethod.getRESTHTTPMethodFromValue(method));
         //request.setRedirect(true);
         //request.setIgnore(false);
-        for (final Object urlheader : headerList) {
-            final List<?> urlheaderRow = (List<?>) urlheader;
-            request.addHeader(urlheaderRow.get(0).toString(), urlheaderRow.get(1).toString());
+        if (headerList != null) {
+            for (final ItemHeader urlheader : headerList) {
+                request.addHeader(urlheader.name, urlheader.value);
+            }
         }
-        for (final Object urlCookie : cookieList) {
-            final List<?> urlCookieRow = (List<?>) urlCookie;
-            request.addCookie(urlCookieRow.get(0).toString(), urlCookieRow.get(1).toString());
+        if (cookieList != null) {
+            for (final ItemHeader urlCookie : cookieList) {
+                request.addCookie(urlCookie.name, urlCookie.value);
+            }
         }
         if (username != null) {
             request.setAuthorization(buildBasicAuthorization(username, password));
