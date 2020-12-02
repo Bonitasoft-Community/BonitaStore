@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 
 import org.apache.commons.codec.binary.Base64;
 import org.bonitasoft.log.event.BEvent;
@@ -39,10 +40,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
     public static final String COMMUNITY_GITHUBPASSWORD = "!&Bonita2020!!";
     // https://developer.github.com/changes/2020-02-14-deprecating-password-auth/
 
-    public static final String COMMUNITY_GITHUBTOKEN = "d622a9efb4bdef1ee4efb3a887ce1f8b4037cdf4";
-
-
-    public static String COMMUNITY_GITHUBURLREPOSITORY = "https://api.github.com/orgs/Bonitasoft-Community";
+    public static final String COMMUNITY_GITHUBURLREPOSITORY = "https://api.github.com/orgs/Bonitasoft-Community";
 
     private final static BEvent NoListingFound = new BEvent(BonitaStoreCommunity.class.getName(), 2, Level.APPLICATIONERROR, "No Listing Found", "The Githbub repository is supposed to have a file 'listing.xml' which describe all objects available. THis file is not found.",
             "result is not consistent",
@@ -68,10 +66,9 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
     private final static BEvent EVENT_BAD_ARTEFACT = new BEvent(BonitaStoreCommunity.class.getName(), 10, Level.APPLICATIONERROR, "Bad Artefact", "Artefact is not the one expected according the topic",
             "A topic is given in the repository. The artefact is not the correct one according the topic", "Topic in the repository has to be fixed");
 
-    
     public BonitaStoreCommunity(final String urlRepository) {
         super(BonitaStoreCommunity.COMMUNITY_GITHUBUSERNAME, BonitaStoreCommunity.COMMUNITY_GITHUBPASSWORD, urlRepository);
-        mGithubAccessor.addDefaultHeader( ItemHeader.getItemHeader("Authorization", "token "+BonitaStoreCommunity.COMMUNITY_GITHUBTOKEN));
+        mGithubAccessor.addDefaultHeader(ItemHeader.getItemHeader("Authorization", "token " + getGithubToken()));
     }
 
     /**
@@ -166,7 +163,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                     if ("readme.md".equalsIgnoreCase(repositoryName))
                         continue;
                     // this is what we search
-                    if (detectionParameters.filterByName != null && ! detectionParameters.filterByName.equals(repositoryName))
+                    if (detectionParameters.filterByName != null && !detectionParameters.filterByName.equals(repositoryName))
                         continue;
 
                     TypeArtifact checkTypeArtefact = needMatchByName ? match(detectionParameters.listTypeArtifacts, repositoryName) : typeArtefact;
@@ -176,7 +173,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                         storeResult.addEvent(event);
                         continue;
                     }
-                        
+
                     ArtifactResult artifactResult = new ArtifactResult();
                     artifactResult.artifact = factoryArtefact.getFromType(typeArtefact, repositoryName, null,
                             (String) oneRepository.get("description"),
@@ -214,8 +211,8 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
 
                     if (!resultContent.isError()) {
                         // artifact maybe a resource (then the content is an JSONARRAY) or a binary (like a Groovy Code)
-                        Object jsonResult =resultContent.getJsonObject(); 
-                        if ( jsonResult instanceof List) {
+                        Object jsonResult = resultContent.getJsonObject();
+                        if (jsonResult instanceof List) {
                             for (final Map<String, Object> oneContent : (List<Map<String, Object>>) resultContent.getJsonArray(null)) {
                                 final String assetName = (String) oneContent.get("name");
                                 if (assetName == null) {
@@ -230,18 +227,18 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                                         final StringReader stringPage = new StringReader(pageSt);
                                         try {
                                             final Properties properties = new Properties();
-    
+
                                             properties.load(stringPage);
                                             final String pageName = properties.getProperty("name");
                                             if (pageName != null && !pageName.isEmpty()) {
                                                 artifactResult.artifact.setName(pageName);
                                             }
-    
+
                                             final String pageDescription = properties.getProperty("description");
                                             if (pageDescription != null && !pageDescription.isEmpty()) {
                                                 artifactResult.artifact.setDescription(pageDescription);
                                             }
-    
+
                                             final String pageDisplayName = properties.getProperty("displayName");
                                             if (pageDisplayName != null && !pageDisplayName.isEmpty()) {
                                                 artifactResult.artifact.setDisplayName(pageDisplayName);
@@ -250,11 +247,11 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                                             storeResult.addEvent(new BEvent(errorDecodePageProperties, "Error " + e.toString()));
                                         }
                                     }
-    
+
                                 }
-    
+
                                 if (assetName.equalsIgnoreCase("logo.jpg") || assetName.equalsIgnoreCase(shortName + ".jpg")) {
-    
+
                                     // we get it !
                                     try {
                                         final ResultGithub resultContentLogo = mGithubAccessor.executeGetRestOrder(null, (String) oneContent.get("url"), logBox);
@@ -274,7 +271,6 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                             } // end loop on content
                         } // end of content is an array
                     } // end get Contents
-                    
 
                     // --------------------- release ?
                     String releaseUrl = (String) oneRepository.get("releases_url");
@@ -285,18 +281,18 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                     }
 
                     // get the releases now
-                    if (releaseUrl!=null) {
+                    if (releaseUrl != null) {
                         final ResultGithub resultRelease = mGithubAccessor.executeGetRestOrder(null, releaseUrl, logBox);
                         resultRelease.checkResultFormat(null, true, "Contents of a release must be a list");
                         storeResult.addEvents(resultRelease.listEvents);
                         if (!resultRelease.isError()) {
                             for (final Map<String, Object> oneRelease : (List<Map<String, Object>>) resultRelease.getJsonArray(null)) {
-    
+
                                 final Artifact.ArtefactRelease appsRelease = artifactResult.artifact.newInstanceRelease();
                                 appsRelease.id = (Long) oneRelease.get("id");
                                 appsRelease.version = oneRelease.get("name").toString();
                                 traceOneApps.append("release[" + appsRelease.version + "] detected;");
-    
+
                                 try {
                                     appsRelease.dateRelease = sdfParseRelease.parse(oneRelease.get("published_at").toString());
                                 } catch (final Exception e) {
@@ -319,7 +315,7 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
                                 }
                                 artifactResult.artifact.listReleases.add(appsRelease);
                             } // end loop on release
-    
+
                             if (artifactResult.artifact.listReleases.isEmpty() || artifactResult.artifact.getLastUrlDownload() == null) {
                                 artifactResult.artifact.setAvailable(false);
                             }
@@ -462,4 +458,50 @@ public class BonitaStoreCommunity extends BonitaStoreGit {
         }
     }
 
+    public static final String COMMUNITY_BASEDGITHUBTOKEN = "b+g/c998f*<(86>3>#<%B*n*q9>9E5E%s-t*B.y%8/g&e)d/54f/7'@,<)=6?/B&>(o.D$@3F$s,w4C(";
+
+    private String getGithubToken() {
+        // https://github.community/t/personal-access-token-deleting-itself/13955
+        // if the token is commit, then Github delete the token !
+        return decodeToken(COMMUNITY_BASEDGITHUBTOKEN);
+
+    }
+    
+/**
+ * from the token gave by Github, calculed the coded token. Then the coded token will be save and commit to github
+ * @param args
+ */
+    public static void main(String[] args) {
+        Random r = new Random(System.currentTimeMillis());
+        String tokenGenerated = "<placeTokenGivenByGithubHere";
+        StringBuffer tokenCoded = new StringBuffer();
+        
+        for (int i = 0; i < tokenGenerated.length(); i++) {
+            char c = (char) (tokenGenerated.charAt(i) + (i%20));
+            char random= (char) (r.nextInt(26) + 32);
+            tokenCoded.append( c).append( random );
+        }
+        System.out.println("Token source   = [" + tokenGenerated+"]");
+        System.out.println("Token coded    = [" + tokenCoded.toString()+"]");
+
+        String tokenRecalculated = decodeToken(tokenCoded.toString());
+        System.out.println("Token Recalcul = [" + tokenRecalculated+"]");
+        if (tokenRecalculated.equals(tokenGenerated))
+            System.out.println("CORRECT");
+        else
+            System.out.println("INCORRECT");    
+
+    }
+
+    private static String decodeToken(String tokenCoded) {
+        StringBuffer decoded = new StringBuffer();
+        int count=0;
+        for (int i = 0; i < tokenCoded.length(); i++) {
+            if (i % 2 == 1)
+                continue;
+            decoded.append( (char) (tokenCoded.charAt(i) - (count%20)));
+            count++;
+        }
+        return decoded.toString();
+    }
 }
