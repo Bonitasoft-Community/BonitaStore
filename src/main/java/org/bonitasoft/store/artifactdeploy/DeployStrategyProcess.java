@@ -205,7 +205,7 @@ public class DeployStrategyProcess extends DeployStrategy {
      * @param logBox
      * @return
      */
-    private List<BEvent> applyProcessManager(ProcessDefinition processDefinition, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public static List<BEvent> applyProcessManager(ProcessDefinition processDefinition, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
         List<BEvent> listEvents = new ArrayList<>();
 
         List<ActorInstance> listActors = bonitaAccessor.processAPI.getActors(processDefinition.getId(), 0, 10000, ActorCriterion.NAME_ASC);
@@ -250,7 +250,7 @@ public class DeployStrategyProcess extends DeployStrategy {
      * @param logBox
      * @return
      */
-    private List<BEvent> applyCategory(ProcessDefinition processDefinition, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public static List<BEvent> applyCategory(ProcessDefinition processDefinition, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
         List<BEvent> listEvents = new ArrayList<>();
         String description = processDefinition.getDescription();
         if (description == null)
