@@ -2,6 +2,7 @@ package org.bonitasoft.store;
 
 import java.lang.reflect.Method;
 
+import org.bonitasoft.engine.api.APIAccessor;
 import org.bonitasoft.engine.api.ApplicationAPI;
 import org.bonitasoft.engine.api.IdentityAPI;
 import org.bonitasoft.engine.api.OrganizationAPI;
@@ -34,6 +35,9 @@ public class BonitaStoreAccessor {
     public static BonitaStoreAccessor getInstance(APISession apiSession) {
         return new BonitaStoreAccessor(apiSession);
     }
+    public static BonitaStoreAccessor getInstance(APIAccessor apiAccessor) {
+        return new BonitaStoreAccessor(apiAccessor);
+    }
 
     public BonitaStoreAccessor(APISession apiSession) {
         this.apiSession = apiSession;
@@ -44,6 +48,19 @@ public class BonitaStoreAccessor {
             this.pageAPI = TenantAPIAccessor.getCustomPageAPI(apiSession);
             this.applicationAPI = TenantAPIAccessor.getLivingApplicationAPI(apiSession);
             this.organisationAPI = TenantAPIAccessor.getIdentityAPI(apiSession);
+
+        } catch (Exception e) {
+        }
+    }
+    
+    public BonitaStoreAccessor(APIAccessor apiAccessor) {
+        try {
+            this.processAPI = apiAccessor.getProcessAPI();
+            this.identityAPI = apiAccessor.getIdentityAPI();
+            this.profileAPI = apiAccessor.getProfileAPI();
+            this.pageAPI = apiAccessor.getCustomPageAPI();
+            this.applicationAPI = apiAccessor.getLivingApplicationAPI();
+            this.organisationAPI = apiAccessor.getIdentityAPI();
 
         } catch (Exception e) {
         }

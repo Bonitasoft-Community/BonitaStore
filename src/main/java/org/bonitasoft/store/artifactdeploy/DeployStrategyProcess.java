@@ -36,9 +36,9 @@ import org.bonitasoft.store.toolbox.LoggerStore;
 
 public class DeployStrategyProcess extends DeployStrategy {
 
-    private static final String CST_CATEGORY = "CATEGORY:";
+    public static final String CST_CATEGORY = "CATEGORY:";
 
-    private static final String CST_PROCESS_MANAGER = "ProcessManager";
+    public static final String CST_PROCESS_MANAGER = "ProcessManager";
 
     protected final static BEvent EventCantRemoveCurrentProcess = new BEvent(DeployStrategyProcess.class.getName(), 1, Level.APPLICATIONERROR, "Current process can't be removed", "To deploy the new process (same name, same version), current process has to be removed. The operation failed.",
             "Deployment of the new process is not possible", "Check the exception");
@@ -53,6 +53,8 @@ public class DeployStrategyProcess extends DeployStrategy {
     protected final static BEvent EventProcessCategoryError = new BEvent(DeployStrategyProcess.class.getName(), 5, Level.APPLICATIONERROR, "Can't create a category", "A category can't be created", "Process is not registered in the category", "Check the exception");
 
     protected final static BEvent EventProcessCategoryReferenced = new BEvent(DeployStrategyProcess.class.getName(), 6, Level.SUCCESS, "Process Manager referenced in category", "Process is referenced in category");
+
+    protected final static BEvent EventProcessCantCreateCategory = new BEvent(DeployStrategyProcess.class.getName(), 7, Level.ERROR, "Can't create a category", "A category can't be created", "Impossible to reference the process in the category", "Check the category, and create it manually");
 
     /* *********************************************************************** */
     /*                                                                         */
@@ -171,10 +173,10 @@ public class DeployStrategyProcess extends DeployStrategy {
                 deployOperation.deploymentStatus = DeploymentStatus.LOADED;
 
                 if (deployParameters.processManagerActor)
-                    deployOperation.listEvents.addAll(applyProcessManager(processDefinition, bonitaAccessor, logBox));
+                    deployOperation.listEvents.addAll(applyProcessManager(processDefinition.getId(), bonitaAccessor));
 
                 if (deployParameters.processCategory)
-                    deployOperation.listEvents.addAll(applyCategory(processDefinition, bonitaAccessor, logBox));
+                    deployOperation.listEvents.addAll(applyCategory(processDefinition, true, bonitaAccessor));
 
                 if (deployParameters.processEnable)
                     bonitaAccessor.processAPI.enableProcess(processDefinition.getId());
@@ -205,10 +207,10 @@ public class DeployStrategyProcess extends DeployStrategy {
      * @param logBox
      * @return
      */
-    public static List<BEvent> applyProcessManager(ProcessDefinition processDefinition, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public static List<BEvent> applyProcessManager(Long processDefinitionId, BonitaStoreAccessor bonitaAccessor) {
         List<BEvent> listEvents = new ArrayList<>();
 
-        List<ActorInstance> listActors = bonitaAccessor.processAPI.getActors(processDefinition.getId(), 0, 10000, ActorCriterion.NAME_ASC);
+        List<ActorInstance> listActors = bonitaAccessor.processAPI.getActors(processDefinitionId, 0, 10000, ActorCriterion.NAME_ASC);
         for (ActorInstance actor : listActors) {
             if (actor.getName().equalsIgnoreCase(CST_PROCESS_MANAGER)) {
                 // Here the actor, copy the definition 
@@ -219,16 +221,16 @@ public class DeployStrategyProcess extends DeployStrategy {
 
                         if (actorMember.getGroupId() > 0 && actorMember.getRoleId() > 0) {
                             explanation = "MemberShip Group[" + actorMember.getGroupId() + "] RoleId[" + actorMember.getRoleId() + "]";
-                            bonitaAccessor.processAPI.createProcessSupervisorForMembership(processDefinition.getId(), actorMember.getGroupId(), actorMember.getRoleId());
+                            bonitaAccessor.processAPI.createProcessSupervisorForMembership(processDefinitionId, actorMember.getGroupId(), actorMember.getRoleId());
                         } else if (actorMember.getGroupId() > 0) {
                             explanation = "MemberShip Group[" + actorMember.getGroupId() + "]";
-                            bonitaAccessor.processAPI.createProcessSupervisorForGroup(processDefinition.getId(), actorMember.getGroupId());
+                            bonitaAccessor.processAPI.createProcessSupervisorForGroup(processDefinitionId, actorMember.getGroupId());
                         } else if (actorMember.getRoleId() > 0) {
                             explanation = "MemberShip Role[" + actorMember.getRoleId() + "]";
-                            bonitaAccessor.processAPI.createProcessSupervisorForRole(processDefinition.getId(), actorMember.getRoleId());
+                            bonitaAccessor.processAPI.createProcessSupervisorForRole(processDefinitionId, actorMember.getRoleId());
                         } else if (actorMember.getUserId() > 0) {
                             explanation = "MemberShip User[" + actorMember.getUserId() + "]";
-                            bonitaAccessor.processAPI.createProcessSupervisorForUser(processDefinition.getId(), actorMember.getUserId());
+                            bonitaAccessor.processAPI.createProcessSupervisorForUser(processDefinitionId, actorMember.getUserId());
                         }
                     } catch (AlreadyExistsException e) {
                         // nothing to do here
@@ -250,7 +252,7 @@ public class DeployStrategyProcess extends DeployStrategy {
      * @param logBox
      * @return
      */
-    public static List<BEvent> applyCategory(ProcessDefinition processDefinition, BonitaStoreAccessor bonitaAccessor, LoggerStore logBox) {
+    public static List<BEvent> applyCategory(ProcessDefinition processDefinition, boolean createIfMissing, BonitaStoreAccessor bonitaAccessor) {
         List<BEvent> listEvents = new ArrayList<>();
         String description = processDefinition.getDescription();
         if (description == null)
@@ -267,29 +269,52 @@ public class DeployStrategyProcess extends DeployStrategy {
         List<Category> listPortalCategory = bonitaAccessor.processAPI.getCategories(0, 10000, CategoryCriterion.NAME_ASC);
         Map<String, Category> mapPortalCategory = new HashMap<>();
         for (Category categoryI : listPortalCategory) {
-            mapPortalCategory.put(categoryI.getName(), categoryI);
+            mapPortalCategory.put(categoryI.getName().toLowerCase(), categoryI);
         }
-        List<Long> categoryIds = new ArrayList<>();
+        List<Category> categoryIds = new ArrayList<>();
         // generate one category per string
         String categoryName = "";
         StringBuilder categoryNameList = new StringBuilder();
         try {
             while (st.hasMoreTokens()) {
                 categoryName = st.nextToken();
-                Category category = mapPortalCategory.get(categoryName);
+                categoryName = categoryName.trim();
+                if (categoryName.length() == 0)
+                    continue;
+                Category category = mapPortalCategory.get(categoryName.toLowerCase());
                 if (category == null) {
                     // create it
-                    category = bonitaAccessor.processAPI.createCategory(categoryName, "");
-                    // in case user gives twice the name in the list
-                    mapPortalCategory.put(category.getName(), category);
+                    try {
+                        category = bonitaAccessor.processAPI.createCategory(categoryName, "");
+
+                        // in case user gives twice the name in the list
+                        mapPortalCategory.put(category.getName().toLowerCase(), category);
+                    } catch (AlreadyExistsException ae) {
+                        // Strange, this category exist or not?
+                        listEvents.add(new BEvent(EventProcessCantCreateCategory, categoryName));
+                    }
                 }
-                categoryIds.add(category.getId());
-                categoryNameList.append(category.getName() + ",");
+                if (category != null) {
+                    categoryIds.add(category);
+                }
             }
             if (categoryIds.isEmpty())
                 return listEvents;
 
-            bonitaAccessor.processAPI.addCategoriesToProcess(processDefinition.getId(), categoryIds);
+            //-------------------------  calculate the diff
+            List<Category> listExistingCategory = bonitaAccessor.processAPI.getCategoriesOfProcessDefinition(processDefinition.getId(), 0,10000, CategoryCriterion.NAME_ASC);
+            // calculate a DIFF, to add only the missing category
+            List<Long> newCategoryIds = new ArrayList<>();
+            for (Category cat : categoryIds) {
+                if ( ! isContainsCategory( cat ,listExistingCategory )) {
+                    newCategoryIds.add( cat.getId() );
+                    categoryNameList.append(cat.getName() + ",");
+                }
+            }
+            if (newCategoryIds.isEmpty())
+                return listEvents;
+            
+            bonitaAccessor.processAPI.addCategoriesToProcess(processDefinition.getId(), newCategoryIds);
             listEvents.add(new BEvent(EventProcessCategoryReferenced, categoryNameList.toString()));
 
         } catch (CreationException e) {
@@ -299,6 +324,20 @@ public class DeployStrategyProcess extends DeployStrategy {
         return listEvents;
     }
 
+    /**
+     * check if the category exist in the list of existing category, comparng the ID
+     * @param cat
+     * @param listExistingCategory
+     * @return
+     */
+    private static boolean isContainsCategory( Category cat ,List<Category>listExistingCategory ) {
+        for (Category index : listExistingCategory) {
+            if (index.getId() == cat.getId())
+                return true;
+        }
+        return false;
+    }
+    
     private String getLabelProcess(Artifact process) {
         return "Process Name[" + process.getBonitaName() + "] Version[" + process.getVersion() + "]";
     }
