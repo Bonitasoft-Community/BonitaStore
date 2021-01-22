@@ -63,7 +63,7 @@ public class BonitaStoreAccessorClient {
         String userName = args.length > 2 ? args[2] : null;
         String passwd = args.length > 3 ? args[3] : null;
         String fileName = args.length > 4 ? args[4] : null;
-        List<String> listOptions = new ArrayList<String>();
+        List<String> listOptions = new ArrayList<>();
         for (int i = 5; i < args.length; i++)
             listOptions.add(args[i]);
         // decode options
@@ -213,7 +213,7 @@ public class BonitaStoreAccessorClient {
             FactoryArtifact factoryArtefact = FactoryArtifact.getInstance();
             LoggerStore loggerStore = new LoggerStore();
 
-            BonitaStoreAccessor BonitaAccessor = new BonitaStoreAccessor(apiSession);
+            BonitaStoreAccessor bonitaAccessor = new BonitaStoreAccessor(apiSession);
 
             System.out.println("  Load Artefact");
             ArtifactResult artefactResult = factoryArtefact.getInstanceArtefact(fileArtifact.getName(), new BonitaStoreInputFile(fileArtifact), true, bonitaStore, loggerStore);
@@ -233,7 +233,7 @@ public class BonitaStoreAccessorClient {
             artefactResult.artifact.setDeployStrategy(deployStrategy);
 
             // then deploy
-            DeployOperation deployOperation = artefactResult.artifact.deploy(new BonitaStoreParameters(), BonitaAccessor, loggerStore);
+            DeployOperation deployOperation = artefactResult.artifact.deploy(new BonitaStoreParameters(), bonitaAccessor, loggerStore);
             deployOperation.artifact = artefactResult.artifact;
             System.out.println("Deploiment Status:" + deployOperation.deploymentStatus.toString());
             System.out.println("Deploiment Details:" + deployOperation.listEvents.toString());

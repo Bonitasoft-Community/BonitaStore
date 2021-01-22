@@ -18,7 +18,7 @@ public class BonitaStoreParameters {
     /**
      * List of artifacts to detect or to deploy
      */
-    public List<TypeArtifact> listTypeArtifacts = Arrays.asList(TypeArtifact.CUSTOMPAGE, TypeArtifact.CUSTOMWIDGET, TypeArtifact.GROOVY, TypeArtifact.PROCESS, TypeArtifact.BDM, TypeArtifact.LAYOUT, TypeArtifact.LIVINGAPP, TypeArtifact.THEME, TypeArtifact.RESTAPI, TypeArtifact.PROFILE,
+    public final static List<TypeArtifact> listTypeArtifacts = Arrays.asList(TypeArtifact.CUSTOMPAGE, TypeArtifact.CUSTOMWIDGET, TypeArtifact.GROOVY, TypeArtifact.PROCESS, TypeArtifact.BDM, TypeArtifact.LAYOUT, TypeArtifact.LIVINGAPP, TypeArtifact.THEME, TypeArtifact.RESTAPI, TypeArtifact.PROFILE,
             TypeArtifact.ORGANIZATION, TypeArtifact.LOOKANDFEEL);
 
     public boolean withNotAvailable = true;

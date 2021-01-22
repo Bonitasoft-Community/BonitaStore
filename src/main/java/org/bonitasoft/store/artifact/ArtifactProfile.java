@@ -95,7 +95,7 @@ public class ArtifactProfile extends Artifact {
             SearchResult<ProfileEntry> searchResult = profileAPI.searchProfileEntries(searchOptionsBuilder.done());
             boolean alreadyExist = false;
             for (ProfileEntry profileEntry : searchResult.getResult()) {
-                if (profileEntry.getPage().equals(page.getName()))
+                if (profileEntry.getPage().equals(page.getName()) || ("custompage_"+profileEntry.getPage()).equals(page.getName()))
                     alreadyExist = true;
             }
             if (alreadyExist) {
@@ -105,7 +105,11 @@ public class ArtifactProfile extends Artifact {
             }
 
             // ProfileEntry createProfileLinkEntry(String name, String description, long profileId, String page, boolean isCustom)
-            Object[] params = new Object[] { page.getDisplayName(), page.getDescription(), bonitaBaseElement.getId(), page.getName(), true };
+            String profileEntryName =page.getDisplayName();
+            if (profileEntryName.startsWith("custompage_"))
+                profileEntryName = profileEntryName.substring("custompage_".length());
+            
+            Object[] params = new Object[] { profileEntryName, page.getDescription(), bonitaBaseElement.getId(), page.getName(), true };
             Method[] listMethods = profileAPI.getClass().getMethods();
 
             // String methods="";
