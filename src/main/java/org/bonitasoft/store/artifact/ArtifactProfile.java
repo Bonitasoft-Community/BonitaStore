@@ -108,7 +108,9 @@ public class ArtifactProfile extends Artifact {
             String profileEntryName =page.getDisplayName();
             if (profileEntryName.startsWith("custompage_"))
                 profileEntryName = profileEntryName.substring("custompage_".length());
-            
+            if (profileEntryName.length()==0)
+                profileEntryName="CustomPage";
+            profileEntryName = profileEntryName.substring(0,1).toUpperCase()+profileEntryName.substring(1);
             Object[] params = new Object[] { profileEntryName, page.getDescription(), bonitaBaseElement.getId(), page.getName(), true };
             Method[] listMethods = profileAPI.getClass().getMethods();
 
